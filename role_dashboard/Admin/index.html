@@ -1,0 +1,1751 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Admin Dashboard | Zimdra DMS</title>
+
+    <link rel="stylesheet" href="admin.css">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+<div class="app-shell">
+
+    <!-- =========================================================
+         SIDEBAR
+    ========================================================== -->
+
+    <aside class="sidebar">
+
+        <div class="brand">
+
+            <div class="brand-mark">
+                Z
+            </div>
+
+            <div>
+                <div class="brand-name">
+                    ZIMDRA
+                </div>
+
+                <div class="brand-subtitle">
+                    Dealer Management System
+                </div>
+            </div>
+
+        </div>
+
+
+        <nav class="sidebar-nav">
+
+            <button class="nav-item active" data-tab="dashboard">
+                <span class="nav-icon">▦</span>
+                <span>Dashboard</span>
+            </button>
+
+            <button class="nav-item" data-tab="users">
+                <span class="nav-icon">♙</span>
+                <span>Users & Roles</span>
+            </button>
+
+            <button class="nav-item" data-tab="workshop">
+                <span class="nav-icon">⚙</span>
+                <span>Workshop</span>
+            </button>
+
+            <button class="nav-item" data-tab="billing">
+                <span class="nav-icon">▤</span>
+                <span>Billing & Payments</span>
+            </button>
+
+            <button class="nav-item" data-tab="inventory">
+                <span class="nav-icon">▣</span>
+                <span>Inventory</span>
+            </button>
+
+            <button class="nav-item" data-tab="reports">
+                <span class="nav-icon">◒</span>
+                <span>Reports</span>
+            </button>
+
+            <button class="nav-item" data-tab="audit">
+                <span class="nav-icon">◷</span>
+                <span>Audit Log</span>
+            </button>
+
+            <button class="nav-item" data-tab="settings">
+                <span class="nav-icon">⚙</span>
+                <span>Settings</span>
+            </button>
+
+        </nav>
+
+
+        <div class="sidebar-bottom">
+
+            <div class="admin-mini-card">
+
+                <div class="avatar">
+                    AD
+                </div>
+
+                <div class="admin-mini-info">
+
+                    <strong>
+                        System Admin
+                    </strong>
+
+                    <span>
+                        Administrator
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <button class="logout-btn" id="logoutBtn">
+                ⇥ Logout
+            </button>
+
+        </div>
+
+    </aside>
+
+
+    <!-- =========================================================
+         MAIN CONTENT
+    ========================================================== -->
+
+    <main class="main-content">
+
+        <!-- TOP BAR -->
+
+        <header class="topbar">
+
+            <div>
+
+                <div class="page-kicker">
+                    ADMINISTRATION
+                </div>
+
+                <h1 id="pageTitle">
+                    System Dashboard
+                </h1>
+
+            </div>
+
+
+            <div class="topbar-right">
+
+                <button
+                    class="icon-button"
+                    id="refreshBtn"
+                    title="Refresh"
+                >
+                    ↻
+                </button>
+
+
+                <div class="date-box">
+
+                    <span id="currentDate">
+                        --
+                    </span>
+
+                    <strong id="currentTime">
+                        --:--
+                    </strong>
+
+                </div>
+
+
+                <div class="profile-box">
+
+                    <div class="avatar">
+                        AD
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            Administrator
+                        </strong>
+
+                        <span>
+                            System Admin
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- =====================================================
+             DASHBOARD
+        ====================================================== -->
+
+        <section
+            class="page-section active"
+            id="dashboard"
+        >
+
+            <div class="section-heading">
+
+                <div>
+
+                    <div class="section-kicker">
+                        BUSINESS OVERVIEW
+                    </div>
+
+                    <h2>
+                        Zimdra Performance
+                    </h2>
+
+                    <p>
+                        Real-time overview of workshop operations,
+                        collections, inventory and system activity.
+                    </p>
+
+                </div>
+
+
+                <div class="heading-actions">
+
+                    <button
+                        class="btn secondary"
+                        id="loadDemoBtn"
+                    >
+                        Load Demo Data
+                    </button>
+
+                    <button
+                        class="btn primary"
+                        id="dashboardExportBtn"
+                    >
+                        Export Dashboard
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 KPI CARDS
+            ================================================== -->
+
+            <div class="kpi-grid">
+
+                <article class="kpi-card revenue-card">
+
+                    <div class="kpi-top">
+
+                        <span class="kpi-label">
+                            TOTAL REVENUE EARNED
+                        </span>
+
+                        <span class="kpi-icon">
+                            Nu.
+                        </span>
+
+                    </div>
+
+                    <div
+                        class="kpi-value"
+                        id="totalRevenue"
+                    >
+                        Nu. 0.00
+                    </div>
+
+                    <div class="kpi-footer">
+
+                        <span
+                            class="positive"
+                            id="revenueGrowth"
+                        >
+                            +0%
+                        </span>
+
+                        <span>
+                            vs previous period
+                        </span>
+
+                    </div>
+
+                </article>
+
+
+                <article class="kpi-card">
+
+                    <div class="kpi-top">
+
+                        <span class="kpi-label">
+                            TOTAL JOBS
+                        </span>
+
+                        <span class="kpi-icon blue">
+                            JC
+                        </span>
+
+                    </div>
+
+                    <div
+                        class="kpi-value"
+                        id="totalJobs"
+                    >
+                        0
+                    </div>
+
+                    <div class="kpi-footer">
+
+                        <span id="activeJobs">
+                            0
+                        </span>
+
+                        <span>
+                            active jobs
+                        </span>
+
+                    </div>
+
+                </article>
+
+
+                <article class="kpi-card">
+
+                    <div class="kpi-top">
+
+                        <span class="kpi-label">
+                            READY FOR BILLING
+                        </span>
+
+                        <span class="kpi-icon orange">
+                            RB
+                        </span>
+
+                    </div>
+
+                    <div
+                        class="kpi-value"
+                        id="readyBilling"
+                    >
+                        0
+                    </div>
+
+                    <div class="kpi-footer">
+
+                        <span class="warning">
+                            Attention
+                        </span>
+
+                        <span>
+                            jobs waiting
+                        </span>
+
+                    </div>
+
+                </article>
+
+
+                <article class="kpi-card">
+
+                    <div class="kpi-top">
+
+                        <span class="kpi-label">
+                            PENDING PAYMENT
+                        </span>
+
+                        <span class="kpi-icon red">
+                            PP
+                        </span>
+
+                    </div>
+
+                    <div
+                        class="kpi-value"
+                        id="pendingPayment"
+                    >
+                        Nu. 0.00
+                    </div>
+
+                    <div class="kpi-footer">
+
+                        <span id="pendingBillsCount">
+                            0
+                        </span>
+
+                        <span>
+                            unpaid bills
+                        </span>
+
+                    </div>
+
+                </article>
+
+
+                <article class="kpi-card">
+
+                    <div class="kpi-top">
+
+                        <span class="kpi-label">
+                            LOW STOCK ITEMS
+                        </span>
+
+                        <span class="kpi-icon purple">
+                            ST
+                        </span>
+
+                    </div>
+
+                    <div
+                        class="kpi-value"
+                        id="lowStock"
+                    >
+                        0
+                    </div>
+
+                    <div class="kpi-footer">
+
+                        <span class="danger">
+                            Reorder
+                        </span>
+
+                        <span>
+                            required
+                        </span>
+
+                    </div>
+
+                </article>
+
+
+                <article class="kpi-card">
+
+                    <div class="kpi-top">
+
+                        <span class="kpi-label">
+                            ACTIVE USERS
+                        </span>
+
+                        <span class="kpi-icon green">
+                            US
+                        </span>
+
+                    </div>
+
+                    <div
+                        class="kpi-value"
+                        id="activeUsers"
+                    >
+                        0
+                    </div>
+
+                    <div class="kpi-footer">
+
+                        <span>
+                            System
+                        </span>
+
+                        <span>
+                            users
+                        </span>
+
+                    </div>
+
+                </article>
+
+            </div>
+
+
+            <!-- =================================================
+                 REVENUE GRAPH
+            ================================================== -->
+
+            <div class="panel chart-panel large-chart">
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <div class="panel-kicker">
+                            ZIMDRA EARNINGS
+                        </div>
+
+                        <h3>
+                            Total Revenue Earned
+                        </h3>
+
+                        <p>
+                            Actual revenue collected by Zimdra
+                            from completed customer transactions.
+                        </p>
+
+                    </div>
+
+
+                    <div class="chart-controls">
+
+                        <button
+                            class="range-btn active"
+                            data-range="7"
+                        >
+                            7D
+                        </button>
+
+                        <button
+                            class="range-btn"
+                            data-range="14"
+                        >
+                            14D
+                        </button>
+
+                        <button
+                            class="range-btn"
+                            data-range="30"
+                        >
+                            30D
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <div class="chart-wrapper">
+
+                    <canvas id="revenueTrendChart"></canvas>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 SECOND ROW
+            ================================================== -->
+
+            <div class="chart-grid">
+
+                <div class="panel chart-panel">
+
+                    <div class="panel-header">
+
+                        <div>
+
+                            <div class="panel-kicker">
+                                WORKSHOP
+                            </div>
+
+                            <h3>
+                                Job Status Distribution
+                            </h3>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="chart-wrapper doughnut-wrapper">
+
+                        <canvas id="jobStatusChart"></canvas>
+
+                    </div>
+
+                </div>
+
+
+                <div class="panel chart-panel">
+
+                    <div class="panel-header">
+
+                        <div>
+
+                            <div class="panel-kicker">
+                                COLLECTIONS
+                            </div>
+
+                            <h3>
+                                Revenue by Payment Method
+                            </h3>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="chart-wrapper">
+
+                        <canvas id="paymentMethodChart"></canvas>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 THIRD ROW
+            ================================================== -->
+
+            <div class="chart-grid">
+
+                <div class="panel chart-panel">
+
+                    <div class="panel-header">
+
+                        <div>
+
+                            <div class="panel-kicker">
+                                TECHNICIANS
+                            </div>
+
+                            <h3>
+                                Workshop Performance
+                            </h3>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="chart-wrapper">
+
+                        <canvas
+                            id="technicianPerformanceChart"
+                        ></canvas>
+
+                    </div>
+
+                </div>
+
+
+                <div class="panel">
+
+                    <div class="panel-header">
+
+                        <div>
+
+                            <div class="panel-kicker">
+                                QUICK INSIGHT
+                            </div>
+
+                            <h3>
+                                Revenue Snapshot
+                            </h3>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="insight-list">
+
+                        <div class="insight-row">
+
+                            <div class="insight-icon green">
+                                ↗
+                            </div>
+
+                            <div>
+
+                                <strong>
+                                    Top Revenue Day
+                                </strong>
+
+                                <span id="topRevenueDay">
+                                    --
+                                </span>
+
+                            </div>
+
+                            <b id="topRevenueAmount">
+                                Nu. 0
+                            </b>
+
+                        </div>
+
+
+                        <div class="insight-row">
+
+                            <div class="insight-icon blue">
+                                Nu.
+                            </div>
+
+                            <div>
+
+                                <strong>
+                                    Average Transaction
+                                </strong>
+
+                                <span>
+                                    Per completed payment
+                                </span>
+
+                            </div>
+
+                            <b id="averageTransaction">
+                                Nu. 0
+                            </b>
+
+                        </div>
+
+
+                        <div class="insight-row">
+
+                            <div class="insight-icon orange">
+                                RB
+                            </div>
+
+                            <div>
+
+                                <strong>
+                                    Billing Pipeline
+                                </strong>
+
+                                <span>
+                                    Jobs ready for billing
+                                </span>
+
+                            </div>
+
+                            <b id="billingPipeline">
+                                0
+                            </b>
+
+                        </div>
+
+
+                        <div class="insight-row">
+
+                            <div class="insight-icon red">
+                                !
+                            </div>
+
+                            <div>
+
+                                <strong>
+                                    Outstanding
+                                </strong>
+
+                                <span>
+                                    Customer payments pending
+                                </span>
+
+                            </div>
+
+                            <b id="outstandingAmount">
+                                Nu. 0
+                            </b>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =====================================================
+             USERS
+        ====================================================== -->
+
+        <section
+            class="page-section"
+            id="users"
+        >
+
+            <div class="section-heading">
+
+                <div>
+
+                    <div class="section-kicker">
+                        ACCESS CONTROL
+                    </div>
+
+                    <h2>
+                        Users & Roles
+                    </h2>
+
+                    <p>
+                        Manage system users and role access.
+                    </p>
+
+                </div>
+
+
+                <button
+                    class="btn primary"
+                    id="addUserBtn"
+                >
+                    + Add User
+                </button>
+
+            </div>
+
+
+            <div class="toolbar">
+
+                <input
+                    type="search"
+                    id="userSearch"
+                    class="search-input"
+                    placeholder="Search users..."
+                >
+
+                <select
+                    id="roleFilter"
+                    class="select-input"
+                >
+
+                    <option value="all">
+                        All Roles
+                    </option>
+
+                    <option value="admin">
+                        Administrator
+                    </option>
+
+                    <option value="service_manager">
+                        Service Manager
+                    </option>
+
+                    <option value="storekeeper">
+                        Storekeeper
+                    </option>
+
+                    <option value="billing_clerk">
+                        Billing Clerk
+                    </option>
+
+                    <option value="cash_counter">
+                        Cash Counter
+                    </option>
+
+                    <option value="technician">
+                        Technician
+                    </option>
+
+                    <option value="reception">
+                        Reception
+                    </option>
+
+                </select>
+
+
+                <select
+                    id="statusFilter"
+                    class="select-input"
+                >
+
+                    <option value="all">
+                        All Status
+                    </option>
+
+                    <option value="Active">
+                        Active
+                    </option>
+
+                    <option value="Inactive">
+                        Inactive
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="panel table-panel">
+
+                <div class="table-scroll">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+
+                                <th>User</th>
+                                <th>Username</th>
+                                <th>Role</th>
+                                <th>Phone</th>
+                                <th>Status</th>
+                                <th>Last Active</th>
+                                <th>Actions</th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody id="usersTableBody"></tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =====================================================
+             WORKSHOP
+        ====================================================== -->
+
+        <section
+            class="page-section"
+            id="workshop"
+        >
+
+            <div class="section-heading">
+
+                <div>
+
+                    <div class="section-kicker">
+                        OPERATIONS
+                    </div>
+
+                    <h2>
+                        Workshop Monitoring
+                    </h2>
+
+                    <p>
+                        Monitor job cards and workshop progress.
+                    </p>
+
+                </div>
+
+
+                <button
+                    class="btn secondary"
+                    id="workshopExportBtn"
+                >
+                    Export Jobs
+                </button>
+
+            </div>
+
+
+            <div class="mini-kpi-grid">
+
+                <div class="mini-card">
+                    <span>Total Jobs</span>
+                    <strong id="workTotalJobs">0</strong>
+                </div>
+
+                <div class="mini-card">
+                    <span>In Progress</span>
+                    <strong id="workInProgress">0</strong>
+                </div>
+
+                <div class="mini-card">
+                    <span>Ready Billing</span>
+                    <strong id="workReadyBilling">0</strong>
+                </div>
+
+                <div class="mini-card">
+                    <span>Completed</span>
+                    <strong id="workCompleted">0</strong>
+                </div>
+
+            </div>
+
+
+            <div class="panel table-panel">
+
+                <div class="table-scroll">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+
+                                <th>Job Card</th>
+                                <th>Customer</th>
+                                <th>Vehicle</th>
+                                <th>Technician</th>
+                                <th>Supervisor</th>
+                                <th>Status</th>
+                                <th>Priority</th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody id="workshopTableBody"></tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =====================================================
+             BILLING
+        ====================================================== -->
+
+        <section
+            class="page-section"
+            id="billing"
+        >
+
+            <div class="section-heading">
+
+                <div>
+
+                    <div class="section-kicker">
+                        FINANCE
+                    </div>
+
+                    <h2>
+                        Billing & Payments
+                    </h2>
+
+                    <p>
+                        Monitor bills, payments and total earned revenue.
+                    </p>
+
+                </div>
+
+
+                <button
+                    class="btn secondary"
+                    id="billingExportBtn"
+                >
+                    Export Payments
+                </button>
+
+            </div>
+
+
+            <div class="mini-kpi-grid">
+
+                <div class="mini-card">
+
+                    <span>
+                        Total Revenue Earned
+                    </span>
+
+                    <strong id="billingRevenue">
+                        Nu. 0
+                    </strong>
+
+                </div>
+
+
+                <div class="mini-card">
+
+                    <span>
+                        Paid Transactions
+                    </span>
+
+                    <strong id="paidTransactions">
+                        0
+                    </strong>
+
+                </div>
+
+
+                <div class="mini-card">
+
+                    <span>
+                        Pending Payment
+                    </span>
+
+                    <strong id="billingPending">
+                        Nu. 0
+                    </strong>
+
+                </div>
+
+
+                <div class="mini-card">
+
+                    <span>
+                        Average Transaction
+                    </span>
+
+                    <strong id="billingAverage">
+                        Nu. 0
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="panel table-panel">
+
+                <div class="table-scroll">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+
+                                <th>Bill No.</th>
+                                <th>Job Card</th>
+                                <th>Customer</th>
+                                <th>Amount</th>
+                                <th>Payment Method</th>
+                                <th>Status</th>
+                                <th>Date</th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody id="billingTableBody"></tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =====================================================
+             INVENTORY
+        ====================================================== -->
+
+        <section
+            class="page-section"
+            id="inventory"
+        >
+
+            <div class="section-heading">
+
+                <div>
+
+                    <div class="section-kicker">
+                        STORES
+                    </div>
+
+                    <h2>
+                        Inventory Overview
+                    </h2>
+
+                    <p>
+                        Monitor stock levels and reorder requirements.
+                    </p>
+
+                </div>
+
+
+                <button
+                    class="btn secondary"
+                    id="inventoryExportBtn"
+                >
+                    Export Inventory
+                </button>
+
+            </div>
+
+
+            <div class="mini-kpi-grid">
+
+                <div class="mini-card">
+
+                    <span>
+                        Total Items
+                    </span>
+
+                    <strong id="inventoryTotal">
+                        0
+                    </strong>
+
+                </div>
+
+
+                <div class="mini-card">
+
+                    <span>
+                        Low Stock
+                    </span>
+
+                    <strong id="inventoryLow">
+                        0
+                    </strong>
+
+                </div>
+
+
+                <div class="mini-card">
+
+                    <span>
+                        Out of Stock
+                    </span>
+
+                    <strong id="inventoryOut">
+                        0
+                    </strong>
+
+                </div>
+
+
+                <div class="mini-card">
+
+                    <span>
+                        Inventory Value
+                    </span>
+
+                    <strong id="inventoryValue">
+                        Nu. 0
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="panel table-panel">
+
+                <div class="table-scroll">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+
+                                <th>Part No.</th>
+                                <th>Part Name</th>
+                                <th>Stock</th>
+                                <th>Reorder Level</th>
+                                <th>Unit Price</th>
+                                <th>Stock Value</th>
+                                <th>Status</th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody id="inventoryTableBody"></tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =====================================================
+             REPORTS
+        ====================================================== -->
+
+        <section
+            class="page-section"
+            id="reports"
+        >
+
+            <div class="section-heading">
+
+                <div>
+
+                    <div class="section-kicker">
+                        ANALYTICS
+                    </div>
+
+                    <h2>
+                        Reports
+                    </h2>
+
+                    <p>
+                        Export operational and financial information.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="report-grid">
+
+                <button
+                    class="report-card"
+                    data-report="revenue"
+                >
+
+                    <span class="report-icon">
+                        Nu.
+                    </span>
+
+                    <strong>
+                        Revenue Report
+                    </strong>
+
+                    <small>
+                        Total revenue earned by Zimdra
+                    </small>
+
+                </button>
+
+
+                <button
+                    class="report-card"
+                    data-report="jobs"
+                >
+
+                    <span class="report-icon">
+                        JC
+                    </span>
+
+                    <strong>
+                        Job Card Report
+                    </strong>
+
+                    <small>
+                        Workshop job activity
+                    </small>
+
+                </button>
+
+
+                <button
+                    class="report-card"
+                    data-report="inventory"
+                >
+
+                    <span class="report-icon">
+                        ST
+                    </span>
+
+                    <strong>
+                        Inventory Report
+                    </strong>
+
+                    <small>
+                        Parts and stock levels
+                    </small>
+
+                </button>
+
+
+                <button
+                    class="report-card"
+                    data-report="users"
+                >
+
+                    <span class="report-icon">
+                        US
+                    </span>
+
+                    <strong>
+                        User Report
+                    </strong>
+
+                    <small>
+                        System users and roles
+                    </small>
+
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <!-- =====================================================
+             AUDIT
+        ====================================================== -->
+
+        <section
+            class="page-section"
+            id="audit"
+        >
+
+            <div class="section-heading">
+
+                <div>
+
+                    <div class="section-kicker">
+                        SECURITY
+                    </div>
+
+                    <h2>
+                        Audit Log
+                    </h2>
+
+                    <p>
+                        Recent administrative and system activities.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="panel table-panel">
+
+                <div class="table-scroll">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+
+                                <th>Date / Time</th>
+                                <th>User</th>
+                                <th>Action</th>
+                                <th>Module</th>
+                                <th>Description</th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody id="auditTableBody"></tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =====================================================
+             SETTINGS
+        ====================================================== -->
+
+        <section
+            class="page-section"
+            id="settings"
+        >
+
+            <div class="section-heading">
+
+                <div>
+
+                    <div class="section-kicker">
+                        SYSTEM
+                    </div>
+
+                    <h2>
+                        System Settings
+                    </h2>
+
+                    <p>
+                        Prototype configuration and data controls.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="settings-grid">
+
+                <div class="panel setting-card">
+
+                    <h3>
+                        Demo Data
+                    </h3>
+
+                    <p>
+                        Load realistic demo data for the complete
+                        Zimdra DMS dashboard.
+                    </p>
+
+                    <button
+                        class="btn primary"
+                        id="settingsDemoBtn"
+                    >
+                        Load Demo Data
+                    </button>
+
+                </div>
+
+
+                <div class="panel setting-card">
+
+                    <h3>
+                        Admin Data
+                    </h3>
+
+                    <p>
+                        Reset only Admin role data stored in
+                        localStorage.
+                    </p>
+
+                    <button
+                        class="btn danger"
+                        id="clearAdminBtn"
+                    >
+                        Reset Admin Data
+                    </button>
+
+                </div>
+
+
+                <div class="panel setting-card">
+
+                    <h3>
+                        System Information
+                    </h3>
+
+                    <div class="system-info">
+
+                        <div>
+                            <span>Application</span>
+                            <strong>Zimdra DMS</strong>
+                        </div>
+
+                        <div>
+                            <span>Version</span>
+                            <strong>Prototype v2.1</strong>
+                        </div>
+
+                        <div>
+                            <span>Currency</span>
+                            <strong>Nu.</strong>
+                        </div>
+
+                        <div>
+                            <span>Storage</span>
+                            <strong>Browser LocalStorage</strong>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<!-- =============================================================
+     USER MODAL
+============================================================== -->
+
+<div
+    class="modal-backdrop"
+    id="userModal"
+>
+
+    <div class="modal">
+
+        <div class="modal-header">
+
+            <div>
+
+                <div class="section-kicker">
+                    USER MANAGEMENT
+                </div>
+
+                <h3 id="modalTitle">
+                    Add User
+                </h3>
+
+            </div>
+
+            <button
+                class="modal-close"
+                id="closeUserModal"
+            >
+                ×
+            </button>
+
+        </div>
+
+
+        <form id="userForm">
+
+            <input
+                type="hidden"
+                id="editUserId"
+            >
+
+
+            <div class="form-grid">
+
+                <div class="form-group">
+
+                    <label>
+                        Full Name
+                    </label>
+
+                    <input
+                        type="text"
+                        id="userName"
+                        required
+                        placeholder="Enter full name"
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Username
+                    </label>
+
+                    <input
+                        type="text"
+                        id="username"
+                        required
+                        placeholder="Enter username"
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Role
+                    </label>
+
+                    <select
+                        id="userRole"
+                        required
+                    >
+
+                        <option value="admin">
+                            Administrator
+                        </option>
+
+                        <option value="service_manager">
+                            Service Manager
+                        </option>
+
+                        <option value="storekeeper">
+                            Storekeeper
+                        </option>
+
+                        <option value="billing_clerk">
+                            Billing Clerk
+                        </option>
+
+                        <option value="cash_counter">
+                            Cash Counter
+                        </option>
+
+                        <option value="technician">
+                            Technician
+                        </option>
+
+                        <option value="reception">
+                            Reception
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Phone
+                    </label>
+
+                    <input
+                        type="text"
+                        id="userPhone"
+                        placeholder="17XXXXXX"
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Status
+                    </label>
+
+                    <select id="userStatus">
+
+                        <option value="Active">
+                            Active
+                        </option>
+
+                        <option value="Inactive">
+                            Inactive
+                        </option>
+
+                    </select>
+
+                </div>
+
+            </div>
+
+
+            <div class="modal-actions">
+
+                <button
+                    type="button"
+                    class="btn secondary"
+                    id="cancelUserBtn"
+                >
+                    Cancel
+                </button>
+
+                <button
+                    type="submit"
+                    class="btn primary"
+                >
+                    Save User
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<!-- =============================================================
+     TOAST
+============================================================== -->
+
+<div
+    class="toast"
+    id="toast"
+>
+
+    <span id="toastMessage">
+        Saved successfully
+    </span>
+
+</div>
+
+
+<script src="admin.js"></script>
+
+</body>
+</html>

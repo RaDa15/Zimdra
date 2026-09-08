@@ -1,0 +1,374 @@
+/* ==========================================================================
+   zimdra.css — design system
+   --------------------------------------------------------------------------
+   Path:  zimdra-dms/assets/css/zimdra.css
+
+   Tokens, base rules and the shared controls. Every screen loads this first.
+   Nothing in here is specific to one page — if a rule only serves the sign-in
+   screen, it belongs in sign_in.css instead.
+   ========================================================================== */
+
+
+/* --------------------------------------------------------------------------
+   1. TOKENS
+   -------------------------------------------------------------------------- */
+
+:root{
+
+  /* Steel — the quiet ground the whole interface sits on.
+     A true cool grey, not a tinted near-black. */
+  --steel-950:#16191D;
+  --steel-700:#454C55;
+  --steel-400:#8C939C;
+  --steel-150:#DDE0E4;
+  --steel-050:#F2F4F6;
+  --paper:#FFFFFF;
+  /* The page ground behind cards and panels. Sign-in and every dashboard
+     use this same value — do not hard-code #E8EBEF anywhere. */
+  --ground:#E8EBEF;
+
+  /* Ink — carbon-form blue. Primary action, focus, selection. */
+  --ink-900:#0C2848;
+  --ink-800:#0F3157;
+  --ink-700:#123A6B;
+  --ink-500:#1E5FA8;
+  --ink-100:#DCE8F5;
+
+  /* Form yellow — THE accent, rationed to one meaning:
+     a person must decide something now. If it starts appearing on section
+     headers or hover states it stops meaning anything. */
+  --form-500:#E8B520;
+  --form-100:#FDF3D4;
+
+  /* Semantic */
+  --post-600:#17693E;  --post-050:#E6F2EB;
+  --hold-600:#A8600B;  --hold-050:#FBF0E0;
+  --stop-600:#A8231C;  --stop-050:#F9E8E7;
+
+  /* Type. Plex was drawn for technical contexts and has genuine tabular
+     figures — a storekeeper reading 09409M07L01-5PK off a screen needs
+     0/O and 1/l/I to be unmistakable. */
+  --font-ui:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --font-data:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+
+  /* Spacing — 4px base */
+  --s1:4px;  --s2:8px;  --s3:12px; --s4:16px;
+  --s5:24px; --s6:32px; --s7:48px;
+
+  /* Radius stays near-zero. The system's outputs are ruled forms, so what a
+     person sees on screen maps onto what prints. */
+  --r-control:2px;
+  --r-flat:0;
+
+  /* The only shadows in the system. Overlays and the sign-in card. */
+  --lift:0 4px 16px rgba(22,25,29,.14);
+  --lift-card:0 1px 3px rgba(22,25,29,.06), 0 18px 48px rgba(22,25,29,.10);
+
+  /* Density — desk is the default */
+  --field-h:48px;
+  --row-h:30px;
+  --body-sz:16px;
+  --tap:auto;
+}
+
+/* Bay mode — tablet on the workshop floor. Gloved hand, imperfect light.
+   Set data-density="bay" on <html>. */
+[data-density="bay"]{
+  --field-h:60px;
+  --row-h:48px;
+  --body-sz:17px;
+  --tap:46px;
+}
+
+
+/* --------------------------------------------------------------------------
+   2. BASE
+   -------------------------------------------------------------------------- */
+
+*,*::before,*::after{ box-sizing:border-box; }
+
+html,body{ height:100%; }
+
+body{
+  margin:0;
+  font-family:var(--font-ui);
+  font-size:var(--body-sz);
+  line-height:1.5;
+  color:var(--steel-950);
+  background:var(--steel-050);
+  -webkit-font-smoothing:antialiased;
+  font-variant-numeric:tabular-nums;
+}
+
+/* Focus is always visible and never removed. */
+:focus-visible{
+  outline:2px solid var(--ink-500);
+  outline-offset:2px;
+}
+
+button,input,select,textarea{ font:inherit; color:inherit; }
+
+
+/* --------------------------------------------------------------------------
+   3. TYPE
+   -------------------------------------------------------------------------- */
+
+.zd-display{ font-size:32px; line-height:1.14; font-weight:700; letter-spacing:-.02em; margin:0; }
+.zd-heading{ font-size:19px; line-height:26px; font-weight:600; margin:0; }
+.zd-subhead{ font-size:15px; line-height:22px; font-weight:600; margin:0; }
+
+/* Labels are sentence case. Never capitals — capitals read slower. */
+ /* Two label sizes, both intentional. .zd-label is for single-task pages
+    like sign-in, where the form IS the screen. Dense data-entry screens use
+    the 13px Label size from design.md — see .field label in the dashboards. */
+.zd-label{ display:block; font-size:15px; font-weight:600; }
+.zd-label--dense{ font-size:13px; font-weight:600; }
+.zd-label-aside{ font-size:14px; color:var(--steel-400); }
+
+.zd-hint{ margin:var(--s2) 0 0; font-size:14px; color:var(--steel-700); }
+.zd-caption{ font-size:12px; line-height:16px; color:var(--steel-400); }
+
+/* Mono is functional, not decorative: it aligns characters that get compared. */
+.zd-data{ font-family:var(--font-data); font-variant-numeric:tabular-nums; }
+.zd-num{ font-family:var(--font-data); font-variant-numeric:tabular-nums; text-align:right; }
+
+.zd-muted{ color:var(--steel-700); }
+.zd-dim{ color:var(--steel-400); }
+
+.zd-sr{
+  position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+  overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0;
+}
+
+
+/* --------------------------------------------------------------------------
+   4. CHIP
+   -------------------------------------------------------------------------- */
+
+.zd-chip{
+  display:inline-block;
+  background:var(--ink-100);
+  color:var(--ink-700);
+  font-family:var(--font-data);
+  font-size:12px;
+  font-weight:500;
+  letter-spacing:.10em;
+  padding:7px 12px;
+}
+
+
+/* --------------------------------------------------------------------------
+   5. FIELDS
+   -------------------------------------------------------------------------- */
+
+.zd-field{ margin-top:var(--s5); }
+
+.zd-field-head{
+  display:flex; align-items:baseline; justify-content:space-between; gap:var(--s3);
+}
+
+.zd-input,
+.zd-select{
+  width:100%;
+  height:var(--field-h);
+  margin-top:var(--s2);
+  padding:0 var(--s4);
+  background:var(--paper);
+  border:1px solid var(--steel-150);
+  border-radius:var(--r-control);
+  font-size:var(--body-sz);
+  color:var(--steel-950);
+}
+.zd-input:hover,.zd-select:hover{ border-color:var(--steel-400); }
+.zd-input:focus,.zd-select:focus{
+  border-color:var(--ink-700);
+  outline:2px solid var(--ink-100);
+  outline-offset:0;
+}
+.zd-input::placeholder{ color:var(--steel-400); }
+.zd-input:disabled{ background:var(--steel-050); color:var(--steel-400); }
+
+.zd-input--code{ font-family:var(--font-data); letter-spacing:.02em; }
+.zd-input--num{ font-family:var(--font-data); text-align:right; }
+
+/* Native arrow is inconsistent across platforms; this one always matches. */
+.zd-select{
+  padding-right:40px;
+  appearance:none;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' fill='none' stroke='%23454C55' stroke-width='1.6'/></svg>");
+  background-repeat:no-repeat;
+  background-position:right var(--s4) center;
+}
+
+/* Prefixed row — a tag box joined to a field. Used by User ID and PIN. */
+.zd-row{
+  display:flex;
+  align-items:stretch;
+  margin-top:var(--s2);
+  background:var(--paper);
+  border:1px solid var(--steel-150);
+  border-radius:var(--r-control);
+}
+.zd-row:focus-within{
+  border-color:var(--ink-700);
+  outline:2px solid var(--ink-100);
+}
+.zd-row[data-invalid="true"]{
+  border-color:var(--stop-600);
+  background:var(--stop-050);
+}
+.zd-row__tag{
+  flex:none; width:54px;
+  display:grid; place-items:center;
+  background:var(--steel-050);
+  border-right:1px solid var(--steel-150);
+  font-family:var(--font-data);
+  font-size:13px;
+  color:var(--steel-700);
+}
+/* Read-only row — the value is shown, not typed. Sits on the grey ground so
+   it reads as a display field rather than an empty input. */
+.zd-row--readonly{ background:var(--steel-050); }
+.zd-row--readonly:focus-within{ outline:none; border-color:var(--steel-150); }
+
+.zd-row__body{
+  flex:1;
+  min-height:var(--field-h);
+  display:flex; align-items:center; gap:var(--s4);
+  padding:0 var(--s4);
+}
+
+/* Errors sit beside the field that caused them and say what to do next —
+   never a toast in the corner that vanishes before it is read. */
+.zd-error{
+  display:flex; gap:var(--s2);
+  margin-top:var(--s2);
+  font-size:14px;
+  color:var(--stop-600);
+}
+.zd-error[hidden]{ display:none; }
+
+.zd-check{
+  display:flex; align-items:center; gap:11px;
+  margin-top:var(--s5);
+  font-size:15px;
+  cursor:pointer;
+}
+.zd-check input{
+  width:18px; height:18px; margin:0;
+  accent-color:var(--ink-700);
+  cursor:pointer;
+}
+
+
+/* --------------------------------------------------------------------------
+   6. BUTTONS
+   -------------------------------------------------------------------------- */
+
+.zd-btn{
+  display:inline-flex;
+  align-items:center; justify-content:center; gap:var(--s2);
+  min-height:56px;
+  min-width:var(--tap);
+  padding:0 var(--s4);
+  border:1px solid transparent;
+  border-radius:var(--r-control);
+  background:var(--paper);
+  font-family:var(--font-ui);
+  font-size:16px;
+  font-weight:600;
+  cursor:pointer;
+  white-space:nowrap;
+}
+.zd-btn--block{ width:100%; }
+
+.zd-btn--primary{ min-height:56px; background:var(--ink-700); color:var(--paper); }
+.zd-btn--primary:hover:not(:disabled){ background:var(--ink-900); }
+
+.zd-btn--secondary{ border-color:var(--steel-150); color:var(--steel-950); }
+.zd-btn--secondary:hover:not(:disabled){ border-color:var(--steel-400); background:var(--steel-050); }
+
+.zd-btn--danger{ border-color:var(--stop-600); color:var(--stop-600); }
+.zd-btn--danger:hover:not(:disabled){ background:var(--stop-050); }
+
+.zd-btn--ghost{ color:var(--steel-700); }
+.zd-btn--ghost:hover:not(:disabled){ background:var(--steel-050); }
+
+.zd-btn:disabled{ opacity:.5; cursor:not-allowed; }
+
+/* Keys are printed on buttons permanently, not revealed on hover. That is how
+   people learn the shortcuts without ever being taught them. */
+.zd-btn__key{ font-family:var(--font-data); font-size:14px; opacity:.75; }
+
+/* A secondary clause inside a button — quieter than the label itself. */
+.zd-btn__note{ font-weight:400; font-size:15px; color:var(--steel-700); }
+
+
+/* --------------------------------------------------------------------------
+   7. DIVIDER
+   -------------------------------------------------------------------------- */
+
+.zd-or{
+  display:flex; align-items:center; gap:var(--s4);
+  margin-top:var(--s5);
+  font-size:13px;
+  color:var(--steel-400);
+}
+.zd-or::before,
+.zd-or::after{ content:""; flex:1; height:1px; background:var(--steel-150); }
+
+
+/* --------------------------------------------------------------------------
+   8. NOTICES
+   -------------------------------------------------------------------------- */
+
+.zd-notice{
+  padding:var(--s4) 18px;
+  background:var(--paper);
+  border:1px solid var(--steel-150);
+  border-left-width:3px;
+  font-size:14px;
+}
+.zd-notice[hidden]{ display:none; }
+.zd-notice--info{ border-left-color:var(--ink-700); }
+.zd-notice--attention{ border-left-color:var(--form-500); background:var(--form-100); }
+.zd-notice--blocked{ border-left-color:var(--stop-600); background:var(--stop-050); }
+.zd-notice--done{ border-left-color:var(--post-600); background:var(--post-050); }
+.zd-notice__title{ font-weight:600; margin-bottom:3px; }
+.zd-notice__body{ color:var(--steel-700); }
+.zd-notice__body code{ font-family:var(--font-data); font-size:13px; }
+
+
+/* --------------------------------------------------------------------------
+   9. STATUS
+   -------------------------------------------------------------------------- */
+
+/* One status, shown once. A square swatch and a word — not a pill, not a
+   badge, not repeated in three places. Colour never carries meaning alone. */
+.zd-status{
+  display:inline-flex; align-items:center; gap:var(--s2);
+  font-size:15px;
+}
+.zd-status::before{
+  content:""; width:9px; height:9px; flex:none;
+  background:var(--steel-400);
+}
+.zd-status[data-status="draft"]::before{ background:var(--hold-600); }
+.zd-status[data-status="open"]::before{ background:var(--ink-700); }
+.zd-status[data-status="ready"]::before,
+.zd-status[data-status="posted"]::before{ background:var(--post-600); }
+.zd-status[data-status="cancelled"]::before{ background:var(--stop-600); }
+
+
+/* --------------------------------------------------------------------------
+   10. MOTION
+   -------------------------------------------------------------------------- */
+
+/* There is almost none, deliberately. An operator entering their fortieth
+   requisition of the day does not want the interface performing for them. */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.01ms !important;
+    transition-duration:.01ms !important;
+  }
+}

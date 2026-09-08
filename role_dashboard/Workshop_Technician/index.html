@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Workshop Technician | Zimdra DMS</title>
+
+    <link rel="stylesheet" href="workshop_technician.css">
+</head>
+
+<body>
+
+<div class="app-shell">
+
+    <!-- =========================================================
+         SIDEBAR
+    ========================================================== -->
+    <aside class="sidebar" id="sidebar">
+
+        <div class="brand">
+            <div class="brand-mark">Z</div>
+
+            <div class="brand-text">
+                <strong>ZIMDRA</strong>
+                <span>Automotive DMS</span>
+            </div>
+        </div>
+
+        <div class="role-card">
+            <div class="role-icon">🔧</div>
+
+            <div>
+                <small>LOGGED IN AS</small>
+                <strong>Workshop Technician</strong>
+                <span id="loggedInTechnician">Pema Wangchuk</span>
+            </div>
+        </div>
+
+        <nav class="main-nav">
+
+            <button class="nav-item active" data-tab="dashboard">
+                <span class="nav-icon">▦</span>
+                <span>Dashboard</span>
+            </button>
+
+            <button class="nav-item" data-tab="jobs">
+                <span class="nav-icon">🛠</span>
+                <span>My Jobs</span>
+            </button>
+
+            <button class="nav-item" data-tab="parts">
+                <span class="nav-icon">📦</span>
+                <span>Parts Requests</span>
+            </button>
+
+            <button class="nav-item" data-tab="history">
+                <span class="nav-icon">↺</span>
+                <span>Work History</span>
+            </button>
+
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="system-status">
+                <span class="status-dot"></span>
+                System Online
+            </div>
+
+            <small>Zimdra DMS Prototype</small>
+        </div>
+
+    </aside>
+
+
+    <!-- =========================================================
+         MAIN
+    ========================================================== -->
+    <main class="main-content">
+
+        <!-- TOP BAR -->
+        <header class="topbar">
+
+            <button class="mobile-menu" id="mobileMenuBtn">
+                ☰
+            </button>
+
+            <div>
+                <div class="breadcrumb">WORKSHOP / TECHNICIAN</div>
+                <h1 id="pageTitle">Technician Dashboard</h1>
+            </div>
+
+            <div class="topbar-right">
+
+                <div class="date-box">
+                    <span id="currentDate"></span>
+                </div>
+
+                <button class="notification-btn" id="notificationBtn">
+                    🔔
+                    <span class="notification-count" id="notificationCount">0</span>
+                </button>
+
+            </div>
+
+        </header>
+
+
+        <!-- =====================================================
+             DASHBOARD TAB
+        ====================================================== -->
+        <section class="page active" id="dashboardPage">
+
+            <div class="welcome-row">
+
+                <div>
+                    <div class="page-kicker">WORKSHOP OPERATIONS</div>
+
+                    <h2>
+                        Good day,
+                        <span id="welcomeTechnician">Pema</span> 👋
+                    </h2>
+
+                    <p>
+                        Review your assigned jobs, request parts and update
+                        workshop progress.
+                    </p>
+                </div>
+
+                <button class="primary-btn" data-tab-target="jobs">
+                    View My Jobs →
+                </button>
+
+            </div>
+
+
+            <!-- KPI CARDS -->
+            <div class="stats-grid">
+
+                <div class="stat-card">
+                    <div class="stat-icon blue">🛠</div>
+
+                    <div>
+                        <span>Assigned Jobs</span>
+                        <strong id="statAssigned">0</strong>
+                    </div>
+                </div>
+
+
+                <div class="stat-card">
+                    <div class="stat-icon orange">⚙</div>
+
+                    <div>
+                        <span>In Progress</span>
+                        <strong id="statProgress">0</strong>
+                    </div>
+                </div>
+
+
+                <div class="stat-card">
+                    <div class="stat-icon yellow">📦</div>
+
+                    <div>
+                        <span>Waiting for Parts</span>
+                        <strong id="statWaiting">0</strong>
+                    </div>
+                </div>
+
+
+                <div class="stat-card">
+                    <div class="stat-icon green">✓</div>
+
+                    <div>
+                        <span>Completed</span>
+                        <strong id="statCompleted">0</strong>
+                    </div>
+                </div>
+
+            </div>
+
+
+            <div class="dashboard-grid">
+
+                <!-- TODAY'S JOBS -->
+                <section class="panel">
+
+                    <div class="panel-header">
+
+                        <div>
+                            <div class="panel-kicker">WORKSHOP QUEUE</div>
+                            <h3>My Assigned Jobs</h3>
+                        </div>
+
+                        <button class="text-btn" data-tab-target="jobs">
+                            View All
+                        </button>
+
+                    </div>
+
+                    <div class="table-wrap">
+
+                        <table>
+
+                            <thead>
+                                <tr>
+                                    <th>Job Card</th>
+                                    <th>Customer</th>
+                                    <th>Vehicle</th>
+                                    <th>Job Type</th>
+                                    <th>Status</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="dashboardJobsBody"></tbody>
+
+                        </table>
+
+                    </div>
+
+                </section>
+
+
+                <!-- PARTS ALERT -->
+                <section class="panel">
+
+                    <div class="panel-header">
+
+                        <div>
+                            <div class="panel-kicker">PARTS</div>
+                            <h3>Parts Requests</h3>
+                        </div>
+
+                        <button class="text-btn" data-tab-target="parts">
+                            View Requests
+                        </button>
+
+                    </div>
+
+                    <div id="partsAlerts" class="alert-list"></div>
+
+                </section>
+
+            </div>
+
+        </section>
+
+
+        <!-- =====================================================
+             MY JOBS TAB
+        ====================================================== -->
+        <section class="page" id="jobsPage">
+
+            <div class="section-heading">
+
+                <div>
+                    <div class="page-kicker">WORKSHOP</div>
+                    <h2>My Jobs</h2>
+
+                    <p>
+                        Jobs assigned to you by the Service Manager /
+                        Supervisor.
+                    </p>
+                </div>
+
+                <button class="secondary-btn" id="loadDemoBtn">
+                    Load Demo Data
+                </button>
+
+            </div>
+
+
+            <div class="toolbar">
+
+                <div class="search-box">
+
+                    <span>⌕</span>
+
+                    <input
+                        type="text"
+                        id="jobSearch"
+                        placeholder="Search Job Card, customer, vehicle..."
+                    >
+
+                </div>
+
+                <select id="jobStatusFilter">
+                    <option value="All">All Status</option>
+                    <option value="Assigned">Assigned</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Waiting for Parts">Waiting for Parts</option>
+                    <option value="Work Completed">Work Completed</option>
+                    <option value="Submitted to Supervisor">Submitted to Supervisor</option>
+                </select>
+
+            </div>
+
+
+            <section class="panel">
+
+                <div class="table-wrap">
+
+                    <table>
+
+                        <thead>
+                            <tr>
+                                <th>Job Card</th>
+                                <th>Customer</th>
+                                <th>Vehicle</th>
+                                <th>Registration</th>
+                                <th>Supervisor</th>
+                                <th>Job Type</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="jobsTableBody"></tbody>
+
+                    </table>
+
+                </div>
+
+            </section>
+
+        </section>
+
+
+        <!-- =====================================================
+             JOB WORKSPACE TAB
+        ====================================================== -->
+        <section class="page" id="workspacePage">
+
+            <div class="workspace-header">
+
+                <button class="back-btn" id="backToJobsBtn">
+                    ← Back to My Jobs
+                </button>
+
+                <div class="workspace-actions">
+
+                    <span class="status-badge large" id="workspaceStatus">
+                        Assigned
+                    </span>
+
+                    <button class="primary-btn" id="startWorkBtn">
+                        Start Work
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <div class="job-title-card">
+
+                <div>
+
+                    <div class="page-kicker">JOB CARD</div>
+
+                    <h2 id="workspaceJobCard">JC-2026-001</h2>
+
+                    <p id="workspaceJobType">
+                        General Service
+                    </p>
+
+                </div>
+
+                <div class="job-customer">
+
+                    <strong id="workspaceCustomer">
+                        Customer
+                    </strong>
+
+                    <span id="workspaceVehicle">
+                        Vehicle
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div class="workspace-grid">
+
+                <!-- LEFT -->
+                <div>
+
+                    <!-- VEHICLE / CUSTOMER -->
+                    <section class="panel">
+
+                        <div class="panel-header">
+                            <div>
+                                <div class="panel-kicker">JOB INFORMATION</div>
+                                <h3>Vehicle & Customer</h3>
+                            </div>
+                        </div>
+
+                        <div class="detail-grid">
+
+                            <div class="detail-item">
+                                <span>Customer</span>
+                                <strong id="detailCustomer">—</strong>
+                            </div>
+
+                            <div class="detail-item">
+                                <span>Mobile</span>
+                                <strong id="detailMobile">—</strong>
+                            </div>
+
+                            <div class="detail-item">
+                                <span>Vehicle</span>
+                                <strong id="detailVehicle">—</strong>
+                            </div>
+
+                            <div class="detail-item">
+                                <span>Registration</span>
+                                <strong id="detailRegistration">—</strong>
+                            </div>
+
+                            <div class="detail-item">
+                                <span>Technician</span>
+                                <strong id="detailTechnician">—</strong>
+                            </div>
+
+                            <div class="detail-item">
+                                <span>Supervisor</span>
+                                <strong id="detailSupervisor">—</strong>
+                            </div>
+
+                            <div class="detail-item wide">
+                                <span>Customer Complaint</span>
+                                <strong id="detailComplaint">—</strong>
+                            </div>
+
+                        </div>
+
+                    </section>
+
+
+                    <!-- WORK CHECKLIST -->
+                    <section class="panel">
+
+                        <div class="panel-header">
+
+                            <div>
+                                <div class="panel-kicker">TECHNICIAN WORK</div>
+                                <h3>Work Checklist</h3>
+                            </div>
+
+                            <span id="checklistProgress">
+                                0 / 0 Completed
+                            </span>
+
+                        </div>
+
+                        <div id="checklistContainer"
+                             class="checklist-container">
+                        </div>
+
+                        <button class="secondary-btn add-work-btn"
+                                id="addWorkItemBtn">
+                            + Add Work Item
+                        </button>
+
+                    </section>
+
+
+                    <!-- TECHNICIAN NOTES -->
+                    <section class="panel">
+
+                        <div class="panel-header">
+
+                            <div>
+                                <div class="panel-kicker">WORKSHOP NOTES</div>
+                                <h3>Technician Notes</h3>
+                            </div>
+
+                        </div>
+
+                        <textarea
+                            id="technicianNotes"
+                            rows="6"
+                            placeholder="Enter inspection findings, work performed, observations or recommendations..."
+                        ></textarea>
+
+                    </section>
+
+                </div>
+
+
+                <!-- RIGHT -->
+                <div>
+
+                    <!-- PARTS -->
+                    <section class="panel">
+
+                        <div class="panel-header">
+
+                            <div>
+                                <div class="panel-kicker">PARTS</div>
+                                <h3>Parts Required</h3>
+                            </div>
+
+                            <button class="secondary-btn"
+                                    id="requestPartBtn">
+                                + Request Part
+                            </button>
+
+                        </div>
+
+                        <div class="parts-list"
+                             id="workspacePartsList">
+                        </div>
+
+                    </section>
+
+
+                    <!-- JOB PROGRESS -->
+                    <section class="panel">
+
+                        <div class="panel-header">
+
+                            <div>
+                                <div class="panel-kicker">PROGRESS</div>
+                                <h3>Job Progress</h3>
+                            </div>
+
+                        </div>
+
+                        <div class="progress-container">
+
+                            <div class="progress-meta">
+
+                                <span>Completion</span>
+
+                                <strong id="progressPercent">
+                                    0%
+                                </strong>
+
+                            </div>
+
+                            <div class="progress-track">
+
+                                <div
+                                    class="progress-bar"
+                                    id="progressBar">
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="status-actions">
+
+                            <button
+                                class="status-action"
+                                data-job-status="In Progress">
+                                <span>⚙</span>
+                                In Progress
+                            </button>
+
+                            <button
+                                class="status-action"
+                                data-job-status="Waiting for Parts">
+                                <span>📦</span>
+                                Waiting for Parts
+                            </button>
+
+                            <button
+                                class="status-action"
+                                data-job-status="Work Completed">
+                                <span>✓</span>
+                                Work Completed
+                            </button>
+
+                        </div>
+
+                    </section>
+
+
+                    <!-- SUBMISSION -->
+                    <section class="panel submit-panel">
+
+                        <div class="panel-kicker">
+                            SUPERVISOR HANDOVER
+                        </div>
+
+                        <h3>Ready for Inspection?</h3>
+
+                        <p>
+                            Once all work is completed, submit the job to
+                            the Supervisor for inspection and approval.
+                        </p>
+
+                        <button
+                            class="success-btn full-width"
+                            id="submitSupervisorBtn">
+                            Submit to Supervisor →
+                        </button>
+
+                    </section>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =====================================================
+             PARTS REQUESTS TAB
+        ====================================================== -->
+        <section class="page" id="partsPage">
+
+            <div class="section-heading">
+
+                <div>
+                    <div class="page-kicker">STOREKEEPER</div>
+                    <h2>Parts Requests</h2>
+
+                    <p>
+                        Track parts requested for your assigned jobs.
+                    </p>
+                </div>
+
+                <button class="primary-btn" id="newPartRequestBtn">
+                    + Request Part
+                </button>
+
+            </div>
+
+
+            <section class="panel">
+
+                <div class="table-wrap">
+
+                    <table>
+
+                        <thead>
+                            <tr>
+                                <th>Request ID</th>
+                                <th>Job Card</th>
+                                <th>Part</th>
+                                <th>Requested</th>
+                                <th>Issued</th>
+                                <th>Status</th>
+                                <th>Requested On</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="partsTableBody"></tbody>
+
+                    </table>
+
+                </div>
+
+            </section>
+
+        </section>
+
+
+        <!-- =====================================================
+             HISTORY TAB
+        ====================================================== -->
+        <section class="page" id="historyPage">
+
+            <div class="section-heading">
+
+                <div>
+                    <div class="page-kicker">COMPLETED WORK</div>
+                    <h2>Work History</h2>
+
+                    <p>
+                        Previously completed jobs submitted to supervisors.
+                    </p>
+                </div>
+
+            </div>
+
+
+            <section class="panel">
+
+                <div class="table-wrap">
+
+                    <table>
+
+                        <thead>
+                            <tr>
+                                <th>Job Card</th>
+                                <th>Customer</th>
+                                <th>Vehicle</th>
+                                <th>Job Type</th>
+                                <th>Completed On</th>
+                                <th>Supervisor</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="historyTableBody"></tbody>
+
+                    </table>
+
+                </div>
+
+            </section>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<!-- =========================================================
+     PART REQUEST MODAL
+========================================================== -->
+<div class="modal-backdrop" id="partRequestModal">
+
+    <div class="modal">
+
+        <div class="modal-header">
+
+            <div>
+                <div class="panel-kicker">STORE REQUEST</div>
+                <h3>Request Spare Part</h3>
+            </div>
+
+            <button class="modal-close"
+                    data-close-modal="partRequestModal">
+                ×
+            </button>
+
+        </div>
+
+
+        <form id="partRequestForm">
+
+            <div class="form-grid">
+
+                <div class="form-group">
+                    <label>Job Card ID</label>
+
+                    <input
+                        type="text"
+                        id="requestJobCard"
+                        readonly
+                    >
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>Part</label>
+
+                    <select id="requestPart" required>
+
+                        <option value="">
+                            Select Part
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>Quantity</label>
+
+                    <input
+                        type="number"
+                        id="requestQuantity"
+                        min="1"
+                        step="1"
+                        value="1"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>Priority</label>
+
+                    <select id="requestPriority">
+
+                        <option value="Normal">
+                            Normal
+                        </option>
+
+                        <option value="Urgent">
+                            Urgent
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="form-group full">
+
+                    <label>Reason / Requirement</label>
+
+                    <textarea
+                        id="requestReason"
+                        rows="4"
+                        placeholder="Why is this part required?"
+                        required
+                    ></textarea>
+
+                </div>
+
+            </div>
+
+
+            <div class="modal-footer">
+
+                <button
+                    type="button"
+                    class="secondary-btn"
+                    data-close-modal="partRequestModal">
+                    Cancel
+                </button>
+
+                <button
+                    type="submit"
+                    class="primary-btn">
+                    Send Request
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     ADD WORK MODAL
+========================================================== -->
+<div class="modal-backdrop" id="workItemModal">
+
+    <div class="modal small-modal">
+
+        <div class="modal-header">
+
+            <div>
+                <div class="panel-kicker">WORK ITEM</div>
+                <h3>Add Work Item</h3>
+            </div>
+
+            <button class="modal-close"
+                    data-close-modal="workItemModal">
+                ×
+            </button>
+
+        </div>
+
+
+        <form id="workItemForm">
+
+            <div class="form-group">
+
+                <label>Work Description</label>
+
+                <input
+                    type="text"
+                    id="workItemName"
+                    placeholder="e.g. Replace engine oil"
+                    required
+                >
+
+            </div>
+
+
+            <div class="modal-footer">
+
+                <button
+                    type="button"
+                    class="secondary-btn"
+                    data-close-modal="workItemModal">
+                    Cancel
+                </button>
+
+                <button
+                    type="submit"
+                    class="primary-btn">
+                    Add Work
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     NOTIFICATION
+========================================================== -->
+<div class="toast" id="toast">
+
+    <span id="toastIcon">✓</span>
+
+    <div>
+        <strong id="toastTitle">Success</strong>
+        <p id="toastMessage"></p>
+    </div>
+
+</div>
+
+
+<script src="workshop_technician.js"></script>
+
+</body>
+</html>

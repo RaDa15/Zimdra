@@ -1,0 +1,779 @@
+/* ==========================================================================
+   sign_in.css — sign-in screen
+   --------------------------------------------------------------------------
+   Path: zimdra-dms/assets/css/sign_in.css
+
+   Desktop:
+     - Compact 50/50 split
+     - Fits within one viewport
+     - Slightly smaller typography
+     - Slightly tighter grid/fact layout
+     - Existing UI/UX and colors preserved
+   ========================================================================== */
+
+
+/* ==========================================================================
+   1. PAGE
+   ========================================================================== */
+
+.signin-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+  height: 100vh;
+  min-height: 100vh;
+
+  padding: var(--s5);
+
+  background: #E8EBEF;
+
+  overflow: hidden;
+}
+
+
+/* ==========================================================================
+   2. SIGN-IN CARD
+   ========================================================================== */
+
+.signin-card {
+  width: min(1180px, 100%);
+
+  height: min(874px, calc(100vh - 48px));
+
+  display: grid;
+
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+
+  background: var(--paper);
+
+  box-shadow: var(--lift-card);
+
+  overflow: hidden;
+}
+
+
+/* ==========================================================================
+   3. PITCH — NAVY PANEL
+   ========================================================================== */
+
+.pitch {
+  position: relative;
+
+  overflow: hidden;
+
+  display: flex;
+  flex-direction: column;
+
+  min-width: 0;
+  min-height: 0;
+
+  padding: 38px 38px 32px;
+
+  background: var(--ink-800);
+  color: var(--paper);
+}
+
+
+/* ==========================================================================
+   DECORATIVE SHAPES
+   ========================================================================== */
+
+.pitch__disc,
+.pitch__ring {
+  position: absolute;
+
+  border-radius: 50%;
+
+  pointer-events: none;
+}
+
+
+.pitch__disc {
+  width: 520px;
+  height: 520px;
+
+  top: -55px;
+  right: -185px;
+
+  background: var(--ink-900);
+}
+
+
+.pitch__ring {
+  width: 760px;
+  height: 760px;
+
+  left: 44%;
+  bottom: -540px;
+
+  border: 1px solid rgba(255, 255, 255, .13);
+}
+
+
+/* ==========================================================================
+   CONTENT ABOVE DECORATION
+   ========================================================================== */
+
+.pitch > * {
+  position: relative;
+  z-index: 1;
+}
+
+
+/* ==========================================================================
+   BRAND
+   ========================================================================== */
+
+.brand {
+  display: flex;
+  align-items: center;
+
+  gap: 14px;
+}
+
+
+.brand__mark {
+  width: 50px;
+  height: 50px;
+
+  flex: none;
+
+  display: grid;
+  place-items: center;
+
+  background: var(--form-500);
+  color: var(--ink-900);
+
+  font-size: 17px;
+  font-weight: 700;
+
+  letter-spacing: .02em;
+}
+
+
+.brand__name {
+  font-size: 19px;
+  font-weight: 500;
+
+  line-height: 1.2;
+}
+
+
+.brand__sub {
+  margin-top: 3px;
+
+  font-size: 13px;
+
+  color: rgba(255, 255, 255, .62);
+}
+
+
+/* ==========================================================================
+   PLACE
+   ========================================================================== */
+
+.place {
+  display: flex;
+  align-items: center;
+
+  gap: 12px;
+
+  margin-top: 40px;
+}
+
+
+.place__rule {
+  width: 26px;
+  height: 2px;
+
+  background: var(--form-500);
+}
+
+
+.place__text {
+  font-family: var(--font-data);
+
+  font-size: 11.5px;
+  font-weight: 400;
+
+  letter-spacing: .13em;
+
+  color: var(--form-500);
+}
+
+
+/* ==========================================================================
+   HEADLINE
+   ========================================================================== */
+
+.pitch__headline {
+  margin: 17px 0 0;
+
+  max-width: 390px;
+
+  font-size: 39px;
+  line-height: 1.17;
+
+  font-weight: 600;
+
+  letter-spacing: -.02em;
+}
+
+
+.pitch__headline em {
+  font-style: normal;
+
+  color: var(--form-500);
+}
+
+
+/* ==========================================================================
+   BLURB
+   ========================================================================== */
+
+.pitch__blurb {
+  margin: 19px 0 0;
+
+  max-width: 415px;
+
+  font-size: 15px;
+
+  line-height: 1.68;
+
+  color: rgba(255, 255, 255, .80);
+}
+
+
+/* ==========================================================================
+   FACTS
+   ========================================================================== */
+
+.facts {
+  margin-top: 30px;
+
+  border: 1px solid rgba(255, 255, 255, .20);
+}
+
+
+.fact {
+  display: grid;
+
+  grid-template-columns: 150px minmax(0, 1fr);
+
+  gap: 12px;
+
+  align-items: baseline;
+
+  padding: 11px 13px;
+
+  border-bottom: 1px solid rgba(255, 255, 255, .20);
+}
+
+
+.fact:last-child {
+  border-bottom: 0;
+}
+
+
+.fact__k {
+  font-size: 13.5px;
+
+  font-weight: 600;
+}
+
+
+.fact__v {
+  font-size: 13px;
+
+  line-height: 1.4;
+
+  color: rgba(255, 255, 255, .72);
+}
+
+
+/* ==========================================================================
+   PITCH FOOTER
+   ========================================================================== */
+
+.pitch__foot {
+  margin-top: auto;
+
+  padding-top: 26px;
+
+  border-top: 1px solid rgba(255, 255, 255, .16);
+
+  font-size: 12.5px;
+
+  color: rgba(255, 255, 255, .55);
+}
+
+
+/* ==========================================================================
+   4. FORM — WHITE PANEL
+   ========================================================================== */
+
+.signin-form {
+  display: flex;
+  flex-direction: column;
+
+  min-width: 0;
+  min-height: 0;
+
+  padding: 38px 38px 34px;
+
+  overflow: hidden;
+}
+
+
+.signin-form .zd-chip {
+  align-self: flex-start;
+}
+
+
+/* ==========================================================================
+   FORM TITLE
+   ========================================================================== */
+
+.signin-form__title {
+  margin: 17px 0 0;
+
+  font-size: 29px;
+
+  line-height: 1.2;
+}
+
+
+.signin-form__meta {
+  margin: 6px 0 0;
+
+  font-size: 13px;
+
+  line-height: 1.5;
+
+  color: var(--steel-700);
+}
+
+
+/* ==========================================================================
+   FORM FOOT
+   ========================================================================== */
+
+.signin-form__foot {
+  margin-top: 22px;
+
+  padding-top: 16px;
+
+  border-top: 1px solid var(--steel-150);
+}
+
+
+.build {
+  margin-top: 8px;
+
+  font-family: var(--font-data);
+
+  font-size: 11.5px;
+
+  color: var(--steel-400);
+}
+
+
+/* ==========================================================================
+   USER ID
+   ========================================================================== */
+
+.user-id {
+  font-family: var(--font-data);
+
+  font-size: 15px;
+
+  letter-spacing: .035em;
+}
+
+
+.user-name {
+  margin-left: auto;
+
+  font-size: 13.5px;
+
+  color: var(--steel-700);
+}
+
+
+/* ==========================================================================
+   PIN
+   ========================================================================== */
+
+.pin {
+  display: flex;
+
+  gap: 0;
+}
+
+
+.pin input {
+  width: 19px;
+  height: 28px;
+
+  padding: 0;
+
+  border: 0;
+
+  border-bottom: 2px solid transparent;
+
+  background: transparent;
+
+  text-align: center;
+
+  font-family: var(--font-data);
+
+  font-size: 18px;
+
+  line-height: 28px;
+
+  color: var(--steel-950);
+
+  caret-color: var(--ink-700);
+
+  -webkit-text-security: disc;
+  text-security: disc;
+}
+
+
+.pin input:focus {
+  outline: none;
+
+  border-bottom-color: var(--ink-700);
+}
+
+
+/* ==========================================================================
+   PIN NUMBER SPINNERS
+   ========================================================================== */
+
+.pin input::-webkit-outer-spin-button,
+.pin input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+
+  margin: 0;
+}
+
+
+.pin input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+
+/* ==========================================================================
+   5. RESPONSIVE
+   ========================================================================== */
+
+
+/* --------------------------------------------------------------------------
+   MEDIUM DESKTOP
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 1240px) {
+
+  .pitch,
+  .signin-form {
+    padding: 34px 30px;
+  }
+
+
+  .pitch__headline {
+    font-size: 35px;
+
+    max-width: 350px;
+  }
+
+
+  .fact {
+    grid-template-columns: 140px minmax(0, 1fr);
+
+    padding: 10px 12px;
+  }
+
+
+  .fact__k {
+    font-size: 13px;
+  }
+
+
+  .fact__v {
+    font-size: 12.5px;
+  }
+}
+
+
+/* --------------------------------------------------------------------------
+   SMALL DESKTOP / LAPTOP
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 1040px) {
+
+  .signin-page {
+    padding: 24px;
+  }
+
+
+  .pitch,
+  .signin-form {
+    padding: 28px;
+  }
+
+
+  .brand__mark {
+    width: 46px;
+    height: 46px;
+
+    font-size: 16px;
+  }
+
+
+  .brand__name {
+    font-size: 18px;
+  }
+
+
+  .brand__sub {
+    font-size: 12px;
+  }
+
+
+  .place {
+    margin-top: 28px;
+  }
+
+
+  .place__text {
+    font-size: 11px;
+  }
+
+
+  .pitch__headline {
+    margin-top: 14px;
+
+    font-size: 32px;
+
+    max-width: 300px;
+  }
+
+
+  .pitch__blurb {
+    margin-top: 16px;
+
+    font-size: 14px;
+
+    line-height: 1.6;
+  }
+
+
+  .facts {
+    margin-top: 23px;
+  }
+
+
+  .fact {
+    grid-template-columns: 125px minmax(0, 1fr);
+
+    padding: 9px 11px;
+  }
+
+
+  .fact__k {
+    font-size: 12.5px;
+  }
+
+
+  .fact__v {
+    font-size: 12px;
+  }
+
+
+  .pitch__foot {
+    padding-top: 20px;
+
+    font-size: 11.5px;
+  }
+
+
+  .signin-form__title {
+    margin-top: 14px;
+
+    font-size: 27px;
+  }
+
+
+  .signin-form__meta {
+    font-size: 12.5px;
+  }
+
+
+  .signin-form__foot {
+    margin-top: 18px;
+
+    padding-top: 14px;
+  }
+}
+
+
+/* ==========================================================================
+   6. MOBILE
+   ========================================================================== */
+
+@media (max-width: 700px) {
+
+  .signin-page {
+    width: 100%;
+
+    height: auto;
+
+    min-height: 100vh;
+
+    padding: 0;
+
+    align-items: stretch;
+
+    overflow: visible;
+  }
+
+
+  .signin-card {
+    width: 100%;
+
+    height: auto;
+
+    min-height: 100vh;
+
+    grid-template-columns: 1fr;
+  }
+
+
+  .pitch {
+    order: 2;
+
+    min-height: auto;
+  }
+
+
+  .signin-form {
+    order: 1;
+
+    min-height: auto;
+
+    overflow: visible;
+  }
+
+
+  .pitch__headline {
+    max-width: none;
+  }
+
+
+  .pitch__blurb {
+    max-width: 56ch;
+  }
+
+
+  .pitch__foot {
+    margin-top: 40px;
+  }
+}
+
+
+/* ==========================================================================
+   7. VERY SMALL MOBILE
+   ========================================================================== */
+
+@media (max-width: 520px) {
+
+  .pitch,
+  .signin-form {
+    padding: 24px 18px;
+  }
+
+
+  .pitch__headline {
+    font-size: 28px;
+  }
+
+
+  .pitch__blurb {
+    font-size: 14px;
+  }
+
+
+  .signin-form__title {
+    font-size: 25px;
+  }
+
+
+  .signin-form__meta {
+    font-size: 12px;
+  }
+
+
+  .fact {
+    grid-template-columns: 1fr;
+
+    gap: 2px;
+  }
+
+
+  .fact__k {
+    font-size: 12.5px;
+  }
+
+
+  .fact__v {
+    font-size: 12px;
+  }
+}
+
+
+/* ==========================================================================
+   8. PRINT
+   ========================================================================== */
+
+@media print {
+
+  .pitch {
+    display: none;
+  }
+
+
+  .signin-card {
+    grid-template-columns: 1fr;
+
+    height: auto;
+
+    box-shadow: none;
+  }
+}
+
+
+/* ==========================================================================
+   9. FORM RHYTHM
+   ========================================================================== */
+
+#signin .zd-btn {
+  margin-top: var(--s5);
+}
+
+
+#signin .zd-or {
+  margin-top: var(--s4);
+}
+
+
+#signin #bay {
+  margin-top: var(--s4);
+}
+
+
+#signin .zd-notice {
+  margin-top: var(--s5);
+}

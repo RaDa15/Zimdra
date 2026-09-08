@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Billing Clerk | Zimdra DMS</title>
+
+    <link rel="stylesheet" href="clerk_billing.css">
+</head>
+
+<body>
+
+<div class="app-shell">
+
+    <!-- =========================================================
+         SIDEBAR
+    ========================================================== -->
+
+    <aside class="sidebar">
+
+        <div class="brand">
+            <div class="brand-mark">ZD</div>
+
+            <div>
+                <strong>ZIMDRA</strong>
+                <span>DMS</span>
+            </div>
+        </div>
+
+        <div class="role-card">
+            <div class="role-avatar">BC</div>
+
+            <div>
+                <strong>Billing Clerk</strong>
+                <span>Workshop Billing</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+
+            <button class="nav-item active" data-tab="dashboard">
+                <span class="nav-icon">▦</span>
+                <span>Dashboard</span>
+            </button>
+
+            <button class="nav-item" data-tab="billing">
+                <span class="nav-icon">▤</span>
+                <span>Create Bill</span>
+            </button>
+
+            <button class="nav-item" data-tab="pending">
+                <span class="nav-icon">◷</span>
+                <span>Pending Bills</span>
+                <span class="nav-count" id="pendingNavCount">0</span>
+            </button>
+
+            <button class="nav-item" data-tab="completed">
+                <span class="nav-icon">✓</span>
+                <span>Completed Bills</span>
+            </button>
+
+        </nav>
+
+        <div class="sidebar-bottom">
+
+            <button class="side-action" id="loadDemoBtn">
+                Load Demo Data
+            </button>
+
+            <button class="side-action danger" id="clearDataBtn">
+                Clear Local Data
+            </button>
+
+        </div>
+
+    </aside>
+
+
+    <!-- =========================================================
+         MAIN
+    ========================================================== -->
+
+    <main class="main-content">
+
+        <!-- TOP BAR -->
+
+        <header class="topbar">
+
+            <div>
+                <div class="page-kicker">ZIMDRA AUTOMOTIVE</div>
+
+                <h1 id="pageTitle">
+                    Billing Clerk Dashboard
+                </h1>
+            </div>
+
+            <div class="topbar-actions">
+
+                <div class="system-status">
+                    <span class="status-dot"></span>
+                    Prototype Mode
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- =====================================================
+             DASHBOARD
+        ====================================================== -->
+
+        <section class="tab-section" id="dashboard">
+
+            <div class="section-heading">
+
+                <div>
+                    <span class="section-kicker">BILLING OVERVIEW</span>
+                    <h2>Today's Billing Activity</h2>
+                    <p>
+                        Monitor workshop bills generated from completed
+                        parts issuance and service work.
+                    </p>
+                </div>
+
+                <button class="btn btn-primary" data-tab-target="billing">
+                    + Create Bill
+                </button>
+
+            </div>
+
+
+            <!-- STAT CARDS -->
+
+            <div class="stats-grid">
+
+                <div class="stat-card">
+
+                    <div class="stat-icon blue">
+                        $
+                    </div>
+
+                    <div>
+                        <span>Total Bills</span>
+                        <strong id="statTotalBills">0</strong>
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon yellow">
+                        ◷
+                    </div>
+
+                    <div>
+                        <span>Pending Payment</span>
+                        <strong id="statPendingBills">0</strong>
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon green">
+                        ✓
+                    </div>
+
+                    <div>
+                        <span>Paid Bills</span>
+                        <strong id="statPaidBills">0</strong>
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon purple">
+                        Nu.
+                    </div>
+
+                    <div>
+                        <span>Total Billed</span>
+                        <strong id="statTotalValue">Nu. 0.00</strong>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- DASHBOARD PANELS -->
+
+            <div class="two-column">
+
+                <section class="panel">
+
+                    <div class="panel-header">
+
+                        <div>
+                            <span class="panel-kicker">WORKSHOP</span>
+                            <h3>Ready for Billing</h3>
+                        </div>
+
+                        <button
+                            class="text-button"
+                            data-tab-target="billing">
+                            Open Billing →
+                        </button>
+
+                    </div>
+
+                    <div class="table-wrap">
+
+                        <table>
+
+                            <thead>
+                                <tr>
+                                    <th>Job Card</th>
+                                    <th>Customer</th>
+                                    <th>Vehicle</th>
+                                    <th>Parts</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="dashboardReadyBody"></tbody>
+
+                        </table>
+
+                    </div>
+
+                </section>
+
+
+                <section class="panel">
+
+                    <div class="panel-header">
+
+                        <div>
+                            <span class="panel-kicker">PAYMENT</span>
+                            <h3>Pending Payment</h3>
+                        </div>
+
+                        <button
+                            class="text-button"
+                            data-tab-target="pending">
+                            View All →
+                        </button>
+
+                    </div>
+
+                    <div id="dashboardPendingList"
+                         class="mini-list">
+                    </div>
+
+                </section>
+
+            </div>
+
+        </section>
+
+
+        <!-- =====================================================
+             BILLING
+        ====================================================== -->
+
+        <section class="tab-section hidden" id="billing">
+
+            <div class="section-heading">
+
+                <div>
+                    <span class="section-kicker">WORKSHOP BILLING</span>
+
+                    <h2>Create Customer Bill</h2>
+
+                    <p>
+                        Enter the Job Card ID to fetch issued parts and
+                        prepare the final workshop bill.
+                    </p>
+                </div>
+
+            </div>
+
+
+            <!-- JOB CARD SEARCH -->
+
+            <section class="panel lookup-panel">
+
+                <div class="lookup-row">
+
+                    <div class="field grow">
+
+                        <label for="jobCardInput">
+                            Job Card ID
+                        </label>
+
+                        <input
+                            type="text"
+                            id="jobCardInput"
+                            placeholder="Example: JC-2026-001"
+                            autocomplete="off"
+                        >
+
+                    </div>
+
+                    <button
+                        class="btn btn-primary lookup-button"
+                        id="lookupJobBtn">
+                        Fetch Job Card
+                    </button>
+
+                </div>
+
+                <div
+                    class="error-message hidden"
+                    id="jobError">
+                </div>
+
+            </section>
+
+
+            <!-- JOB DETAILS -->
+
+            <section
+                class="panel hidden"
+                id="jobDetails">
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <span class="panel-kicker">
+                            JOB CARD
+                        </span>
+
+                        <h3 id="jobCardTitle">
+                            JC-2026-001
+                        </h3>
+
+                    </div>
+
+                    <span
+                        class="status-badge"
+                        id="jobStatusBadge">
+                        Ready
+                    </span>
+
+                </div>
+
+
+                <div class="customer-grid">
+
+                    <div class="info-box">
+                        <span>Customer</span>
+                        <strong id="jobCustomer">—</strong>
+                    </div>
+
+                    <div class="info-box">
+                        <span>Mobile</span>
+                        <strong id="jobMobile">—</strong>
+                    </div>
+
+                    <div class="info-box">
+                        <span>Vehicle</span>
+                        <strong id="jobVehicle">—</strong>
+                    </div>
+
+                    <div class="info-box">
+                        <span>Registration</span>
+                        <strong id="jobReg">—</strong>
+                    </div>
+
+                    <div class="info-box">
+                        <span>Mechanic</span>
+                        <strong id="jobMechanic">—</strong>
+                    </div>
+
+                    <div class="info-box">
+                        <span>Supervisor</span>
+                        <strong id="jobSupervisor">—</strong>
+                    </div>
+
+                </div>
+
+
+                <!-- PARTS -->
+
+                <div class="subsection">
+
+                    <div class="subsection-header">
+
+                        <div>
+                            <h4>Issued Parts</h4>
+                            <p>
+                                Parts issued by Storekeeper against
+                                this Job Card.
+                            </p>
+                        </div>
+
+                    </div>
+
+
+                    <div class="table-wrap">
+
+                        <table>
+
+                            <thead>
+
+                                <tr>
+                                    <th>Part ID</th>
+                                    <th>Part Description</th>
+                                    <th>Qty</th>
+                                    <th>Unit Price</th>
+                                    <th>GST</th>
+                                    <th>Line Total</th>
+                                </tr>
+
+                            </thead>
+
+                            <tbody id="billingPartsBody">
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                    <div
+                        class="empty-state hidden"
+                        id="noPartsMessage">
+
+                        <div class="empty-icon">!</div>
+
+                        <strong>No Parts Issued</strong>
+
+                        <p>
+                            The Storekeeper has not issued any parts
+                            against this Job Card yet.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <!-- BILLING ADJUSTMENTS -->
+
+                <div class="subsection">
+
+                    <div class="subsection-header">
+
+                        <div>
+                            <h4>Billing Charges</h4>
+                            <p>
+                                Add labour and other workshop charges.
+                            </p>
+                        </div>
+
+                    </div>
+
+
+                    <div class="charges-grid">
+
+                        <div class="field">
+
+                            <label for="labourCharge">
+                                Labour Charges
+                            </label>
+
+                            <input
+                                type="number"
+                                id="labourCharge"
+                                min="0"
+                                step="0.01"
+                                value="0"
+                            >
+
+                        </div>
+
+
+                        <div class="field">
+
+                            <label for="otherCharge">
+                                Other Charges
+                            </label>
+
+                            <input
+                                type="number"
+                                id="otherCharge"
+                                min="0"
+                                step="0.01"
+                                value="0"
+                            >
+
+                        </div>
+
+
+                        <div class="field">
+
+                            <label for="billingDiscount">
+                                Discount
+                            </label>
+
+                            <input
+                                type="number"
+                                id="billingDiscount"
+                                min="0"
+                                step="0.01"
+                                value="0"
+                            >
+
+                        </div>
+
+
+                        <div class="field">
+
+                            <label for="billingNotes">
+                                Billing Notes
+                            </label>
+
+                            <input
+                                type="text"
+                                id="billingNotes"
+                                placeholder="Optional notes"
+                            >
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- TOTALS -->
+
+                <div class="billing-summary">
+
+                    <div class="summary-row">
+                        <span>Parts Subtotal</span>
+                        <strong id="partsSubtotal">
+                            Nu. 0.00
+                        </strong>
+                    </div>
+
+                    <div class="summary-row">
+                        <span>Labour Charges</span>
+                        <strong id="labourTotal">
+                            Nu. 0.00
+                        </strong>
+                    </div>
+
+                    <div class="summary-row">
+                        <span>Other Charges</span>
+                        <strong id="otherTotal">
+                            Nu. 0.00
+                        </strong>
+                    </div>
+
+                    <div class="summary-row">
+                        <span>Discount</span>
+                        <strong
+                            class="discount-value"
+                            id="discountTotal">
+                            Nu. 0.00
+                        </strong>
+                    </div>
+
+                    <div class="summary-row">
+                        <span>Taxable Amount</span>
+                        <strong id="taxableTotal">
+                            Nu. 0.00
+                        </strong>
+                    </div>
+
+                    <div class="summary-row">
+                        <span>GST</span>
+                        <strong id="gstTotal">
+                            Nu. 0.00
+                        </strong>
+                    </div>
+
+                    <div class="summary-row grand-total">
+                        <span>Grand Total</span>
+                        <strong id="grandTotal">
+                            Nu. 0.00
+                        </strong>
+                    </div>
+
+                </div>
+
+
+                <!-- ACTIONS -->
+
+                <div class="action-bar">
+
+                    <button
+                        class="btn btn-secondary"
+                        id="clearBillingBtn">
+                        Clear
+                    </button>
+
+                    <button
+                        class="btn btn-primary"
+                        id="saveBillBtn">
+                        Save & Send to Cash Counter
+                    </button>
+
+                </div>
+
+            </section>
+
+        </section>
+
+
+        <!-- =====================================================
+             PENDING
+        ====================================================== -->
+
+        <section class="tab-section hidden" id="pending">
+
+            <div class="section-heading">
+
+                <div>
+                    <span class="section-kicker">
+                        CASH COUNTER
+                    </span>
+
+                    <h2>Pending Bills</h2>
+
+                    <p>
+                        Bills prepared by Billing Clerk and waiting
+                        for customer payment.
+                    </p>
+                </div>
+
+            </div>
+
+
+            <section class="panel">
+
+                <div class="table-wrap">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+                                <th>Bill No.</th>
+                                <th>Job Card</th>
+                                <th>Customer</th>
+                                <th>Vehicle</th>
+                                <th>Bill Date</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                            </tr>
+
+                        </thead>
+
+                        <tbody id="pendingBillsBody">
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+                <div
+                    class="empty-state hidden"
+                    id="pendingEmpty">
+
+                    <div class="empty-icon">✓</div>
+
+                    <strong>No Pending Bills</strong>
+
+                    <p>
+                        All prepared bills have been processed.
+                    </p>
+
+                </div>
+
+            </section>
+
+        </section>
+
+
+        <!-- =====================================================
+             COMPLETED
+        ====================================================== -->
+
+        <section class="tab-section hidden" id="completed">
+
+            <div class="section-heading">
+
+                <div>
+                    <span class="section-kicker">
+                        BILLING HISTORY
+                    </span>
+
+                    <h2>Completed Bills</h2>
+
+                    <p>
+                        View bills that have already been paid.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <section class="panel">
+
+                <div class="table-wrap">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+                                <th>Bill No.</th>
+                                <th>Job Card</th>
+                                <th>Customer</th>
+                                <th>Bill Date</th>
+                                <th>Payment</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                            </tr>
+
+                        </thead>
+
+                        <tbody id="completedBillsBody">
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+                <div
+                    class="empty-state hidden"
+                    id="completedEmpty">
+
+                    <div class="empty-icon">—</div>
+
+                    <strong>No Completed Bills</strong>
+
+                    <p>
+                        Paid bills will appear here.
+                    </p>
+
+                </div>
+
+            </section>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<!-- =============================================================
+     BILL PREVIEW MODAL
+============================================================== -->
+
+<div
+    class="modal-backdrop hidden"
+    id="billModal">
+
+    <div class="modal invoice-modal">
+
+        <div class="modal-header">
+
+            <div>
+                <span class="section-kicker">
+                    BILL PREVIEW
+                </span>
+
+                <h2>Workshop Bill</h2>
+            </div>
+
+            <button
+                class="modal-close"
+                id="closeBillModal">
+                ×
+            </button>
+
+        </div>
+
+
+        <div
+            class="invoice"
+            id="invoiceContent">
+        </div>
+
+
+        <div class="modal-actions">
+
+            <button
+                class="btn btn-secondary"
+                id="closeBillBtn">
+                Close
+            </button>
+
+            <button
+                class="btn btn-primary"
+                id="printBillBtn">
+                Print Bill
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =============================================================
+     TOAST
+============================================================== -->
+
+<div
+    class="toast hidden"
+    id="toast">
+</div>
+
+
+<script src="clerk_billing.js"></script>
+
+</body>
+</html>
