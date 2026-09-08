@@ -382,14 +382,10 @@
   function getDashboardUrl(role) {
     const dashboards = {
       Admin: "../role_dashboard/Admin/admin.html",
-
       Storekeeper: "../role_dashboard/Storekeeper/storekeeper.html",
-
       Service_Supervisor:
         "../role_dashboard/Service_Supervisor/service_supervisor.html",
-
       Clerk_Billing: "../role_dashboard/Clerk_Billing/clerk_billing.html",
-
       Workshop_Technician:
         "../role_dashboard/Workshop_Technician/workshop_technician.html",
     };
