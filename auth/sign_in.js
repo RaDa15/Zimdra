@@ -551,15 +551,24 @@
      DASHBOARD URL
      ------------------------------------------------------------------------ */
 
-  function getDashboardUrl(role) {
+ function getDashboardUrl(role) {
+  const dashboards = {
+    'Admin': '../role_dashboard/admin/admin.html',
 
-    return (
-      '../role_dashboard/' +
-      role +
-      '/index.html'
-    );
+    'Storekeeper': '../role_dashboard/storekeeper/storekeeper.html',
 
-  }
+    'Service_Supervisor':
+      '../role_dashboard/service_supervisor/service_supervisor.html',
+
+    'Clerk_Billing':
+      '../role_dashboard/clerk_billing/clerk_billing.html',
+
+    'Workshop_Technician':
+      '../role_dashboard/workshop_technician/workshop_technician.html'
+  };
+
+  return dashboards[role] || '../role_dashboard/admin/admin.html';
+}
 
 
   /* ------------------------------------------------------------------------
