@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,8 +9,8 @@
 
     <link rel="stylesheet" href="storekeeper.css">
 
-    <!-- Excel reader -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- Excel Import -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 </head>
 
 <body>
@@ -19,67 +20,325 @@
     <!-- =========================================================
          SIDEBAR
     ========================================================== -->
+
     <aside class="sidebar">
 
         <div class="brand">
-            <div class="brand-mark">Z</div>
+
+            <div class="brand-mark">
+                Z
+            </div>
+
             <div>
                 <strong>ZIMDRA</strong>
-                <span>DMS</span>
+                <span>Dealer Management System</span>
             </div>
+
         </div>
 
+
         <div class="user-card">
-            <div class="avatar">SK</div>
+
+            <div class="avatar">
+                SK
+            </div>
+
             <div>
                 <strong>Storekeeper</strong>
                 <span>Parts & Inventory</span>
             </div>
+
         </div>
+
 
         <nav class="sidebar-nav">
 
-            <button class="nav-item active" data-tab="dashboard">
-                <span class="nav-icon">▦</span>
-                <span>Dashboard</span>
+            <button
+                type="button"
+                class="nav-item active"
+                data-tab="dashboard">
+
+                <span class="nav-icon">
+                    ⌂
+                </span>
+
+                <span>
+                    Dashboard
+                </span>
+
             </button>
 
-            <button class="nav-item" data-tab="workshop">
-                <span class="nav-icon">🔧</span>
-                <span>Workshop Parts</span>
+
+            <button
+                type="button"
+                class="nav-item"
+                data-tab="workshop">
+
+                <span class="nav-icon">
+                    🔧
+                </span>
+
+                <span>
+                    Workshop Parts
+                </span>
+
             </button>
 
-            <button class="nav-item" data-tab="counter">
-                <span class="nav-icon">🛒</span>
-                <span>Parts Counter</span>
+
+            <button
+                type="button"
+                class="nav-item"
+                data-tab="material-receipt">
+
+                <span class="nav-icon">
+                    ↓
+                </span>
+
+                <span>
+                    Material Receipt
+                </span>
+
             </button>
 
-            <button class="nav-item" data-tab="cash">
-                <span class="nav-icon">💵</span>
-                <span>Cash Counter</span>
+
+            <!-- =====================================================
+                 INVENTORY
+            ====================================================== -->
+
+            <div
+                class="inventory-nav-group"
+                id="inventoryNavGroup">
+
+                <button
+                    type="button"
+                    class="nav-item"
+                    id="inventoryNavBtn"
+                    data-tab="inventory">
+
+                    <span class="nav-icon">
+                        📦
+                    </span>
+
+                    <span>
+                        Inventory
+                    </span>
+
+                    <span
+                        class="nav-arrow"
+                        id="inventoryArrow">
+                        ▾
+                    </span>
+
+                </button>
+
+
+                <div
+                    id="inventorySubmenu"
+                    class="nav-submenu">
+
+                    <button
+                        type="button"
+                        class="submenu-item"
+                        data-inventory-action="add-product">
+                        + Add Product
+                    </button>
+
+                    <button
+                        type="button"
+                        class="submenu-item"
+                        data-inventory-action="add-category">
+                        + Add Category
+                    </button>
+
+                    <button
+                        type="button"
+                        class="submenu-item"
+                        data-inventory-action="manage-category">
+                        Manage Category
+                    </button>
+
+                    <button
+                        type="button"
+                        class="submenu-item"
+                        data-inventory-action="manage-product">
+                        Manage Product
+                    </button>
+
+                    <button
+                        type="button"
+                        class="submenu-item"
+                        data-inventory-action="group-pricing">
+                        Group Pricing
+                    </button>
+
+                    <button
+                        type="button"
+                        class="submenu-item"
+                        data-inventory-action="units">
+                        Units
+                    </button>
+
+                    <button
+                        type="button"
+                        class="submenu-item"
+                        data-inventory-action="group-price-list">
+                        Group Price List
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="nav-item"
+                data-tab="counter">
+
+                <span class="nav-icon">
+                    🛒
+                </span>
+
+                <span>
+                    Counter Sale
+                </span>
+
             </button>
 
-            <button class="nav-item" data-tab="inventory">
-                <span class="nav-icon">📦</span>
-                <span>Inventory</span>
+
+            <div
+                class="quotation-nav-group"
+                id="quotationNavGroup">
+
+                <button
+                    type="button"
+                    class="nav-item"
+                    id="quotationNavBtn"
+                    data-tab="quotation">
+
+                    <span class="nav-icon">
+                        📝
+                    </span>
+
+                    <span>
+                        Quotation
+                    </span>
+
+                    <span
+                        class="nav-arrow"
+                        id="quotationArrow">
+                        ▾
+                    </span>
+
+                </button>
+
+
+                <div
+                    id="quotationSubmenu"
+                    class="nav-submenu">
+
+                    <button
+                        type="button"
+                        class="submenu-item"
+                        data-quotation-nav-action="add-quotation">
+                        + Add Quotation
+                    </button>
+
+                    <button
+                        type="button"
+                        class="submenu-item"
+                        data-quotation-nav-action="manage-quotation">
+                        Manage Quotation
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="nav-item"
+                data-tab="party">
+
+                <span class="nav-icon">
+                    🤝
+                </span>
+
+                <span>
+                    Party Sale
+                </span>
+
             </button>
 
-            <button class="nav-item" data-tab="transactions">
-                <span class="nav-icon">🧾</span>
-                <span>Transactions</span>
+
+            <button
+                type="button"
+                class="nav-item"
+                data-tab="transfer">
+
+                <span class="nav-icon">
+                    🔁
+                </span>
+
+                <span>
+                    Branch Transfer
+                </span>
+
+            </button>
+
+
+            <button
+                type="button"
+                class="nav-item"
+                data-tab="cash">
+
+                <span class="nav-icon">
+                    ৳
+                </span>
+
+                <span>
+                    Cash Counter
+                </span>
+
+            </button>
+
+
+            <button
+                type="button"
+                class="nav-item"
+                data-tab="transactions">
+
+                <span class="nav-icon">
+                    ☷
+                </span>
+
+                <span>
+                    Transactions
+                </span>
+
             </button>
 
         </nav>
 
+
         <div class="sidebar-bottom">
 
-            <button id="loadDemoBtn" class="side-action">
-                ↻ Load Demo Data
-            </button>
+            <div class="sidebar-status">
 
-            <button id="clearDataBtn" class="side-action danger">
-                🗑 Clear Data
-            </button>
+                <span class="status-dot"></span>
+
+                <div>
+                    <strong>
+                        System Active
+                    </strong>
+
+                    <small>
+                        Local workspace
+                    </small>
+                </div>
+
+            </div>
 
         </div>
 
@@ -89,28 +348,47 @@
     <!-- =========================================================
          MAIN
     ========================================================== -->
+
     <main class="main">
 
-        <!-- TOP BAR -->
+
+        <!-- TOPBAR -->
+
         <header class="topbar">
 
             <div>
-                <div class="breadcrumb">ZIMDRA DMS / STOREKEEPER</div>
-                <h1 id="pageTitle">Storekeeper Dashboard</h1>
+
+                <div class="breadcrumb">
+                    ZIMDRA / STOREKEEPER
+                </div>
+
+                <h1 id="pageTitle">
+                    Storekeeper Dashboard
+                </h1>
+
             </div>
+
 
             <div class="topbar-actions">
 
-                <button id="quickCounterBtn" class="btn primary">
-                    ＋ New Counter Sale
-                </button>
-
                 <div class="top-user">
-                    <div class="avatar small">SK</div>
-                    <div>
-                        <strong>Storekeeper</strong>
-                        <span>Thimphu</span>
+
+                    <div class="avatar small">
+                        SK
                     </div>
+
+                    <div>
+
+                        <strong>
+                            Storekeeper
+                        </strong>
+
+                        <span>
+                            Parts & Inventory
+                        </span>
+
+                    </div>
+
                 </div>
 
             </div>
@@ -118,80 +396,260 @@
         </header>
 
 
+        <!-- =========================================================
+             CONTENT
+        ========================================================== -->
+
         <div class="content">
 
 
             <!-- =====================================================
                  DASHBOARD
             ====================================================== -->
-            <section id="dashboard" class="page-section active">
+
+            <section
+                id="dashboardTab"
+                class="page-section active">
+
 
                 <div class="section-heading">
+
                     <div>
-                        <div class="kicker">OVERVIEW</div>
-                        <h2>Storekeeper Dashboard</h2>
-                        <p>Monitor workshop requests, counter sales and inventory.</p>
+
+                        <div class="kicker">
+                            STORE OPERATIONS
+                        </div>
+
+                        <h2>
+                            Storekeeper Dashboard
+                        </h2>
+
+                        <p>
+                            Monitor parts, workshop requests,
+                            inventory and pending counter sales.
+                        </p>
+
                     </div>
+
+
+                    <div class="section-actions">
+
+                        <button
+                            type="button"
+                            class="btn secondary"
+                            data-tab-button="workshop">
+                            Workshop Parts
+                        </button>
+
+                        <button
+                            type="button"
+                            class="btn secondary"
+                            data-tab-button="inventory">
+                            View Inventory
+                        </button>
+
+                    </div>
+
                 </div>
 
+
+                <!-- STATS -->
 
                 <div class="stats-grid">
 
-                    <div class="stat-card">
-                        <div class="stat-icon blue">📦</div>
-                        <div>
-                            <span>Total Parts</span>
-                            <strong id="statParts">0</strong>
-                        </div>
-                    </div>
 
                     <div class="stat-card">
-                        <div class="stat-icon red">⚠</div>
-                        <div>
-                            <span>Low Stock</span>
-                            <strong id="statLowStock">0</strong>
+
+                        <div class="stat-icon blue">
+                            📦
                         </div>
+
+                        <div>
+
+                            <span>
+                                Total Products
+                            </span>
+
+                            <strong id="statProducts">
+                                0
+                            </strong>
+
+                        </div>
+
                     </div>
 
-                    <div class="stat-card">
-                        <div class="stat-icon orange">🔧</div>
-                        <div>
-                            <span>Parts Issues</span>
-                            <strong id="statIssues">0</strong>
-                        </div>
-                    </div>
 
                     <div class="stat-card">
-                        <div class="stat-icon green">Nu.</div>
-                        <div>
-                            <span>Today's Sales</span>
-                            <strong id="statSales">Nu. 0.00</strong>
+
+                        <div class="stat-icon red">
+                            !
                         </div>
+
+                        <div>
+
+                            <span>
+                                Low Stock Items
+                            </span>
+
+                            <strong id="statLowStock">
+                                0
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="stat-card">
+
+                        <div class="stat-icon orange">
+                            🔧
+                        </div>
+
+                        <div>
+
+                            <span>
+                                Pending Job Cards
+                            </span>
+
+                            <strong id="statPendingJobs">
+                                0
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="stat-card">
+
+                        <div class="stat-icon green">
+                            ৳
+                        </div>
+
+                        <div>
+
+                            <span>
+                                Pending Cash
+                            </span>
+
+                            <strong id="statPendingCash">
+                                Nu. 0.00
+                            </strong>
+
+                        </div>
+
                     </div>
 
                 </div>
 
 
+                <!-- DASHBOARD LISTS -->
+
                 <div class="dashboard-grid">
+
+
+                    <!-- WORKSHOP -->
 
                     <div class="panel">
 
                         <div class="panel-header">
 
                             <div>
-                                <div class="kicker">WORKSHOP</div>
-                                <h3>Pending Parts Requests</h3>
+
+                                <div class="kicker">
+                                    WORKSHOP
+                                </div>
+
+                                <h3>
+                                    Parts Requests
+                                </h3>
+
                             </div>
 
                             <button
+                                type="button"
                                 class="text-button"
-                                data-tab-target="workshop">
-                                View All →
+                                data-tab-button="workshop">
+                                View all
                             </button>
 
                         </div>
 
-                        <div id="dashboardRequests" class="dashboard-list">
+
+                        <div
+                            id="dashboardWorkshopList"
+                            class="dashboard-list">
+                        </div>
+
+                    </div>
+
+
+                    <!-- LOW STOCK -->
+
+                    <div class="panel">
+
+                        <div class="panel-header">
+
+                            <div>
+
+                                <div class="kicker">
+                                    INVENTORY
+                                </div>
+
+                                <h3>
+                                    Low Stock
+                                </h3>
+
+                            </div>
+
+                            <button
+                                type="button"
+                                class="text-button"
+                                data-tab-button="inventory">
+                                View inventory
+                            </button>
+
+                        </div>
+
+
+                        <div
+                            id="dashboardLowStockList"
+                            class="dashboard-list">
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ANALYTICS CHARTS -->
+
+                <div class="dashboard-grid">
+
+
+                    <div class="panel">
+
+                        <div class="panel-header">
+
+                            <div>
+
+                                <div class="kicker">
+                                    INVENTORY
+                                </div>
+
+                                <h3>
+                                    Stock by Product
+                                </h3>
+
+                            </div>
+
+                        </div>
+
+
+                        <div
+                            id="chartInventoryStock"
+                            class="chart-box">
                         </div>
 
                     </div>
@@ -202,19 +660,29 @@
                         <div class="panel-header">
 
                             <div>
-                                <div class="kicker">INVENTORY</div>
-                                <h3>Low Stock Parts</h3>
-                            </div>
 
-                            <button
-                                class="text-button"
-                                data-tab-target="inventory">
-                                Inventory →
-                            </button>
+                                <div class="kicker">
+                                    SALES
+                                </div>
+
+                                <h3>
+                                    Most &amp; Least Sold Items
+                                </h3>
+
+                            </div>
 
                         </div>
 
-                        <div id="dashboardLowStock" class="dashboard-list">
+
+                        <div
+                            id="chartTopSold"
+                            class="chart-box">
+                        </div>
+
+
+                        <div
+                            id="chartLeastSold"
+                            class="chart-box">
                         </div>
 
                     </div>
@@ -222,167 +690,270 @@
                 </div>
 
             </section>
-
 
 
             <!-- =====================================================
                  WORKSHOP PARTS
             ====================================================== -->
-            <section id="workshop" class="page-section">
+
+            <section
+                id="workshopTab"
+                class="page-section">
+
+
+                <!-- WORKSHOP HEADER -->
 
                 <div class="section-heading">
 
                     <div>
-                        <div class="kicker">WORKSHOP</div>
-                        <h2>Issue Parts to Job Card</h2>
-                        <p>Enter a Job Card ID to view requested parts.</p>
+
+                        <div class="kicker">
+                            WORKSHOP PARTS
+                        </div>
+
+                        <h2>
+                            Issue Parts Against Job Card
+                        </h2>
+
+                        <p>
+                            Search a job card to view requested
+                            parts, available stock and issue quantities.
+                        </p>
+
                     </div>
 
                 </div>
 
 
+                <!-- =================================================
+                     QUICK LOOKUP
+                ================================================== -->
+
                 <div class="lookup-card">
+
+                    <div class="lookup-header">
+
+                        <div>
+
+                            <div class="kicker">
+                                QUICK LOOKUP
+                            </div>
+
+                            <h3>
+                                Fetch Job Card Information
+                            </h3>
+
+                            <p>
+                                Enter a Job Card ID to retrieve
+                                customer, vehicle and requested parts.
+                            </p>
+
+                        </div>
+
+
+                        <span class="badge blue">
+                            Workshop
+                        </span>
+
+                    </div>
+
 
                     <div class="lookup-input">
 
-                        <label>Job Card ID</label>
+                        <label for="jobCardSearch">
+                            Job Card ID
+                        </label>
+
 
                         <div class="input-group">
 
                             <input
-                                id="jobCardInput"
+                                id="jobCardSearch"
                                 type="text"
                                 placeholder="Example: JC-2026-001"
-                            >
+                                autocomplete="off">
 
-                            <button id="lookupJobBtn" class="btn primary">
+
+                            <button
+                                type="button"
+                                class="btn primary"
+                                id="searchJobBtn">
                                 Search Job Card
                             </button>
 
                         </div>
 
-                        <div id="jobError" class="error-message"></div>
+
+                        <p class="field-help">
+
+                            Try
+                            <strong>
+                                JC-2026-001
+                            </strong>,
+
+                            <strong>
+                                JC-2026-002
+                            </strong>
+
+                            or
+
+                            <strong>
+                                JC-2026-003
+                            </strong>.
+
+                        </p>
 
                     </div>
 
                 </div>
 
 
-                <div id="jobDetails" class="hidden">
+                <!-- =================================================
+                     JOB RESULT
+                ================================================== -->
+
+                <div
+                    id="workshopResult"
+                    class="workshop-result">
+
+                    <!-- DEFAULT EMPTY STATE -->
 
                     <div class="panel">
 
-                        <div class="panel-header">
+                        <div class="empty-state large">
 
-                            <div>
-                                <div class="kicker">JOB CARD</div>
-                                <h3 id="jobCardTitle">JC-2026-001</h3>
+                            <div class="empty-icon">
+                                🔧
                             </div>
 
-                            <span id="jobStatusBadge" class="badge blue">
-                                Parts Requested
+                            <strong>
+                                Search for a Job Card
+                            </strong>
+
+                            <span>
+                                Enter a Job Card ID above to view
+                                requested workshop parts.
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                     REQUESTED PARTS
+
+                     IMPORTANT:
+                     This section is OUTSIDE workshopResult.
+                     Therefore JavaScript can replace workshopResult
+                     without deleting this section or Add Parts button.
+                ================================================== -->
+
+                <div
+                    id="requestedPartsSection"
+                    class="panel requested-parts-section"
+                    style="display: none;">
+
+
+                    <!-- REQUESTED PARTS HEADER -->
+
+                    <div class="job-parts-heading">
+
+                        <div>
+
+                            <div class="kicker">
+                                WORKSHOP REQUEST
+                            </div>
+
+                            <h4>
+                                Requested Parts
+                            </h4>
+
+                            <span>
+                                Parts requested for this job card
                             </span>
 
                         </div>
 
 
-                        <div class="job-info-grid">
+                        <!-- =================================================
+                             ADD PARTS BUTTON
+                        ================================================== -->
 
-                            <div>
-                                <span>Customer</span>
-                                <strong id="jobCustomer">-</strong>
-                            </div>
+                        <button
+                            type="button"
+                            class="btn primary"
+                            id="addPartsBtn">
 
-                            <div>
-                                <span>Vehicle</span>
-                                <strong id="jobVehicle">-</strong>
-                            </div>
+                            + Add Parts
 
-                            <div>
-                                <span>Registration</span>
-                                <strong id="jobReg">-</strong>
-                            </div>
+                        </button>
 
-                            <div>
-                                <span>Mechanic</span>
-                                <strong id="jobMechanic">-</strong>
-                            </div>
-
-                            <div>
-                                <span>Supervisor</span>
-                                <strong id="jobSupervisor">-</strong>
-                            </div>
-
-                            <div>
-                                <span>Job Type</span>
-                                <strong id="jobType">-</strong>
-                            </div>
-
-                        </div>
+                    </div>
 
 
-                        <div class="table-wrapper">
+                    <!-- REQUESTED PARTS TABLE -->
 
-                            <table>
+                    <div class="table-wrapper">
 
-                                <thead>
-                                    <tr>
-                                        <th>
-                                            <input type="checkbox" id="selectAllPartsBtn">
-                                        </th>
-                                        <th>Part ID</th>
-                                        <th>Part Name</th>
-                                        <th>Requested</th>
-                                        <th>Available</th>
-                                        <th>Issue Qty</th>
-                                        <th>Unit Price</th>
-                                        <th>Total</th>
-                                    </tr>
-                                </thead>
+                        <table>
 
-                                <tbody id="workshopPartsBody">
-                                </tbody>
+                            <thead>
 
-                            </table>
+                                <tr>
 
-                        </div>
+                                    <th>
+                                        Part No.
+                                    </th>
 
+                                    <th>
+                                        Part Name
+                                    </th>
 
-                        <div class="totals-box">
+                                    <th>
+                                        Requested Qty
+                                    </th>
 
-                            <div>
-                                <span>Subtotal</span>
-                                <strong id="workshopSubtotal">Nu. 0.00</strong>
-                            </div>
+                                    <th>
+                                        Available Stock
+                                    </th>
 
-                            <div>
-                                <span>GST</span>
-                                <strong id="workshopGst">Nu. 0.00</strong>
-                            </div>
+                                    <th>
+                                        Status
+                                    </th>
 
-                            <div class="grand-total">
-                                <span>Total</span>
-                                <strong id="workshopTotal">Nu. 0.00</strong>
-                            </div>
+                                    <th>
+                                        Issue Qty
+                                    </th>
 
-                        </div>
+                                    <th>
+                                        Action
+                                    </th>
+
+                                </tr>
+
+                            </thead>
 
 
-                        <div class="panel-footer">
+                            <tbody id="requestedPartsBody">
 
-                            <button
-                                id="clearWorkshopBtn"
-                                class="btn secondary">
-                                Clear
-                            </button>
+                                <tr>
 
-                            <button
-                                id="issuePartsBtn"
-                                class="btn primary">
-                                Issue Selected Parts
-                            </button>
+                                    <td
+                                        colspan="7"
+                                        class="empty-table">
 
-                        </div>
+                                        No requested parts.
+
+                                    </td>
+
+                                </tr>
+
+                            </tbody>
+
+                        </table>
 
                     </div>
 
@@ -391,381 +962,990 @@
             </section>
 
 
-
             <!-- =====================================================
-                 COUNTER
+                 MATERIAL RECEIPT
             ====================================================== -->
-            <section id="counter" class="page-section">
+
+            <section
+                id="material-receiptTab"
+                class="page-section">
+
 
                 <div class="section-heading">
 
                     <div>
-                        <div class="kicker">WALK-IN COUNTER</div>
-                        <h2>Parts Counter Sale</h2>
-                        <p>Sell spare parts directly to walk-in customers.</p>
+
+                        <div class="kicker">
+                            STOCK RECEIVING
+                        </div>
+
+                        <h2>
+                            Material Receipt Note
+                        </h2>
+
+                        <p>
+                            Receive new stock from vendors and update
+                            inventory.
+                        </p>
+
                     </div>
 
                 </div>
 
 
-                <div class="counter-grid">
+                <form
+                    id="mrnForm"
+                    class="panel mrn-form">
 
-                    <div class="panel">
 
-                        <div class="panel-header">
+                    <div class="mrn-section">
+
+                        <div class="form-grid form-grid-4">
+
+
                             <div>
-                                <div class="kicker">PART SEARCH</div>
-                                <h3>Select Parts</h3>
+
+                                <label>
+                                    R/T (Receipt Type)
+                                </label>
+
+                                <select id="mrnReceiptType">
+
+                                    <option value="Invoice">
+                                        Invoice
+                                    </option>
+
+                                    <option value="Cash">
+                                        Cash
+                                    </option>
+
+                                </select>
+
                             </div>
-                        </div>
 
-                        <div class="search-box">
 
-                            <input
-                                id="partSearchInput"
-                                type="text"
-                                placeholder="Search part name or part ID..."
-                            >
+                            <div>
 
-                        </div>
+                                <label>
+                                    MRN No.
+                                </label>
 
-                        <div id="partSearchResults" class="search-results">
+                                <input
+                                    id="mrnNoDisplay"
+                                    type="text"
+                                    readonly>
+
+                            </div>
+
+
+                            <div>
+
+                                <label>
+                                    Ref No.
+                                </label>
+
+                                <input
+                                    id="mrnRefNo"
+                                    type="text">
+
+                            </div>
+
+
+                            <div>
+
+                                <label>
+                                    Date
+                                </label>
+
+                                <input
+                                    id="mrnDate"
+                                    type="date"
+                                    required>
+
+                            </div>
+
+
+                            <div>
+
+                                <label>
+                                    Download Mail
+                                </label>
+
+                                <select id="mrnDownloadMail">
+
+                                    <option value="No">
+                                        No
+                                    </option>
+
+                                    <option value="Yes">
+                                        Yes
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+
+                            <div>
+
+                                <label>
+                                    Vendor Code
+                                </label>
+
+                                <input
+                                    id="mrnVendorCode"
+                                    type="text"
+                                    placeholder="Example: BW">
+
+                            </div>
+
+
+                            <div>
+
+                                <label>
+                                    Vendor Name
+                                </label>
+
+                                <input
+                                    id="mrnVendorName"
+                                    type="text"
+                                    placeholder="Example: Babesa W/Shop, Thimphu">
+
+                            </div>
+
+
+                            <div>
+
+                                <label>
+                                    Rate Type
+                                </label>
+
+                                <select id="mrnRateType">
+
+                                    <option value="Purchase">
+                                        Purchase
+                                    </option>
+
+                                    <option value="Cost">
+                                        Cost
+                                    </option>
+
+                                    <option value="D">
+                                        D (Duty-paid)
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+
+                            <div>
+
+                                <label>
+                                    Invoice No.
+                                </label>
+
+                                <input
+                                    id="mrnInvoiceNo"
+                                    type="text">
+
+                            </div>
+
+
+                            <div>
+
+                                <label>
+                                    Invoice Date
+                                </label>
+
+                                <input
+                                    id="mrnInvoiceDate"
+                                    type="date">
+
+                            </div>
+
+
+                            <div>
+
+                                <label>
+                                    Form No.
+                                </label>
+
+                                <input
+                                    id="mrnFormNo"
+                                    type="text">
+
+                            </div>
+
+
+                            <div>
+
+                                <label>
+                                    Tax on F.P.
+                                </label>
+
+                                <select id="mrnTaxOnFp">
+
+                                    <option value="No">
+                                        No
+                                    </option>
+
+                                    <option value="Yes">
+                                        Yes
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+
+                            <div>
+
+                                <label>
+                                    Vat/SrvTax on Hand
+                                </label>
+
+                                <select id="mrnVatSrvTax">
+
+                                    <option value="No">
+                                        No
+                                    </option>
+
+                                    <option value="Yes">
+                                        Yes
+                                    </option>
+
+                                </select>
+
+                            </div>
+
                         </div>
 
                     </div>
 
 
-                    <div class="panel">
+                    <!-- ITEM -->
 
-                        <div class="panel-header">
+                    <div class="mrn-section mrn-item-entry">
+
+                        <div class="kicker">
+                            ITEM DETAILS
+                        </div>
+
+
+                        <div class="form-grid form-grid-4">
+
 
                             <div>
-                                <div class="kicker">
-                                    SALE
-                                    <span id="currentSaleNo">CS-NEW</span>
-                                </div>
 
-                                <h3>Sale Items</h3>
-                            </div>
+                                <label>
+                                    Product
+                                </label>
 
-                            <span id="saleItemCount" class="badge neutral">
-                                0 Items
-                            </span>
+                                <select id="mrnProductSelect">
 
-                        </div>
+                                    <option value="">
+                                        Select product
+                                    </option>
 
-
-                        <div id="saleEmpty" class="empty-state">
-                            No parts added to this sale.
-                        </div>
-
-
-                        <div class="table-wrapper">
-
-                            <table>
-
-                                <thead>
-                                    <tr>
-                                        <th>Part</th>
-                                        <th>Qty</th>
-                                        <th>Price</th>
-                                        <th>GST</th>
-                                        <th>Total</th>
-                                        <th></th>
-                                    </tr>
-                                </thead>
-
-                                <tbody id="saleItemsBody">
-                                </tbody>
-
-                            </table>
-
-                        </div>
-
-
-                        <div class="customer-form">
-
-                            <div class="form-grid">
-
-                                <div>
-                                    <label>Customer Name</label>
-                                    <input id="saleCustomer" type="text">
-                                </div>
-
-                                <div>
-                                    <label>Mobile</label>
-                                    <input id="saleMobile" type="text">
-                                </div>
-
-                                <div>
-                                    <label>Vehicle</label>
-                                    <input
-                                        id="saleVehicle"
-                                        type="text"
-                                        placeholder="Optional"
-                                    >
-                                </div>
-
-                                <div>
-                                    <label>Customer Type</label>
-
-                                    <select id="saleCustomerType">
-                                        <option value="Retail">Retail</option>
-                                        <option value="Workshop">Workshop</option>
-                                        <option value="Corporate">Corporate</option>
-                                    </select>
-
-                                </div>
+                                </select>
 
                             </div>
 
 
-                            <div class="discount-row">
+                            <div>
 
-                                <label>Discount</label>
+                                <label>
+                                    Part No.
+                                </label>
 
-                                <div class="money-input">
-                                    <span>Nu.</span>
-                                    <input
-                                        id="saleDiscount"
-                                        type="number"
-                                        min="0"
-                                        value="0"
-                                    >
-                                </div>
+                                <input
+                                    id="mrnPartNo"
+                                    type="text">
+
+                            </div>
+
+
+                            <div>
+
+                                <label>
+                                    Description
+                                </label>
+
+                                <input
+                                    id="mrnDescription"
+                                    type="text">
+
+                            </div>
+
+
+                            <div>
+
+                                <label>
+                                    Category
+                                </label>
+
+                                <select id="mrnCategory">
+                                </select>
+
+                            </div>
+
+
+                            <div>
+
+                                <label>
+                                    Unit
+                                </label>
+
+                                <select id="mrnUnit">
+                                </select>
+
+                            </div>
+
+
+                            <div>
+
+                                <label>
+                                    Current Stock
+                                </label>
+
+                                <input
+                                    id="mrnCurrentStock"
+                                    type="text"
+                                    readonly>
+
+                            </div>
+
+
+                            <div>
+
+                                <label>
+                                    Location / Stock Bin
+                                </label>
+
+                                <input
+                                    id="mrnStockBin"
+                                    type="text">
+
+                            </div>
+
+
+                            <div>
+
+                                <label>
+                                    GST %
+                                </label>
+
+                                <input
+                                    id="mrnGst"
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value="7">
+
+                            </div>
+
+
+                            <div>
+
+                                <label>
+                                    Qty Invoiced
+                                </label>
+
+                                <input
+                                    id="mrnQtyInvoiced"
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value="1">
+
+                            </div>
+
+
+                            <div>
+
+                                <label>
+                                    Qty Received
+                                </label>
+
+                                <input
+                                    id="mrnQtyReceived"
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value="1">
+
+                            </div>
+
+
+                            <div>
+
+                                <label>
+                                    Qty Rejected
+                                </label>
+
+                                <input
+                                    id="mrnQtyRejected"
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value="0">
+
+                            </div>
+
+
+                            <div>
+
+                                <label>
+                                    Rate
+                                </label>
+
+                                <input
+                                    id="mrnRate"
+                                    type="number"
+                                    min="0"
+                                    step="0.01">
+
+                            </div>
+
+
+                            <div>
+
+                                <label>
+                                    Rl. Rate (Reference)
+                                </label>
+
+                                <input
+                                    id="mrnRlRate"
+                                    type="number"
+                                    min="0"
+                                    step="0.01">
+
+                            </div>
+
+
+                            <div>
+
+                                <label>
+                                    Freight Rate
+                                </label>
+
+                                <input
+                                    id="mrnFreightRate"
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value="0">
+
+                            </div>
+
+
+                            <div>
+
+                                <label>
+                                    Disc./Comm. on Item %
+                                </label>
+
+                                <input
+                                    id="mrnDiscComm"
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value="0">
 
                             </div>
 
                         </div>
 
+
+                        <div class="mrn-add-line-btn">
+
+                            <button
+                                type="button"
+                                class="btn primary"
+                                id="addMrnLineBtn">
+                                + Add Item
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- LINES -->
+
+                    <div class="table-wrapper">
+
+                        <table>
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>
+                                        Part No.
+                                    </th>
+
+                                    <th>
+                                        Description
+                                    </th>
+
+                                    <th>
+                                        Qty
+                                    </th>
+
+                                    <th>
+                                        Rate
+                                    </th>
+
+                                    <th>
+                                        Freight
+                                    </th>
+
+                                    <th>
+                                        GST
+                                    </th>
+
+                                    <th>
+                                        Total
+                                    </th>
+
+                                    <th></th>
+
+                                </tr>
+
+                            </thead>
+
+
+                            <tbody id="mrnLinesBody">
+
+                                <tr>
+
+                                    <td
+                                        colspan="8"
+                                        class="empty-table">
+
+                                        No items added.
+
+                                    </td>
+
+                                </tr>
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+
+                    <!-- DISCOUNTS -->
+
+                    <div class="mrn-section">
+
+                        <div class="form-grid form-grid-4">
+
+
+                            <div>
+
+                                <label>
+                                    Discount A %
+                                </label>
+
+                                <input
+                                    id="mrnDiscountA"
+                                    type="number"
+                                    min="0"
+                                    value="0">
+
+                            </div>
+
+
+                            <div>
+
+                                <label>
+                                    Discount B %
+                                </label>
+
+                                <input
+                                    id="mrnDiscountB"
+                                    type="number"
+                                    min="0"
+                                    value="0">
+
+                            </div>
+
+
+                            <div>
+
+                                <label>
+                                    Discount C %
+                                </label>
+
+                                <input
+                                    id="mrnDiscountC"
+                                    type="number"
+                                    min="0"
+                                    value="0">
+
+                            </div>
+
+
+                            <div>
+
+                                <label>
+                                    Cash Discount %
+                                </label>
+
+                                <input
+                                    id="mrnCashDiscount"
+                                    type="number"
+                                    min="0"
+                                    value="0">
+
+                            </div>
+
+
+                            <div>
+
+                                <label>
+                                    Handling Charge
+                                </label>
+
+                                <input
+                                    id="mrnHandlingCharge"
+                                    type="number"
+                                    min="0"
+                                    value="0">
+
+                            </div>
+
+
+                            <div>
+
+                                <label>
+                                    VOR Surcharge
+                                </label>
+
+                                <input
+                                    id="mrnVorSurcharge"
+                                    type="number"
+                                    min="0"
+                                    value="0">
+
+                            </div>
+
+
+                            <div>
+
+                                <label>
+                                    Service Tax %
+                                </label>
+
+                                <input
+                                    id="mrnServiceTax"
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value="0">
+
+                            </div>
+
+
+                            <div>
+
+                                <label>
+                                    E-Cess %
+                                </label>
+
+                                <input
+                                    id="mrnECess"
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value="0">
+
+                            </div>
+
+
+                            <div>
+
+                                <label>
+                                    Excise %
+                                </label>
+
+                                <input
+                                    id="mrnExcise"
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value="0">
+
+                            </div>
+
+
+                            <div>
+
+                                <label>
+                                    Tax Surcharge %
+                                </label>
+
+                                <input
+                                    id="mrnTaxSurcharge"
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value="0">
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- TOTALS -->
+
+                    <div class="mrn-section mrn-summary-section">
 
                         <div class="totals-box">
 
-                            <div>
-                                <span>Subtotal</span>
-                                <strong id="saleSubtotal">Nu. 0.00</strong>
-                            </div>
 
                             <div>
-                                <span>Discount</span>
-                                <strong id="saleDiscountDisplay">Nu. 0.00</strong>
+
+                                <span>
+                                    No. of Items / Total Qty
+                                </span>
+
+                                <strong>
+                                    <span id="mrnTotalItems">0</span>
+                                    /
+                                    <span id="mrnTotalQty">0</span>
+                                </strong>
+
                             </div>
 
-                            <div>
-                                <span>Taxable Amount</span>
-                                <strong id="saleTaxable">Nu. 0.00</strong>
-                            </div>
 
                             <div>
-                                <span>GST</span>
-                                <strong id="saleGst">Nu. 0.00</strong>
+
+                                <span>
+                                    Assessable Value
+                                </span>
+
+                                <strong id="mrnAssessableValue">
+                                    Nu. 0.00
+                                </strong>
+
                             </div>
+
+
+                            <div>
+
+                                <span>
+                                    Discount
+                                </span>
+
+                                <strong id="mrnDiscountAmount">
+                                    Nu. 0.00
+                                </strong>
+
+                            </div>
+
+
+                            <div>
+
+                                <span>
+                                    GST
+                                </span>
+
+                                <strong id="mrnGstAmount">
+                                    Nu. 0.00
+                                </strong>
+
+                            </div>
+
+
+                            <div>
+
+                                <span>
+                                    Handling
+                                </span>
+
+                                <strong id="mrnHandlingDisplay">
+                                    Nu. 0.00
+                                </strong>
+
+                            </div>
+
 
                             <div class="grand-total">
-                                <span>Grand Total</span>
-                                <strong id="saleGrandTotal">Nu. 0.00</strong>
+
+                                <span>
+                                    Net Total
+                                </span>
+
+                                <strong id="mrnNetTotal">
+                                    Nu. 0.00
+                                </strong>
+
                             </div>
 
                         </div>
 
+                    </div>
 
-                        <div class="panel-footer">
 
-                            <button id="newSaleBtn" class="btn secondary">
-                                New Sale
-                            </button>
+                    <div class="panel-footer">
 
-                            <button id="sendToCashBtn" class="btn primary">
-                                Send to Cash Counter →
-                            </button>
+                        <button
+                            type="button"
+                            class="btn secondary"
+                            id="clearMrnBtn">
+                            Clear
+                        </button>
+
+
+                        <button
+                            type="submit"
+                            class="btn primary"
+                            id="saveMrnBtn">
+                            Save Material Receipt
+                        </button>
+
+                    </div>
+
+                </form>
+
+
+                <!-- MRN HISTORY -->
+
+                <div class="panel">
+
+                    <div class="panel-header">
+
+                        <div>
+
+                            <div class="kicker">
+                                HISTORY
+                            </div>
+
+                            <h3>
+                                Material Receipts
+                            </h3>
 
                         </div>
+
+
+                        <input
+                            id="mrnHistorySearch"
+                            class="history-search"
+                            placeholder="Search MRN / vendor / invoice">
+
+                    </div>
+
+
+                    <div class="table-wrapper">
+
+                        <table>
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>
+                                        MRN
+                                    </th>
+
+                                    <th>
+                                        Date
+                                    </th>
+
+                                    <th>
+                                        Vendor
+                                    </th>
+
+                                    <th>
+                                        Invoice
+                                    </th>
+
+                                    <th>
+                                        Items
+                                    </th>
+
+                                    <th>
+                                        Total
+                                    </th>
+
+                                    <th></th>
+
+                                </tr>
+
+                            </thead>
+
+
+                            <tbody id="mrnHistoryBody">
+                            </tbody>
+
+                        </table>
 
                     </div>
 
                 </div>
 
             </section>
-
-
-
-            <!-- =====================================================
-                 CASH
-            ====================================================== -->
-            <section id="cash" class="page-section">
-
-                <div class="section-heading">
-
-                    <div>
-                        <div class="kicker">PAYMENT</div>
-                        <h2>Cash Counter</h2>
-                        <p>Clear pending counter sales and generate invoices.</p>
-                    </div>
-
-                </div>
-
-
-                <div class="cash-grid">
-
-                    <div class="panel">
-
-                        <div class="panel-header">
-
-                            <div>
-                                <div class="kicker">PENDING</div>
-                                <h3>Pending Payments</h3>
-                            </div>
-
-                            <span id="pendingCount" class="badge orange">
-                                0
-                            </span>
-
-                        </div>
-
-                        <div id="pendingPayments" class="pending-list">
-                        </div>
-
-                    </div>
-
-
-                    <div class="panel">
-
-                        <div id="noPaymentSelected" class="empty-state large">
-                            Select a pending payment to continue.
-                        </div>
-
-
-                        <div id="paymentForm" class="hidden">
-
-                            <div class="panel-header">
-
-                                <div>
-                                    <div class="kicker">PAYMENT</div>
-                                    <h3 id="paymentSaleNo">CS-NEW</h3>
-                                </div>
-
-                            </div>
-
-
-                            <div class="payment-details">
-
-                                <div>
-                                    <span>Customer</span>
-                                    <strong id="paymentCustomer">-</strong>
-                                </div>
-
-                                <div>
-                                    <span>Mobile</span>
-                                    <strong id="paymentMobile">-</strong>
-                                </div>
-
-                                <div>
-                                    <span>Amount Due</span>
-                                    <strong id="paymentDue">Nu. 0.00</strong>
-                                </div>
-
-                            </div>
-
-
-                            <div class="payment-methods">
-
-                                <button
-                                    class="payment-method active"
-                                    data-method="Cash">
-                                    💵 Cash
-                                </button>
-
-                                <button
-                                    class="payment-method"
-                                    data-method="Card">
-                                    💳 Card
-                                </button>
-
-                                <button
-                                    class="payment-method"
-                                    data-method="Bank Transfer">
-                                    🏦 Bank Transfer
-                                </button>
-
-                            </div>
-
-
-                            <div class="amount-box">
-
-                                <label>Amount Received</label>
-
-                                <div class="money-input large">
-                                    <span>Nu.</span>
-
-                                    <input
-                                        id="amountReceived"
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
-                                    >
-                                </div>
-
-                            </div>
-
-
-                            <div class="change-box">
-
-                                <span>Change</span>
-                                <strong id="changeAmount">Nu. 0.00</strong>
-
-                            </div>
-
-
-                            <div id="paymentError" class="error-message"></div>
-
-
-                            <button
-                                id="completePaymentBtn"
-                                class="btn primary full">
-                                Complete Payment & Generate Invoice
-                            </button>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </section>
-
 
 
             <!-- =====================================================
                  INVENTORY
             ====================================================== -->
-            <section id="inventory" class="page-section">
+
+            <section
+                id="inventoryTab"
+                class="page-section">
+
 
                 <div class="section-heading">
 
                     <div>
-                        <div class="kicker">STOCK CONTROL</div>
-                        <h2>Parts Inventory</h2>
-                        <p>Manage spare parts, pricing and stock levels.</p>
+
+                        <div class="kicker">
+                            STOCK CONTROL
+                        </div>
+
+                        <h2>
+                            Inventory
+                        </h2>
+
+                        <p>
+                            Manage parts, stock levels, prices and
+                            locations.
+                        </p>
+
                     </div>
+
 
                     <div class="section-actions">
 
-                        <!-- NEW BUTTON -->
-                        <button id="addPartBtn" class="btn primary">
-                            ＋ Add Part
+                        <button
+                            type="button"
+                            class="btn secondary"
+                            id="importExcelBtn">
+                            Import Excel
                         </button>
 
-                        <!-- NEW BUTTON -->
-                        <button id="uploadExcelBtn" class="btn secondary">
-                            ⇧ Upload Excel
-                        </button>
 
                         <input
-                            id="excelFileInput"
                             type="file"
+                            id="excelFileInput"
                             accept=".xlsx,.xls,.csv"
-                            hidden
-                        >
+                            hidden>
+
+
+                        <button
+                            type="button"
+                            class="btn primary"
+                            id="addProductTopBtn">
+                            + Add Product
+                        </button>
 
                     </div>
 
@@ -778,13 +1958,55 @@
 
                         <input
                             id="inventorySearch"
-                            type="text"
-                            placeholder="Search part ID, name or category..."
-                        >
+                            placeholder="Search part number, product or model">
+
+
+                        <select id="inventoryLocationFilter">
+
+                            <option value="">
+                                All Locations
+                            </option>
+
+                            <option value="Thimphu">
+                                Thimphu
+                            </option>
+
+                            <option value="Phuntsholing">
+                                Phuntsholing
+                            </option>
+
+                        </select>
+
+
+                        <select id="inventoryStockFilter">
+
+                            <option value="">
+                                All Stock
+                            </option>
+
+                            <option value="low">
+                                Low Stock
+                            </option>
+
+                            <option value="out">
+                                Out of Stock
+                            </option>
+
+                            <option value="available">
+                                Available
+                            </option>
+
+                        </select>
+
 
                         <div class="inventory-help">
-                            <span>Excel columns:</span>
-                            Part ID · Part Name · Category · Stock · Reorder Level · Price · GST
+
+                            <span id="inventoryCount">
+                                0
+                            </span>
+
+                            products
+
                         </div>
 
                     </div>
@@ -797,19 +2019,49 @@
                             <thead>
 
                                 <tr>
-                                    <th>Part ID</th>
-                                    <th>Part Name</th>
-                                    <th>Category</th>
-                                    <th>Stock</th>
-                                    <th>Reorder</th>
-                                    <th>Unit Price</th>
-                                    <th>GST</th>
-                                    <th>Status</th>
+
+                                    <th>
+                                        Product
+                                    </th>
+
+                                    <th>
+                                        Part No.
+                                    </th>
+
+                                    <th>
+                                        Category
+                                    </th>
+
+                                    <th>
+                                        Location
+                                    </th>
+
+                                    <th>
+                                        Stock
+                                    </th>
+
+                                    <th>
+                                        Reorder
+                                    </th>
+
+                                    <th>
+                                        Sale Price
+                                    </th>
+
+                                    <th>
+                                        GST
+                                    </th>
+
+                                    <th>
+                                        Actions
+                                    </th>
+
                                 </tr>
 
                             </thead>
 
-                            <tbody id="inventoryBody">
+
+                            <tbody id="inventoryTableBody">
                             </tbody>
 
                         </table>
@@ -821,24 +2073,815 @@
             </section>
 
 
-
             <!-- =====================================================
-                 TRANSACTIONS
+                 COUNTER SALE
             ====================================================== -->
-            <section id="transactions" class="page-section">
+
+            <section
+                id="counterTab"
+                class="page-section">
+
 
                 <div class="section-heading">
 
                     <div>
-                        <div class="kicker">AUDIT TRAIL</div>
-                        <h2>Transactions</h2>
-                        <p>View workshop issues and counter sales.</p>
+
+                        <div class="kicker">
+                            RETAIL SALES
+                        </div>
+
+                        <h2>
+                            Counter Sale
+                        </h2>
+
+                        <p>
+                            Add parts to a counter-sale cart and send
+                            it to the Cash Counter.
+                        </p>
+
                     </div>
 
                 </div>
 
 
+                <div class="counter-grid">
+
+
+                    <!-- SEARCH -->
+
+                    <div class="panel">
+
+                        <div class="search-box">
+
+                            <input
+                                id="counterSearch"
+                                placeholder="Search product or part number">
+
+                        </div>
+
+
+                        <div
+                            id="counterSearchResults"
+                            class="search-results">
+                        </div>
+
+                    </div>
+
+
+                    <!-- CART -->
+
+                    <div class="panel">
+
+                        <div class="panel-header">
+
+                            <div>
+
+                                <div class="kicker">
+                                    CURRENT SALE
+                                </div>
+
+                                <h3 id="counterSaleNumber">
+                                    Counter Sale
+                                </h3>
+
+                            </div>
+
+
+                            <span class="badge blue">
+                                Pending Cash
+                            </span>
+
+                        </div>
+
+
+                        <div class="mrn-section">
+
+                            <div class="form-grid form-grid-4">
+
+                                <div>
+
+                                    <label>
+                                        Sale Type
+                                    </label>
+
+                                    <select id="counterSaleType">
+
+                                        <option value="Counter">
+                                            Counter Sale (Cash) - CSCA
+                                        </option>
+
+                                        <option value="Party">
+                                            Party Sale (Credit) - CSIA
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+
+                                <div>
+
+                                    <label>
+                                        Code
+                                    </label>
+
+                                    <select id="counterCode">
+
+                                        <option value="Cash">
+                                            Cash
+                                        </option>
+
+                                        <option value="Credit">
+                                            Credit
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+
+                                <div>
+
+                                    <label>
+                                        Type
+                                    </label>
+
+                                    <select id="counterType">
+
+                                        <option value="Others">
+                                            Others
+                                        </option>
+
+                                        <option value="Trader">
+                                            Trader
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+
+                                <div>
+
+                                    <label>
+                                        C.S.T. No.
+                                    </label>
+
+                                    <input
+                                        id="counterCstNo"
+                                        type="text">
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="table-wrapper">
+
+                            <table>
+
+                                <thead>
+
+                                    <tr>
+
+                                        <th>
+                                            Product
+                                        </th>
+
+                                        <th>
+                                            Qty
+                                        </th>
+
+                                        <th>
+                                            Price
+                                        </th>
+
+                                        <th>
+                                            Total
+                                        </th>
+
+                                        <th></th>
+
+                                    </tr>
+
+                                </thead>
+
+
+                                <tbody id="counterCartBody">
+
+                                    <tr>
+
+                                        <td
+                                            colspan="5"
+                                            class="empty-table">
+
+                                            Cart is empty.
+
+                                        </td>
+
+                                    </tr>
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+
+                        <div class="customer-form">
+
+                            <div class="form-grid">
+
+
+                                <div>
+
+                                    <label>
+                                        Customer Name
+                                    </label>
+
+                                    <input
+                                        id="counterCustomerName"
+                                        placeholder="Walk-in customer">
+
+                                </div>
+
+
+                                <div>
+
+                                    <label>
+                                        Mobile No.
+                                    </label>
+
+                                    <input
+                                        id="counterCustomerPhone"
+                                        placeholder="Optional">
+
+                                </div>
+
+
+                                <div>
+
+                                    <label>
+                                        Vehicle No.
+                                    </label>
+
+                                    <input
+                                        id="counterVehicleNo"
+                                        placeholder="Example: BP-1-A1234">
+
+                                </div>
+
+
+                                <div>
+
+                                    <label>
+                                        Model
+                                    </label>
+
+                                    <input
+                                        id="counterModel"
+                                        placeholder="Example: Toyota Hilux">
+
+                                </div>
+
+                            </div>
+
+
+                            <div
+                                id="partySaleFields"
+                                class="form-grid"
+                                style="display: none; margin-top: 14px;">
+
+
+                                <div>
+
+                                    <label>
+                                        TPN No.
+                                    </label>
+
+                                    <input
+                                        id="counterTpnNo"
+                                        placeholder="Tax Payer Number">
+
+                                </div>
+
+
+                                <div>
+
+                                    <label>
+                                        Customer Address
+                                    </label>
+
+                                    <textarea
+                                        id="counterCustomerAddress"
+                                        placeholder="Multi-line address"></textarea>
+
+                                </div>
+
+
+                                <div>
+
+                                    <label>
+                                        Cash Discount
+                                    </label>
+
+                                    <input
+                                        id="counterCashDiscount"
+                                        type="number"
+                                        min="0"
+                                        value="0">
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="form-grid" style="margin-top: 14px;">
+
+                                <div>
+
+                                    <label>
+                                        Discount
+                                    </label>
+
+                                    <input
+                                        id="counterDiscount"
+                                        type="number"
+                                        min="0"
+                                        value="0">
+
+                                </div>
+
+
+                                <div>
+
+                                    <label>
+                                        Handling Charge
+                                    </label>
+
+                                    <input
+                                        id="counterHandlingCharge"
+                                        type="number"
+                                        min="0"
+                                        value="0">
+
+                                </div>
+
+
+                                <div>
+
+                                    <label>
+                                        Surcharge
+                                    </label>
+
+                                    <input
+                                        id="counterSurcharge"
+                                        type="number"
+                                        min="0"
+                                        value="0">
+
+                                </div>
+
+                            </div>
+
+
+                            <div style="margin-top: 14px;">
+
+                                <label>
+                                    Amount in Words
+                                </label>
+
+                                <input
+                                    id="counterAmountWords"
+                                    type="text"
+                                    readonly>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="totals-box">
+
+
+                            <div>
+
+                                <span>
+                                    Subtotal
+                                </span>
+
+                                <strong id="counterSubtotal">
+                                    Nu. 0.00
+                                </strong>
+
+                            </div>
+
+
+                            <div>
+
+                                <span>
+                                    GST
+                                </span>
+
+                                <strong id="counterGST">
+                                    Nu. 0.00
+                                </strong>
+
+                            </div>
+
+
+                            <div>
+
+                                <span>
+                                    Discount
+                                </span>
+
+                                <strong id="counterDiscountTotal">
+                                    Nu. 0.00
+                                </strong>
+
+                            </div>
+
+
+                            <div class="grand-total">
+
+                                <span>
+                                    Grand Total
+                                </span>
+
+                                <strong id="counterGrandTotal">
+                                    Nu. 0.00
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="panel-footer">
+
+                            <button
+                                type="button"
+                                class="btn secondary"
+                                id="clearSaleBtn">
+                                Clear Sale
+                            </button>
+
+
+                            <button
+                                type="button"
+                                class="btn success"
+                                id="sendSaleToCashBtn">
+                                Send to Cash Counter
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- =====================================================
+                 QUOTATION
+            ====================================================== -->
+
+            <section
+                id="quotationTab"
+                class="page-section">
+
+
+                <div class="section-heading">
+
+                    <div>
+
+                        <div class="kicker">
+                            ESTIMATE
+                        </div>
+
+                        <h2>
+                            Quotation
+                        </h2>
+
+                        <p>
+                            Prepare a non-binding price quotation for a
+                            customer. Quotations do not affect stock and
+                            can be converted to a Counter Sale later.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="counter-grid">
+
+
+                    <!-- SEARCH -->
+
+                    <div class="panel">
+
+                        <div class="search-box">
+
+                            <input
+                                id="quotationSearch"
+                                placeholder="Search product or part number">
+
+                        </div>
+
+
+                        <div
+                            id="quotationSearchResults"
+                            class="search-results">
+                        </div>
+
+                    </div>
+
+
+                    <!-- CART -->
+
+                    <div class="panel">
+
+                        <div class="panel-header">
+
+                            <div>
+
+                                <div class="kicker">
+                                    CURRENT QUOTATION
+                                </div>
+
+                                <h3 id="quotationNumber">
+                                    Quotation
+                                </h3>
+
+                            </div>
+
+
+                            <span class="badge gray">
+                                Not Yet Saved
+                            </span>
+
+                        </div>
+
+
+                        <div class="table-wrapper">
+
+                            <table>
+
+                                <thead>
+
+                                    <tr>
+
+                                        <th>
+                                            Product
+                                        </th>
+
+                                        <th>
+                                            Qty
+                                        </th>
+
+                                        <th>
+                                            Price
+                                        </th>
+
+                                        <th>
+                                            Total
+                                        </th>
+
+                                        <th></th>
+
+                                    </tr>
+
+                                </thead>
+
+
+                                <tbody id="quotationCartBody">
+
+                                    <tr>
+
+                                        <td
+                                            colspan="5"
+                                            class="empty-table">
+
+                                            No items added.
+
+                                        </td>
+
+                                    </tr>
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+
+                        <div class="customer-form">
+
+                            <div class="form-grid">
+
+
+                                <div>
+
+                                    <label>
+                                        Customer Name
+                                    </label>
+
+                                    <input
+                                        id="quotationCustomerName"
+                                        placeholder="Walk-in customer">
+
+                                </div>
+
+
+                                <div>
+
+                                    <label>
+                                        Mobile No.
+                                    </label>
+
+                                    <input
+                                        id="quotationCustomerPhone"
+                                        placeholder="Optional">
+
+                                </div>
+
+
+                                <div>
+
+                                    <label>
+                                        Vehicle No.
+                                    </label>
+
+                                    <input
+                                        id="quotationVehicleNo"
+                                        placeholder="Optional">
+
+                                </div>
+
+
+                                <div>
+
+                                    <label>
+                                        Valid Until
+                                    </label>
+
+                                    <input
+                                        id="quotationValidUntil"
+                                        type="date">
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="form-grid" style="margin-top: 14px;">
+
+                                <div>
+
+                                    <label>
+                                        Discount
+                                    </label>
+
+                                    <input
+                                        id="quotationDiscount"
+                                        type="number"
+                                        min="0"
+                                        value="0">
+
+                                </div>
+
+
+                                <div>
+
+                                    <label>
+                                        Handling Charge
+                                    </label>
+
+                                    <input
+                                        id="quotationHandlingCharge"
+                                        type="number"
+                                        min="0"
+                                        value="0">
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="totals-box">
+
+
+                            <div>
+
+                                <span>
+                                    Subtotal
+                                </span>
+
+                                <strong id="quotationSubtotal">
+                                    Nu. 0.00
+                                </strong>
+
+                            </div>
+
+
+                            <div>
+
+                                <span>
+                                    GST
+                                </span>
+
+                                <strong id="quotationGST">
+                                    Nu. 0.00
+                                </strong>
+
+                            </div>
+
+
+                            <div>
+
+                                <span>
+                                    Discount
+                                </span>
+
+                                <strong id="quotationDiscountTotal">
+                                    Nu. 0.00
+                                </strong>
+
+                            </div>
+
+
+                            <div class="grand-total">
+
+                                <span>
+                                    Estimated Total
+                                </span>
+
+                                <strong id="quotationGrandTotal">
+                                    Nu. 0.00
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="panel-footer">
+
+                            <button
+                                type="button"
+                                class="btn secondary"
+                                id="clearQuotationBtn">
+                                Clear
+                            </button>
+
+
+                            <button
+                                type="button"
+                                class="btn primary"
+                                id="saveQuotationBtn">
+                                Save Quotation
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- QUOTATION HISTORY -->
+
                 <div class="panel">
+
+                    <div class="panel-header">
+
+                        <div>
+
+                            <div class="kicker">
+                                HISTORY
+                            </div>
+
+                            <h3>
+                                Quotations
+                            </h3>
+
+                        </div>
+
+
+                        <input
+                            id="quotationHistorySearch"
+                            class="history-search"
+                            placeholder="Search quotation / customer">
+
+                    </div>
+
 
                     <div class="table-wrapper">
 
@@ -847,17 +2890,855 @@
                             <thead>
 
                                 <tr>
-                                    <th>Date / Time</th>
-                                    <th>Reference</th>
-                                    <th>Type</th>
-                                    <th>Customer / Job Card</th>
-                                    <th>Amount</th>
-                                    <th>Status</th>
+
+                                    <th>
+                                        Quotation
+                                    </th>
+
+                                    <th>
+                                        Date
+                                    </th>
+
+                                    <th>
+                                        Customer
+                                    </th>
+
+                                    <th>
+                                        Valid Until
+                                    </th>
+
+                                    <th>
+                                        Items
+                                    </th>
+
+                                    <th>
+                                        Total
+                                    </th>
+
+                                    <th>
+                                        Status
+                                    </th>
+
+                                    <th></th>
+
                                 </tr>
 
                             </thead>
 
-                            <tbody id="transactionsBody">
+
+                            <tbody id="quotationHistoryBody">
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- =====================================================
+                 PARTY SALE (CREDIT / TRADER ACCOUNT)
+            ====================================================== -->
+
+            <section
+                id="partyTab"
+                class="page-section">
+
+
+                <div class="section-heading">
+
+                    <div>
+
+                        <div class="kicker">
+                            CREDIT SALES · CSIA
+                        </div>
+
+                        <h2>
+                            Party Sale
+                        </h2>
+
+                        <p>
+                            Sell to a trade/dealer account on credit terms.
+                            Party sales carry TPN, address and cash discount
+                            and are settled later, not at the counter.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="counter-grid">
+
+
+                    <!-- SEARCH -->
+
+                    <div class="panel">
+
+                        <div class="search-box">
+
+                            <input
+                                id="partySearch"
+                                placeholder="Search product or part number">
+
+                        </div>
+
+
+                        <div
+                            id="partySearchResults"
+                            class="search-results">
+                        </div>
+
+                    </div>
+
+
+                    <!-- CART -->
+
+                    <div class="panel">
+
+                        <div class="panel-header">
+
+                            <div>
+
+                                <div class="kicker">
+                                    CURRENT PARTY SALE
+                                </div>
+
+                                <h3 id="partySaleNumber">
+                                    Party Sale
+                                </h3>
+
+                            </div>
+
+
+                            <span class="badge blue">
+                                Credit
+                            </span>
+
+                        </div>
+
+
+                        <div class="table-wrapper">
+
+                            <table>
+
+                                <thead>
+
+                                    <tr>
+
+                                        <th>
+                                            Product
+                                        </th>
+
+                                        <th>
+                                            Qty
+                                        </th>
+
+                                        <th>
+                                            Price
+                                        </th>
+
+                                        <th>
+                                            Total
+                                        </th>
+
+                                        <th></th>
+
+                                    </tr>
+
+                                </thead>
+
+
+                                <tbody id="partyCartBody">
+
+                                    <tr>
+
+                                        <td
+                                            colspan="5"
+                                            class="empty-table">
+
+                                            Cart is empty.
+
+                                        </td>
+
+                                    </tr>
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+
+                        <div class="customer-form">
+
+                            <div class="form-grid">
+
+                                <div>
+
+                                    <label>
+                                        Trader / Customer Name
+                                    </label>
+
+                                    <input
+                                        id="partyCustomerName"
+                                        placeholder="Trader account name">
+
+                                </div>
+
+                                <div>
+
+                                    <label>
+                                        Mobile No.
+                                    </label>
+
+                                    <input
+                                        id="partyCustomerPhone"
+                                        placeholder="Optional">
+
+                                </div>
+
+                                <div>
+
+                                    <label>
+                                        TPN No.
+                                    </label>
+
+                                    <input
+                                        id="partyTpnNo"
+                                        placeholder="Tax Payer Number">
+
+                                </div>
+
+                                <div>
+
+                                    <label>
+                                        C.S.T. No.
+                                    </label>
+
+                                    <input
+                                        id="partyCstNo"
+                                        placeholder="Optional">
+
+                                </div>
+
+                            </div>
+
+
+                            <div style="margin-top: 14px;">
+
+                                <label>
+                                    Customer Address
+                                </label>
+
+                                <textarea
+                                    id="partyCustomerAddress"
+                                    placeholder="Multi-line address"></textarea>
+
+                            </div>
+
+
+                            <div class="form-grid" style="margin-top: 14px;">
+
+                                <div>
+
+                                    <label>
+                                        Discount
+                                    </label>
+
+                                    <input
+                                        id="partyDiscount"
+                                        type="number"
+                                        min="0"
+                                        value="0">
+
+                                </div>
+
+                                <div>
+
+                                    <label>
+                                        Cash Discount
+                                    </label>
+
+                                    <input
+                                        id="partyCashDiscount"
+                                        type="number"
+                                        min="0"
+                                        value="0">
+
+                                </div>
+
+                                <div>
+
+                                    <label>
+                                        Handling Charge
+                                    </label>
+
+                                    <input
+                                        id="partyHandlingCharge"
+                                        type="number"
+                                        min="0"
+                                        value="0">
+
+                                </div>
+
+                                <div>
+
+                                    <label>
+                                        Surcharge
+                                    </label>
+
+                                    <input
+                                        id="partySurcharge"
+                                        type="number"
+                                        min="0"
+                                        value="0">
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="totals-box">
+
+                            <div>
+                                <span>Subtotal</span>
+                                <strong id="partySubtotal">Nu. 0.00</strong>
+                            </div>
+
+                            <div>
+                                <span>GST</span>
+                                <strong id="partyGST">Nu. 0.00</strong>
+                            </div>
+
+                            <div>
+                                <span>Discount</span>
+                                <strong id="partyDiscountTotal">Nu. 0.00</strong>
+                            </div>
+
+                            <div class="grand-total">
+                                <span>Grand Total</span>
+                                <strong id="partyGrandTotal">Nu. 0.00</strong>
+                            </div>
+
+                        </div>
+
+
+                        <div class="panel-footer">
+
+                            <button
+                                type="button"
+                                class="btn secondary"
+                                id="clearPartySaleBtn">
+                                Clear Sale
+                            </button>
+
+                            <button
+                                type="button"
+                                class="btn success"
+                                id="sendPartySaleToCashBtn">
+                                Send to Cash Counter
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- =====================================================
+                 BRANCH TRANSFER (INTER-BRANCH REQUISITION / MTN)
+            ====================================================== -->
+
+            <section
+                id="transferTab"
+                class="page-section">
+
+
+                <div class="section-heading">
+
+                    <div>
+
+                        <div class="kicker">
+                            MATERIAL TRANSFER NOTE
+                        </div>
+
+                        <h2>
+                            Branch Transfer Requisition
+                        </h2>
+
+                        <p>
+                            Request parts that are currently stocked at the
+                            other branch — e.g. Phuntsholing requesting parts
+                            held at Thimphu, or vice versa.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="lookup-card">
+
+                    <div class="lookup-header">
+
+                        <div>
+
+                            <div class="kicker">
+                                MY BRANCH
+                            </div>
+
+                            <h3>
+                                Set Your Branch
+                            </h3>
+
+                            <p>
+                                The requesting branch is always your own
+                                branch; the supplying branch is set
+                                automatically to the other one.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="form-grid form-grid-4">
+
+                        <div>
+
+                            <label>
+                                My Branch (Requesting)
+                            </label>
+
+                            <select id="transferMyBranch">
+
+                                <option value="Thimphu">
+                                    Thimphu
+                                </option>
+
+                                <option value="Phuntsholing">
+                                    Phuntsholing
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                        <div>
+
+                            <label>
+                                Supplying Branch
+                            </label>
+
+                            <input
+                                id="transferSupplyingBranch"
+                                type="text"
+                                readonly>
+
+                        </div>
+
+                        <div>
+
+                            <label>
+                                Transfer No.
+                            </label>
+
+                            <input
+                                id="transferNoDisplay"
+                                type="text"
+                                readonly>
+
+                        </div>
+
+                        <div>
+
+                            <label>
+                                Date
+                            </label>
+
+                            <input
+                                id="transferDate"
+                                type="date">
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <form
+                    id="transferForm"
+                    class="panel mrn-form">
+
+                    <div class="mrn-section mrn-item-entry">
+
+                        <div class="kicker">
+                            REQUEST PART
+                        </div>
+
+                        <div class="form-grid form-grid-4">
+
+                            <div class="product-field">
+
+                                <label>
+                                    Part No. (available at supplying branch)
+                                </label>
+
+                                <select id="transferPartSelect">
+
+                                    <option value="">
+                                        Select part
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+                            <div>
+
+                                <label>
+                                    Available at Supplying Branch
+                                </label>
+
+                                <input
+                                    id="transferAvailableStock"
+                                    type="text"
+                                    readonly>
+
+                            </div>
+
+                            <div>
+
+                                <label>
+                                    Qty Requested
+                                </label>
+
+                                <input
+                                    id="transferQty"
+                                    type="number"
+                                    min="1"
+                                    step="1"
+                                    value="1">
+
+                            </div>
+
+                            <div>
+
+                                <label>
+                                    Description / Reason
+                                </label>
+
+                                <input
+                                    id="transferDescription"
+                                    type="text"
+                                    placeholder="Why this part is needed">
+
+                            </div>
+
+                        </div>
+
+                        <div class="mrn-add-line-btn">
+
+                            <button
+                                type="button"
+                                class="btn primary"
+                                id="addTransferLineBtn">
+                                + Add to Requisition
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="table-wrapper">
+
+                        <table>
+
+                            <thead>
+
+                                <tr>
+                                    <th>Part No.</th>
+                                    <th>Description</th>
+                                    <th>Qty Requested</th>
+                                    <th></th>
+                                </tr>
+
+                            </thead>
+
+                            <tbody id="transferLinesBody">
+
+                                <tr>
+                                    <td colspan="4" class="empty-table">
+                                        No items added.
+                                    </td>
+                                </tr>
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+
+                    <div class="panel-footer">
+
+                        <button
+                            type="button"
+                            class="btn secondary"
+                            id="clearTransferBtn">
+                            Clear
+                        </button>
+
+                        <button
+                            type="submit"
+                            class="btn primary"
+                            id="saveTransferBtn">
+                            Raise Requisition
+                        </button>
+
+                    </div>
+
+                </form>
+
+
+                <div class="panel">
+
+                    <div class="panel-header">
+
+                        <div>
+
+                            <div class="kicker">
+                                HISTORY
+                            </div>
+
+                            <h3>
+                                Branch Transfer Requisitions
+                            </h3>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="table-wrapper">
+
+                        <table>
+
+                            <thead>
+
+                                <tr>
+                                    <th>Transfer No.</th>
+                                    <th>Date</th>
+                                    <th>From</th>
+                                    <th>To</th>
+                                    <th>Items</th>
+                                    <th>Status</th>
+                                    <th></th>
+                                </tr>
+
+                            </thead>
+
+                            <tbody id="transferHistoryBody">
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- =====================================================
+                 CASH COUNTER
+            ====================================================== -->
+
+            <section
+                id="cashTab"
+                class="page-section">
+
+
+                <div class="section-heading">
+
+                    <div>
+
+                        <div class="kicker">
+                            PAYMENT
+                        </div>
+
+                        <h2>
+                            Cash Counter
+                        </h2>
+
+                        <p>
+                            Complete pending counter sales and issue
+                            invoices.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="cash-grid">
+
+
+                    <div class="panel">
+
+                        <div class="panel-header">
+
+                            <div>
+
+                                <div class="kicker">
+                                    QUEUE
+                                </div>
+
+                                <h3>
+                                    Pending Sales
+                                </h3>
+
+                            </div>
+
+                        </div>
+
+
+                        <div
+                            id="pendingSalesList"
+                            class="pending-list">
+                        </div>
+
+                    </div>
+
+
+                    <div class="panel">
+
+                        <div class="panel-header">
+
+                            <div>
+
+                                <div class="kicker">
+                                    PAYMENT
+                                </div>
+
+                                <h3 id="cashSaleTitle">
+                                    Select a Sale
+                                </h3>
+
+                            </div>
+
+                        </div>
+
+
+                        <div id="paymentPanel">
+
+                            <div class="empty-state large">
+                                Select a pending sale.
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- =====================================================
+                 TRANSACTIONS
+            ====================================================== -->
+
+            <section
+                id="transactionsTab"
+                class="page-section">
+
+
+                <div class="section-heading">
+
+                    <div>
+
+                        <div class="kicker">
+                            HISTORY
+                        </div>
+
+                        <h2>
+                            Transactions
+                        </h2>
+
+                        <p>
+                            View completed counter sales and
+                            inventory transactions.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="panel">
+
+                    <div class="inventory-toolbar">
+
+                        <input
+                            id="transactionSearch"
+                            placeholder="Search transaction, invoice or customer">
+
+                    </div>
+
+
+                    <div class="table-wrapper">
+
+                        <table>
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>
+                                        Transaction
+                                    </th>
+
+                                    <th>
+                                        Reference
+                                    </th>
+
+                                    <th>
+                                        Date
+                                    </th>
+
+                                    <th>
+                                        Customer
+                                    </th>
+
+                                    <th>
+                                        Type
+                                    </th>
+
+                                    <th>
+                                        Amount
+                                    </th>
+
+                                    <th>
+                                        Status
+                                    </th>
+
+                                </tr>
+
+                            </thead>
+
+
+                            <tbody id="transactionsTableBody">
                             </tbody>
 
                         </table>
@@ -875,131 +3756,531 @@
 </div>
 
 
-
 <!-- =============================================================
-     ADD PART MODAL
+     ADD PRODUCT MODAL
 ============================================================== -->
-<div id="addPartModal" class="modal">
 
-    <div class="modal-backdrop"></div>
+<div
+    id="addProductModal"
+    class="modal">
 
-    <div class="modal-card">
+
+    <div
+        class="modal-backdrop"
+        data-close-modal="addProductModal">
+    </div>
+
+
+    <div class="modal-card add-product-modal">
+
 
         <div class="modal-header">
 
             <div>
-                <div class="kicker">INVENTORY</div>
-                <h3>Add New Part</h3>
+
+                <div class="kicker">
+                    INVENTORY
+                </div>
+
+                <h3 id="productModalTitle">
+                    Add Product
+                </h3>
+
             </div>
 
-            <button id="closeAddPartBtn" class="modal-close">
+
+            <button
+                type="button"
+                class="modal-close"
+                id="closeAddProductBtn">
                 ×
             </button>
 
         </div>
 
 
-        <div class="form-grid">
+        <form id="addProductForm">
 
-            <div>
-                <label>Part ID *</label>
-                <input id="newPartId" type="text" placeholder="OF-1001">
-            </div>
 
-            <div>
-                <label>Part Name *</label>
-                <input id="newPartName" type="text" placeholder="Oil Filter">
-            </div>
+            <input
+                type="hidden"
+                id="editingProductId">
 
-            <div>
-                <label>Category</label>
-                <input id="newPartCategory" type="text" placeholder="Filters">
-            </div>
 
-            <div>
-                <label>Stock *</label>
-                <input id="newPartStock" type="number" min="0" value="0">
-            </div>
+            <div class="product-form">
 
-            <div>
-                <label>Reorder Level</label>
-                <input id="newPartReorder" type="number" min="0" value="5">
-            </div>
 
-            <div>
-                <label>Unit Price *</label>
+                <div class="product-form-section">
 
-                <div class="money-input">
-                    <span>Nu.</span>
-                    <input id="newPartPrice" type="number" min="0" step="0.01">
+                    <div class="product-form-section-title">
+
+                        <strong>
+                            Product Information
+                        </strong>
+
+                        <span>
+                            Basic identification and classification.
+                        </span>
+
+                    </div>
+
+
+                    <div class="form-grid">
+
+
+                        <div class="product-field">
+
+                            <label>
+                                Part No. / Product Code
+                            </label>
+
+                            <input
+                                id="productPartNo"
+                                required>
+
+                        </div>
+
+
+                        <div class="product-field">
+
+                            <label>
+                                Product Name
+                            </label>
+
+                            <input
+                                id="productName"
+                                required>
+
+                        </div>
+
+
+                        <div class="product-field">
+
+                            <label>
+                                Category
+                            </label>
+
+                            <select id="productCategory">
+                            </select>
+
+                        </div>
+
+
+                        <div class="product-field">
+
+                            <label>
+                                Serial Number
+                            </label>
+
+                            <input
+                                id="productSerialNumber">
+
+                        </div>
+
+
+                        <div class="product-field">
+
+                            <label>
+                                Model
+                            </label>
+
+                            <input
+                                id="productModel">
+
+                        </div>
+
+
+                        <div class="product-field">
+
+                            <label>
+                                Unit
+                            </label>
+
+                            <select id="productUnit">
+                            </select>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="product-form-section">
+
+
+                    <div class="product-form-section-title">
+
+                        <strong>
+                            Pricing & Stock
+                        </strong>
+
+                        <span>
+                            Enter selling price, cost, stock and reorder level.
+                        </span>
+
+                    </div>
+
+
+                    <div class="form-grid">
+
+
+                        <div>
+
+                            <label>
+                                Cost Price
+                            </label>
+
+                            <div class="money-input">
+
+                                <span>
+                                    Nu.
+                                </span>
+
+                                <input
+                                    id="productCostPrice"
+                                    type="number"
+                                    min="0"
+                                    step="0.01">
+
+                            </div>
+
+                        </div>
+
+
+                        <div>
+
+                            <label>
+                                Sale Price
+                            </label>
+
+                            <div class="money-input">
+
+                                <span>
+                                    Nu.
+                                </span>
+
+                                <input
+                                    id="productSalePrice"
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    required>
+
+                            </div>
+
+                        </div>
+
+
+                        <div>
+
+                            <label>
+                                GST
+                            </label>
+
+                            <div class="tax-input">
+
+                                <input
+                                    id="productTax"
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value="7">
+
+                                <span>
+                                    %
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        <div>
+
+                            <label>
+                                Opening Stock
+                            </label>
+
+                            <input
+                                id="productOpeningStock"
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value="0">
+
+                        </div>
+
+
+                        <div>
+
+                            <label>
+                                Reorder Level
+                            </label>
+
+                            <input
+                                id="productReorderLevel"
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value="5">
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="product-form-section">
+
+
+                    <div class="product-form-section-title">
+
+                        <strong>
+                            Location
+                        </strong>
+
+                    </div>
+
+
+                    <div class="product-location-grid">
+
+
+                        <div class="product-location-option">
+
+                            <input
+                                type="radio"
+                                id="locationThimphu"
+                                name="productLocation"
+                                value="Thimphu"
+                                checked>
+
+                            <label for="locationThimphu">
+                                Thimphu
+                            </label>
+
+                        </div>
+
+
+                        <div class="product-location-option">
+
+                            <input
+                                type="radio"
+                                id="locationPhuntsholing"
+                                name="productLocation"
+                                value="Phuntsholing">
+
+                            <label for="locationPhuntsholing">
+                                Phuntsholing
+                            </label>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="product-form-section">
+
+
+                    <div class="product-form-section-title">
+
+                        <strong>
+                            Product Image
+                        </strong>
+
+                    </div>
+
+
+                    <div class="product-image-upload">
+
+                        <input
+                            type="file"
+                            id="productImage"
+                            accept="image/*">
+
+                        <img
+                            id="productImagePreview"
+                            class="product-image-preview"
+                            alt="Product preview">
+
+                    </div>
+
+                </div>
+
+
+                <div class="product-form-section">
+
+
+                    <div class="product-form-section-title">
+
+                        <strong>
+                            Details
+                        </strong>
+
+                    </div>
+
+
+                    <textarea
+                        id="productDetails"
+                        placeholder="Additional product details"></textarea>
+
                 </div>
 
             </div>
 
-            <div>
-                <label>GST %</label>
-                <input id="newPartGst" type="number" min="0" value="18">
+
+            <div
+                id="addProductError"
+                class="error-message">
             </div>
 
-        </div>
+
+            <div class="modal-footer">
 
 
-        <div id="addPartError" class="error-message"></div>
+                <button
+                    type="button"
+                    class="btn secondary"
+                    id="cancelAddProductBtn">
+                    Cancel
+                </button>
 
 
-        <div class="modal-footer">
+                <button
+                    type="submit"
+                    class="btn primary"
+                    id="saveProductBtn">
+                    Save Product
+                </button>
 
-            <button id="cancelAddPartBtn" class="btn secondary">
-                Cancel
-            </button>
+            </div>
 
-            <button id="savePartBtn" class="btn primary">
-                Save Part
-            </button>
-
-        </div>
+        </form>
 
     </div>
 
 </div>
 
+
+<!-- =============================================================
+     INVENTORY MANAGEMENT MODAL
+============================================================== -->
+
+<div
+    id="inventoryManagerModal"
+    class="modal">
+
+
+    <div
+        class="modal-backdrop"
+        data-close-modal="inventoryManagerModal">
+    </div>
+
+
+    <div class="modal-card management-modal">
+
+
+        <div class="modal-header">
+
+            <div>
+
+                <div class="kicker">
+                    INVENTORY MANAGEMENT
+                </div>
+
+                <h3 id="inventoryManagerTitle">
+                    Inventory Management
+                </h3>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="modal-close"
+                id="closeInventoryManagerBtn">
+                ×
+            </button>
+
+        </div>
+
+
+        <div
+            id="inventoryManagerContent"
+            class="management-content">
+        </div>
+
+    </div>
+
+</div>
 
 
 <!-- =============================================================
      INVOICE MODAL
 ============================================================== -->
-<div id="invoiceModal" class="modal">
 
-    <div class="modal-backdrop"></div>
+<div
+    id="invoiceModal"
+    class="modal">
+
+
+    <div
+        class="modal-backdrop"
+        data-close-modal="invoiceModal">
+    </div>
+
 
     <div class="modal-card invoice-modal">
+
 
         <div class="modal-header no-print">
 
             <div>
-                <div class="kicker">PAYMENT COMPLETED</div>
-                <h3>Invoice</h3>
+
+                <div class="kicker">
+                    SALES
+                </div>
+
+                <h3>
+                    Invoice
+                </h3>
+
             </div>
 
-            <button id="closeInvoiceBtn" class="modal-close">
+
+            <button
+                type="button"
+                class="modal-close"
+                id="closeInvoiceBtn">
                 ×
             </button>
 
         </div>
 
 
-        <div id="invoiceContent" class="invoice">
+        <div id="invoiceContent">
         </div>
 
 
         <div class="modal-footer no-print">
 
-            <button id="closeInvoiceBtn2" class="btn secondary">
+
+            <button
+                type="button"
+                class="btn secondary"
+                id="closeInvoiceFooterBtn">
                 Close
             </button>
 
-            <button id="printInvoiceBtn" class="btn primary">
-                🖨 Print Invoice
+
+            <button
+                type="button"
+                class="btn primary"
+                id="printInvoiceBtn">
+                Print Invoice
             </button>
 
         </div>
@@ -1009,16 +4290,473 @@
 </div>
 
 
+<!-- =============================================================
+     MRN MODAL
+============================================================== -->
+
+<div
+    id="mrnModal"
+    class="modal">
+
+
+    <div
+        class="modal-backdrop"
+        data-close-modal="mrnModal">
+    </div>
+
+
+    <div class="modal-card invoice-modal">
+
+
+        <div class="modal-header no-print">
+
+            <div>
+
+                <div class="kicker">
+                    STOCK RECEIPT
+                </div>
+
+                <h3>
+                    Material Receipt
+                </h3>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="modal-close"
+                id="closeMrnBtn">
+                ×
+            </button>
+
+        </div>
+
+
+        <div id="mrnContent">
+        </div>
+
+
+        <div class="modal-footer no-print">
+
+
+            <button
+                type="button"
+                class="btn secondary"
+                id="closeMrnFooterBtn">
+                Close
+            </button>
+
+
+            <button
+                type="button"
+                class="btn primary"
+                id="printMrnBtn">
+                Print MRN
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =============================================================
+     QUOTATION MODAL
+============================================================== -->
+
+<div
+    id="quotationModal"
+    class="modal">
+
+
+    <div
+        class="modal-backdrop"
+        data-close-modal="quotationModal">
+    </div>
+
+
+    <div class="modal-card invoice-modal">
+
+
+        <div class="modal-header no-print">
+
+            <div>
+
+                <div class="kicker">
+                    ESTIMATE
+                </div>
+
+                <h3>
+                    Quotation
+                </h3>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="modal-close"
+                id="closeQuotationBtn">
+                ×
+            </button>
+
+        </div>
+
+
+        <div id="quotationContent">
+        </div>
+
+
+        <div class="modal-footer no-print">
+
+
+            <button
+                type="button"
+                class="btn secondary"
+                id="closeQuotationFooterBtn">
+                Close
+            </button>
+
+
+            <button
+                type="button"
+                class="btn success"
+                id="convertQuotationBtn">
+                Send to Counter Sale
+            </button>
+
+
+            <button
+                type="button"
+                class="btn primary"
+                id="printQuotationBtn">
+                Print Quotation
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =============================================================
+     ADD PARTS MODAL (Requisition Slip Entry)
+============================================================== -->
+
+<div
+    id="addPartsModal"
+    class="modal">
+
+
+    <div
+        class="modal-backdrop"
+        data-close-modal="addPartsModal">
+    </div>
+
+
+    <div class="modal-card add-product-modal">
+
+
+        <div class="modal-header">
+
+            <div>
+
+                <div class="kicker">
+                    WORKSHOP REQUISITION
+                </div>
+
+                <h3>
+                    Add Parts to Requisition
+                </h3>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="modal-close"
+                id="closeAddPartsBtn">
+                ×
+            </button>
+
+        </div>
+
+
+        <form id="addPartForm">
+
+            <input type="hidden" id="addPartJobId">
+
+            <div class="product-form">
+
+
+                <div class="product-form-section">
+
+                    <div class="product-form-section-title">
+
+                        <strong>
+                            Job Card
+                        </strong>
+
+                        <span id="addPartJobLabel">
+                            -
+                        </span>
+
+                    </div>
+
+
+                    <div class="form-grid form-grid-4">
+
+
+                        <div>
+
+                            <label>
+                                Requisition No.
+                            </label>
+
+                            <input
+                                id="addPartRequisitionNo"
+                                type="text"
+                                readonly>
+
+                        </div>
+
+
+                        <div>
+
+                            <label>
+                                Requisition Date
+                            </label>
+
+                            <input
+                                id="addPartRequisitionDate"
+                                type="date">
+
+                        </div>
+
+
+                        <div>
+
+                            <label>
+                                Warranty
+                            </label>
+
+                            <select id="addPartWarranty">
+
+                                <option value="No">
+                                    No
+                                </option>
+
+                                <option value="Yes">
+                                    Yes
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div>
+
+                            <label>
+                                B.Cov. (Bill Coverage)
+                            </label>
+
+                            <select id="addPartBCov">
+
+                                <option value="No">
+                                    No
+                                </option>
+
+                                <option value="Yes">
+                                    Yes
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="product-form-section">
+
+                    <div class="product-form-section-title">
+
+                        <strong>
+                            Part Line
+                        </strong>
+
+                        <span>
+                            Search the part being requested and set the quantity.
+                        </span>
+
+                    </div>
+
+
+                    <div class="form-grid form-grid-4">
+
+
+                        <div class="product-field">
+
+                            <label>
+                                Part No.
+                            </label>
+
+                            <select id="addPartPartSelect">
+
+                                <option value="">
+                                    Select part
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div>
+
+                            <label>
+                                Current Stock
+                            </label>
+
+                            <input
+                                id="addPartCurrentStock"
+                                type="text"
+                                readonly>
+
+                        </div>
+
+
+                        <div>
+
+                            <label>
+                                Qty Requested
+                            </label>
+
+                            <input
+                                id="addPartQty"
+                                type="number"
+                                min="1"
+                                step="1"
+                                value="1">
+
+                        </div>
+
+
+                        <div>
+
+                            <label>
+                                Rate
+                            </label>
+
+                            <input
+                                id="addPartRate"
+                                type="number"
+                                min="0"
+                                step="0.01">
+
+                        </div>
+
+
+                        <div>
+
+                            <label>
+                                N.B. (Non-Billable)
+                            </label>
+
+                            <select id="addPartNb">
+
+                                <option value="No">
+                                    No
+                                </option>
+
+                                <option value="Yes">
+                                    Yes
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div>
+
+                            <label>
+                                E.W. (Extended Warranty)
+                            </label>
+
+                            <select id="addPartEw">
+
+                                <option value="No">
+                                    No
+                                </option>
+
+                                <option value="Yes">
+                                    Yes
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div
+                id="addPartError"
+                class="error-message">
+            </div>
+
+
+            <div class="modal-footer">
+
+                <button
+                    type="button"
+                    class="btn secondary"
+                    id="cancelAddPartBtn">
+                    Cancel
+                </button>
+
+                <button
+                    type="submit"
+                    class="btn primary">
+                    Add to Requisition
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
 
 <!-- =============================================================
      TOAST
 ============================================================== -->
-<div id="toast" class="toast">
-    <span id="toastMessage"></span>
+
+<div
+    id="toast"
+    class="toast">
 </div>
 
+
+<!-- =============================================================
+     JAVASCRIPT
+============================================================== -->
 
 <script src="storekeeper.js"></script>
 
 </body>
+
 </html>

@@ -1,509 +1,612 @@
 /* ==========================================================================
    sign_in.js — sign-in behaviour
    --------------------------------------------------------------------------
-   Path: zimdra-dms/auth/sign_in.js
+   Path:
+   zimdra-dms/auth/sign_in.js
 
-   PROTOTYPE ONLY.
+   PROTOTYPE ONLY
+   --------------------------------------------------------------------------
+   Demo authentication:
    Any 4-digit PIN is accepted.
+
+   Roles:
+     1. Job Card Entry
+     2. Storekeeper
+     3. Billing
+     4. Admin
+
+   Responsibilities:
+     - Populate role dropdown
+     - Display role-specific user information
+     - Handle four-digit PIN
+     - Validate sign-in
+     - Save terminal session
+     - Remember last sign-in
+     - Route user to correct dashboard
    ========================================================================== */
 
 (function () {
   "use strict";
 
-  /* ------------------------------------------------------------------------
-     DESKS / ROLES
-     ------------------------------------------------------------------------ */
+  /* ========================================================================
+       1. ROLE CONFIGURATION
+       ======================================================================== */
 
-  const DESKS = [
-    {
-      role: "Service_Supervisor",
-      label: "Service supervisor",
-      hint: "Allocates jobs to bays and mechanics, approves labour and tracks WIP.",
-      id: "ZM-SS-02",
-      name: "S. Sarkar",
-      emp: "ZAW16",
-      waiting: 5,
+  const ROLES = {
+    "job-card-entry": {
+      label: "Job Card Entry",
+      userId: "JCE-001",
+      userName: "Job Card Officer",
+      hint: "Create job cards, capture customer and vehicle information, and start workshop jobs.",
+      status: "Job Card Entry desk ready.",
+      redirect: "../role_dashboard/Job_Card_Entry/job_card_entry.html",
     },
 
-    {
-      role: "Workshop_Technician",
-      label: "Workshop technician",
-      hint: "Reads assigned jobs, records work done and raises parts requisitions.",
-      id: "ZM-ER-01",
-      name: "E. Rai",
-      emp: "Z015",
-      waiting: 3,
-    },
-
-    {
-      role: "Storekeeper",
+    storekeeper: {
       label: "Storekeeper",
-      hint: "Issues parts against requisitions, keeps stock and raises purchase requisitions.",
-      id: "ZM-DG-04",
-      name: "D. Gyeltshen",
-      emp: "ZAW02",
-      waiting: 2,
+      userId: "STR-001",
+      userName: "Storekeeper",
+      hint: "Manage inventory, process parts requests, issue parts and handle counter sales.",
+      status: "Storekeeper desk ready.",
+      redirect: "../role_dashboard/Storekeeper/storekeeper.html",
     },
 
-    {
-      role: "Clerk_Billing",
-      label: "Billing clerk",
-      hint: "Prepares and posts bills, records payments and manages credit.",
-      id: "ZM-KW-05",
-      name: "K. Wangmo",
-      emp: "ZAW05",
-      waiting: 4,
+    billing: {
+      label: "Billing",
+      userId: "BIL-001",
+      userName: "Billing Clerk",
+      hint: "Fetch completed job cards, review issued parts and labour, calculate taxes and prepare invoices.",
+      status: "Billing desk ready.",
+      redirect: "../role_dashboard/Billing/billing.html",
     },
 
-    {
-      role: "Admin",
+    admin: {
       label: "Admin",
-      hint: "Reviews throughput, technician productivity, revenue and dead stock.",
-      id: "ZM-TD-03",
-      name: "T. Dorji",
-      emp: "ZAW79",
-      waiting: 0,
+      userId: "ADM-001",
+      userName: "System Administrator",
+      hint: "Manage users, workshop configuration, reports, controls and overall system activity.",
+      status: "Administrator access ready.",
+      redirect: "../role_dashboard/Admin/admin.html",
     },
-  ];
-
-  /* ------------------------------------------------------------------------
-     PROTOTYPE SETTINGS
-     ------------------------------------------------------------------------
-
-     TRUE = redirect to the selected role dashboard.
-     ------------------------------------------------------------------------ */
-
-  const REDIRECT = true;
-
-  /* ------------------------------------------------------------------------
-     ELEMENT HELPERS
-     ------------------------------------------------------------------------ */
-
-  const $ = function (selector) {
-    return document.querySelector(selector);
   };
 
-  const el = {
-    desk: $("#desk"),
-    hint: $("#deskHint"),
-    userId: $("#userId"),
-    userName: $("#userName"),
+  /* ========================================================================
+       2. DOM REFERENCES
+       ======================================================================== */
 
-    pinRow: $("#pinRow"),
-    pinError: $("#pinError"),
+  const desk = document.getElementById("desk");
 
-    submit: $("#submit"),
-    bay: $("#bay"),
+  const deskHint = document.getElementById("deskHint");
 
-    stay: $("#stay"),
+  const userId = document.getElementById("userId");
 
-    waiting: $("#waiting"),
-    lastSeen: $("#lastSeen"),
+  const userName = document.getElementById("userName");
 
-    done: $("#done"),
-    doneTitle: $("#doneTitle"),
-    doneBody: $("#doneBody"),
+  const pin = document.getElementById("pin");
+
+  const pinInputs = Array.from(pin.querySelectorAll("input"));
+
+  const pinRow = document.getElementById("pinRow");
+
+  const pinError = document.getElementById("pinError");
+
+  const stay = document.getElementById("stay");
+
+  const submit = document.getElementById("submit");
+
+  const signin = document.getElementById("signin");
+
+  const done = document.getElementById("done");
+
+  const doneTitle = document.getElementById("doneTitle");
+
+  const doneBody = document.getElementById("doneBody");
+
+  const waiting = document.getElementById("waiting");
+
+  const lastSeen = document.getElementById("lastSeen");
+
+  /* ========================================================================
+       3. STORAGE KEYS
+       ======================================================================== */
+
+  const STORAGE = {
+    session: "zimdra_dms_session",
+
+    terminal: "zimdra_dms_terminal_user",
+
+    lastSeen: "zimdra_dms_last_seen",
   };
 
-  /* ------------------------------------------------------------------------
-     PIN INPUTS
-     ------------------------------------------------------------------------ */
+  /* ========================================================================
+       4. HELPERS
+       ======================================================================== */
 
-  const pins = Array.prototype.slice.call(
-    document.querySelectorAll("#pin input"),
-  );
-
-  /* ------------------------------------------------------------------------
-     DESK SELECTION
-     ------------------------------------------------------------------------ */
-
-  DESKS.forEach(function (desk, index) {
-    const option = document.createElement("option");
-
-    option.value = String(index);
-    option.textContent = desk.label;
-
-    el.desk.appendChild(option);
-  });
-
-  function current() {
-    return DESKS[Number(el.desk.value)];
+  function getRole() {
+    return ROLES[desk.value] || null;
   }
 
-  function paintDesk() {
-    const desk = current();
-
-    if (!desk) {
-      return;
-    }
-
-    el.hint.textContent = desk.hint;
-
-    el.userId.textContent = desk.id;
-    el.userName.textContent = desk.name;
-
-    /* Waiting jobs */
-
-    el.waiting.textContent =
-      desk.waiting === 0
-        ? "No jobs waiting at this desk"
-        : desk.waiting +
-          (desk.waiting === 1
-            ? " job waiting at this desk"
-            : " jobs waiting at this desk");
-
-    el.waiting.setAttribute(
-      "data-status",
-      desk.waiting === 0 ? "posted" : "ready",
-    );
-
-    clearPin();
-    hideError();
-
-    el.done.hidden = true;
-  }
-
-  el.desk.addEventListener("change", paintDesk);
-
-  /* ------------------------------------------------------------------------
-     LAST SIGNED IN
-     ------------------------------------------------------------------------ */
-
-  (function lastSeen() {
-    const time = new Date();
-
-    time.setDate(time.getDate() - 4);
-
-    time.setHours(8, 12, 0, 0);
-
-    const pad = function (number) {
-      return String(number).padStart(2, "0");
-    };
-
-    el.lastSeen.textContent =
-      pad(time.getDate()) +
-      "/" +
-      pad(time.getMonth() + 1) +
-      "/" +
-      time.getFullYear() +
-      " " +
-      pad(time.getHours()) +
-      ":" +
-      pad(time.getMinutes());
-  })();
-
-  /* ------------------------------------------------------------------------
-     PIN ENTRY
-     ------------------------------------------------------------------------ */
-
-  pins.forEach(function (box, index) {
-    /* Single digit input */
-
-    box.addEventListener("input", function () {
-      box.value = box.value.replace(/\D/g, "").slice(0, 1);
-
-      box.dataset.filled = box.value ? "true" : "false";
-
-      hideError();
-
-      /* Move to next box */
-
-      if (box.value && index < pins.length - 1) {
-        pins[index + 1].focus();
-      }
-
-      syncSubmit();
-    });
-
-    /* Keyboard navigation */
-
-    box.addEventListener("keydown", function (event) {
-      /* Backspace */
-
-      if (event.key === "Backspace" && !box.value && index > 0) {
-        event.preventDefault();
-
-        pins[index - 1].value = "";
-
-        pins[index - 1].dataset.filled = "false";
-
-        pins[index - 1].focus();
-
-        syncSubmit();
-      }
-
-      /* Left arrow */
-
-      if (event.key === "ArrowLeft" && index > 0) {
-        event.preventDefault();
-
-        pins[index - 1].focus();
-      }
-
-      /* Right arrow */
-
-      if (event.key === "ArrowRight" && index < pins.length - 1) {
-        event.preventDefault();
-
-        pins[index + 1].focus();
-      }
-    });
-
-    /* Paste */
-
-    box.addEventListener("paste", function (event) {
-      event.preventDefault();
-
-      const clipboard = event.clipboardData || window.clipboardData;
-
-      const digits = (clipboard ? clipboard.getData("text") : "")
-        .replace(/\D/g, "")
-        .slice(0, 4)
-        .split("");
-
-      digits.forEach(function (digit, position) {
-        if (pins[position]) {
-          pins[position].value = digit;
-
-          pins[position].dataset.filled = "true";
-        }
-      });
-
-      const next = pins[digits.length] || pins[pins.length - 1];
-
-      if (next) {
-        next.focus();
-      }
-
-      hideError();
-      syncSubmit();
-    });
-  });
-
-  /* ------------------------------------------------------------------------
-     PIN VALUE
-     ------------------------------------------------------------------------ */
-
-  function pinValue() {
-    return pins
+  function getPin() {
+    return pinInputs
       .map(function (input) {
         return input.value;
       })
       .join("");
   }
 
-  /* ------------------------------------------------------------------------
-     ENABLE / DISABLE SUBMIT
-     ------------------------------------------------------------------------ */
-
-  function syncSubmit() {
-    const complete = /^\d{4}$/.test(pinValue());
-
-    el.submit.disabled = !complete;
-  }
-
-  /* ------------------------------------------------------------------------
-     CLEAR PIN
-     ------------------------------------------------------------------------ */
-
   function clearPin() {
-    pins.forEach(function (input) {
+    pinInputs.forEach(function (input) {
       input.value = "";
-
-      input.dataset.filled = "false";
     });
 
-    syncSubmit();
+    pinInputs[0].focus();
   }
 
-  /* ------------------------------------------------------------------------
-     ERRORS
-     ------------------------------------------------------------------------ */
+  function setWaiting(message, state) {
+    waiting.textContent = message || "—";
+
+    if (state) {
+      waiting.dataset.status = state;
+    } else {
+      waiting.dataset.status = "ready";
+    }
+  }
 
   function showError(message) {
-    el.pinError.textContent = message;
+    pinError.textContent = message;
 
-    el.pinError.hidden = false;
+    pinError.hidden = false;
 
-    el.pinRow.dataset.invalid = "true";
+    pinRow.classList.add("is-error");
+
+    pinRow.classList.remove("is-success");
+
+    setWaiting("Sign-in requires attention.", "error");
   }
 
-  function hideError() {
-    el.pinError.hidden = true;
+  function clearError() {
+    pinError.textContent = "";
 
-    el.pinRow.dataset.invalid = "false";
+    pinError.hidden = true;
+
+    pinRow.classList.remove("is-error");
   }
 
-  /* ------------------------------------------------------------------------
-     CREATE PROTOTYPE SESSION
-     ------------------------------------------------------------------------ */
+  function showSuccess() {
+    pinError.textContent = "";
 
-  function createSession(desk, density) {
+    pinError.hidden = true;
+
+    pinRow.classList.remove("is-error");
+
+    pinRow.classList.add("is-success");
+  }
+
+  function formatDateTime(date) {
+    return new Intl.DateTimeFormat("en-BT", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    }).format(date);
+  }
+
+  /* ========================================================================
+       5. LAST SIGN-IN
+       ======================================================================== */
+
+  function renderLastSeen() {
+    const stored = localStorage.getItem(STORAGE.lastSeen);
+
+    if (!stored) {
+      lastSeen.textContent = "—";
+
+      return;
+    }
+
+    const date = new Date(stored);
+
+    if (Number.isNaN(date.getTime())) {
+      lastSeen.textContent = "—";
+
+      return;
+    }
+
+    lastSeen.textContent = formatDateTime(date);
+  }
+
+  /* ========================================================================
+       6. ROLE INFORMATION
+       ======================================================================== */
+
+  function updateRoleInformation() {
+    clearError();
+
+    const role = getRole();
+
+    if (!role) {
+      userId.textContent = "";
+
+      userName.textContent = "";
+
+      deskHint.textContent = "Select the desk you are assigned to.";
+
+      setWaiting("Select a role to continue.", "ready");
+
+      return;
+    }
+
+    userId.textContent = role.userId;
+
+    userName.textContent = role.userName;
+
+    deskHint.textContent = role.hint;
+
+    setWaiting(role.status, "ready");
+  }
+
+  /* ========================================================================
+       7. PIN INPUT BEHAVIOUR
+       ======================================================================== */
+
+  function bindPinInputs() {
+    pinInputs.forEach(function (input, index) {
+      /* --------------------------------------------------------------
+               Only numeric characters
+            -------------------------------------------------------------- */
+
+      input.addEventListener("input", function () {
+        const value = input.value.replace(/\D/g, "");
+
+        input.value = value.slice(0, 1);
+
+        clearError();
+
+        if (input.value && index < pinInputs.length - 1) {
+          pinInputs[index + 1].focus();
+        }
+
+        if (getPin().length === 4) {
+          setWaiting("PIN entered. Ready to sign in.", "ready");
+        }
+      });
+
+      /* --------------------------------------------------------------
+               Keyboard navigation
+            -------------------------------------------------------------- */
+
+      input.addEventListener("keydown", function (event) {
+        if (event.key === "Backspace" && !input.value && index > 0) {
+          pinInputs[index - 1].focus();
+
+          pinInputs[index - 1].value = "";
+
+          event.preventDefault();
+        }
+
+        if (event.key === "ArrowLeft" && index > 0) {
+          pinInputs[index - 1].focus();
+
+          event.preventDefault();
+        }
+
+        if (event.key === "ArrowRight" && index < pinInputs.length - 1) {
+          pinInputs[index + 1].focus();
+
+          event.preventDefault();
+        }
+      });
+
+      /* --------------------------------------------------------------
+               Paste support
+            -------------------------------------------------------------- */
+
+      input.addEventListener("paste", function (event) {
+        event.preventDefault();
+
+        const pasted = (event.clipboardData || window.clipboardData)
+          .getData("text")
+          .replace(/\D/g, "")
+          .slice(0, 4);
+
+        if (!pasted) {
+          return;
+        }
+
+        pasted.split("").forEach(function (digit, digitIndex) {
+          if (pinInputs[digitIndex]) {
+            pinInputs[digitIndex].value = digit;
+          }
+        });
+
+        const nextIndex = Math.min(pasted.length, pinInputs.length - 1);
+
+        pinInputs[nextIndex].focus();
+
+        clearError();
+      });
+    });
+  }
+
+  /* ========================================================================
+       8. FORM VALIDATION
+       ======================================================================== */
+
+  function validateForm() {
+    const role = getRole();
+
+    if (!role) {
+      showError("Please select your role before signing in.");
+
+      desk.focus();
+
+      return false;
+    }
+
+    const enteredPin = getPin();
+
+    if (!/^\d{4}$/.test(enteredPin)) {
+      showError("Enter a four-digit PIN.");
+
+      const firstEmpty = pinInputs.find(function (input) {
+        return !input.value;
+      });
+
+      (firstEmpty || pinInputs[0]).focus();
+
+      return false;
+    }
+
+    return true;
+  }
+
+  /* ========================================================================
+       9. CREATE SESSION
+       ======================================================================== */
+
+  function createSession(role) {
+    const now = new Date();
+
     const session = {
-      role: desk.role,
+      authenticated: true,
 
-      roleLabel: desk.label,
+      roleKey: desk.value,
 
-      employeeCode: desk.emp,
+      role: role.label,
 
-      userId: desk.id,
+      userId: role.userId,
 
-      name: desk.name,
+      userName: role.userName,
 
-      density: density === "bay" ? "bay" : "desk",
+      signedInAt: now.toISOString(),
 
-      remember: el.stay.checked,
-
-      location: "Phuentsholing",
-
-      at: new Date().toISOString(),
+      terminal: "this-terminal",
     };
 
     /*
-      Save session so the dashboard can identify
-      which role/user has logged in.
-    */
+     * "Keep me signed in" uses localStorage.
+     *
+     * Without it, sessionStorage is used and disappears
+     * when the browser tab/session ends.
+     */
 
-    sessionStorage.setItem("ZIMDRA_SESSION", JSON.stringify(session));
+    if (stay.checked) {
+      localStorage.setItem(STORAGE.session, JSON.stringify(session));
 
-    /*
-      Also expose it globally for prototype use.
-    */
+      localStorage.setItem(STORAGE.terminal, JSON.stringify(session));
+    } else {
+      sessionStorage.setItem(STORAGE.session, JSON.stringify(session));
+    }
 
-    window.ZIMDRA_SESSION = session;
+    localStorage.setItem(STORAGE.lastSeen, now.toISOString());
 
     return session;
   }
 
-  /* ------------------------------------------------------------------------
-     DASHBOARD URL
-     ------------------------------------------------------------------------ */
+  /* ========================================================================
+       10. SHOW SUCCESS MESSAGE
+       ======================================================================== */
 
-  function getDashboardUrl(role) {
-    const dashboards = {
-      Admin: "../role_dashboard/Admin/admin.html",
-      Storekeeper: "../role_dashboard/Storekeeper/storekeeper.html",
-      Service_Supervisor:
-        "../role_dashboard/Service_Supervisor/service_supervisor.html",
-      Clerk_Billing: "../role_dashboard/Clerk_Billing/clerk_billing.html",
-      Workshop_Technician:
-        "../role_dashboard/Workshop_Technician/workshop_technician.html",
-    };
+  function showDone(role) {
+    doneTitle.textContent = "Signed in successfully";
 
-    return dashboards[role] || "../role_dashboard/Admin/admin.html";
+    doneBody.textContent =
+      role.label + " · " + role.userName + " · opening workspace…";
+
+    done.hidden = false;
+
+    showSuccess();
+
+    setWaiting("Access granted.", "success");
   }
 
-  /* ------------------------------------------------------------------------
-     SIGN IN
-     ------------------------------------------------------------------------ */
+  /* ========================================================================
+       11. REDIRECT
+       ======================================================================== */
 
-  function signIn(desk, density) {
-    const session = createSession(desk, density);
-
-    const destination = getDashboardUrl(desk.role);
-
-    hideError();
-
+  function redirectToRole(role) {
     /*
-      Redirect immediately after successful
-      prototype authentication.
-    */
+     * Small delay allows the success state to be visible.
+     */
 
-    if (REDIRECT) {
-      window.location.href = destination;
-
-      return;
-    }
-
-    /*
-      Fallback confirmation if REDIRECT
-      is turned off.
-    */
-
-    el.done.hidden = false;
-
-    el.doneTitle.textContent = "Signed in as " + desk.name + " · " + desk.label;
-
-    el.doneBody.innerHTML =
-      "Opening <code>" +
-      destination +
-      "</code>" +
-      (session.density === "bay" ? " in bay density." : ".");
+    window.setTimeout(function () {
+      window.location.href = role.redirect;
+    }, 500);
   }
 
-  /* ------------------------------------------------------------------------
-     SUBMIT LOGIN
-     ------------------------------------------------------------------------ */
+  /* ========================================================================
+       12. SUBMIT
+       ======================================================================== */
 
-  $("#signin").addEventListener("submit", function (event) {
+  function handleSubmit(event) {
     event.preventDefault();
 
-    const desk = current();
+    clearError();
 
-    const pin = pinValue();
+    if (!validateForm()) {
+      return;
+    }
+
+    const role = getRole();
 
     /*
-        Any 4-digit PIN is accepted.
-      */
+     * DEMO AUTHENTICATION
+     * -------------------
+     * Any four-digit PIN is accepted.
+     */
 
-    if (!/^\d{4}$/.test(pin)) {
-      showError("Enter all 4 PIN digits before signing in.");
+    submit.disabled = true;
 
-      if (pins[0]) {
-        pins[0].focus();
+    submit.setAttribute("aria-busy", "true");
+
+    setWaiting("Checking access…", "working");
+
+    window.setTimeout(function () {
+      createSession(role);
+
+      showDone(role);
+
+      redirectToRole(role);
+    }, 350);
+  }
+
+  /* ========================================================================
+       13. ROLE CHANGE
+       ======================================================================== */
+
+  function handleRoleChange() {
+    updateRoleInformation();
+
+    clearPin();
+
+    submit.disabled = false;
+
+    submit.removeAttribute("aria-busy");
+  }
+
+  /* ========================================================================
+       14. ENTER KEY
+       ======================================================================== */
+
+  function bindKeyboardSubmit() {
+    signin.addEventListener("keydown", function (event) {
+      if (
+        event.key === "Enter" &&
+        document.activeElement.tagName !== "SELECT"
+      ) {
+        /*
+         * Let normal form submission handle Enter
+         * when the PIN is complete.
+         */
+
+        if (getPin().length === 4) {
+          event.preventDefault();
+
+          signin.requestSubmit();
+        }
       }
+    });
+  }
 
+  /* ========================================================================
+       15. RESTORE PREVIOUS TERMINAL USER
+    ======================================================================== */
+
+  function restoreTerminalUser() {
+    const stored = localStorage.getItem(STORAGE.terminal);
+
+    if (!stored) {
       return;
     }
 
-    signIn(desk, "desk");
-  });
+    try {
+      const session = JSON.parse(stored);
 
-  /* ------------------------------------------------------------------------
-     BAY TABLET LOGIN
-     ------------------------------------------------------------------------ */
-
-  el.bay.addEventListener("click", function () {
-    const desk = current();
-
-    const pin = pinValue();
-
-    if (!/^\d{4}$/.test(pin)) {
-      showError("Enter all 4 PIN digits first, then choose the bay tablet.");
-
-      if (pins[0]) {
-        pins[0].focus();
+      if (!session || !session.roleKey || !ROLES[session.roleKey]) {
+        return;
       }
 
-      return;
+      /*
+       * Restore the last role.
+       *
+       * PIN is deliberately NOT restored.
+       */
+
+      desk.value = session.roleKey;
+
+      updateRoleInformation();
+
+      setWaiting("Previous terminal user: " + session.userName, "ready");
+    } catch (error) {
+      console.warn("Unable to restore terminal user.", error);
+    }
+  }
+
+  /* ========================================================================
+       16. CHECK EXISTING SESSION
+    ======================================================================== */
+
+  function hasExistingSession() {
+    const local = localStorage.getItem(STORAGE.session);
+
+    const temporary = sessionStorage.getItem(STORAGE.session);
+
+    return !!(local || temporary);
+  }
+
+  /* ========================================================================
+       17. INITIALIZE
+    ======================================================================== */
+
+  function init() {
+    /*
+     * Initial state
+     */
+
+    updateRoleInformation();
+
+    renderLastSeen();
+
+    bindPinInputs();
+
+    bindKeyboardSubmit();
+
+    /*
+     * Role selector
+     */
+
+    desk.addEventListener("change", handleRoleChange);
+
+    /*
+     * Form submission
+     */
+
+    signin.addEventListener("submit", handleSubmit);
+
+    /*
+     * Restore previous terminal role
+     */
+
+    restoreTerminalUser();
+
+    /*
+     * If a session already exists,
+     * keep the user informed but do not
+     * automatically redirect.
+     */
+
+    if (hasExistingSession()) {
+      setWaiting("Previous terminal session found.", "ready");
     }
 
-    document.documentElement.setAttribute("data-density", "bay");
+    /*
+     * Focus role selector
+     */
 
-    signIn(desk, "bay");
-  });
-
-  /* ------------------------------------------------------------------------
-     BOOT
-     ------------------------------------------------------------------------
-
-     Service Supervisor is selected by default.
-     ------------------------------------------------------------------------ */
-
-  const supervisorIndex = DESKS.findIndex(function (desk) {
-    return desk.role === "Service_Supervisor";
-  });
-
-  if (supervisorIndex !== -1) {
-    el.desk.value = String(supervisorIndex);
+    desk.focus();
   }
 
-  paintDesk();
-  syncSubmit();
+  /* ========================================================================
+       18. START APPLICATION
+    ======================================================================== */
 
-  /* Initial PIN focus */
-
-  if (pins.length) {
-    pins[0].focus();
-  }
+  init();
 })();

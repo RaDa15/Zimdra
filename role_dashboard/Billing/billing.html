@@ -6,7 +6,7 @@
 
     <title>Billing Clerk | Zimdra DMS</title>
 
-    <link rel="stylesheet" href="clerk_billing.css">
+    <link rel="stylesheet" href="billing.css">
 </head>
 
 <body>
@@ -361,6 +361,11 @@
                     </div>
 
                     <div class="info-box">
+                        <span>Customer Code</span>
+                        <strong id="jobCustomerCode">—</strong>
+                    </div>
+
+                    <div class="info-box">
                         <span>Mobile</span>
                         <strong id="jobMobile">—</strong>
                     </div>
@@ -376,13 +381,58 @@
                     </div>
 
                     <div class="info-box">
+                        <span>Chassis No.</span>
+                        <strong id="jobChassis">—</strong>
+                    </div>
+
+                    <div class="info-box">
+                        <span>Job Order No.</span>
+                        <strong id="jobOrderNo">—</strong>
+                    </div>
+
+                    <div class="info-box">
+                        <span>Job Date</span>
+                        <strong id="jobDateValue">—</strong>
+                    </div>
+
+                    <div class="info-box">
+                        <span>O.MLG (Odometer)</span>
+                        <strong id="jobOmlg">—</strong>
+                    </div>
+
+                    <div class="info-box">
+                        <span>Bay</span>
+                        <strong id="jobBay">—</strong>
+                    </div>
+
+                    <div class="info-box">
+                        <span>Govt. Vehicle</span>
+                        <strong id="jobGovtVehicle">—</strong>
+                    </div>
+
+                    <div class="info-box">
+                        <span>G.P. No. (Gate Pass)</span>
+                        <strong id="jobGpNo">—</strong>
+                    </div>
+
+                    <div class="info-box">
                         <span>Mechanic</span>
                         <strong id="jobMechanic">—</strong>
                     </div>
 
                     <div class="info-box">
-                        <span>Supervisor</span>
+                        <span>Mechanic 2</span>
+                        <strong id="jobMechanic2">—</strong>
+                    </div>
+
+                    <div class="info-box">
+                        <span>Floor Supervisor</span>
                         <strong id="jobSupervisor">—</strong>
+                    </div>
+
+                    <div class="info-box">
+                        <span>Delivered By</span>
+                        <strong id="jobDeliveredBy">—</strong>
                     </div>
 
                 </div>
@@ -447,6 +497,114 @@
                 </div>
 
 
+                <!-- BILL TYPE & PAYMENT (legacy Bill Preparation fields) -->
+
+                <div class="subsection">
+
+                    <div class="subsection-header">
+
+                        <div>
+                            <h4>Bill Type &amp; Payment</h4>
+                            <p>
+                                How this bill is being raised and settled.
+                            </p>
+                        </div>
+
+                    </div>
+
+
+                    <div class="charges-grid">
+
+                        <div class="field">
+
+                            <label for="billKind">
+                                Cash / Invoice (I/C)
+                            </label>
+
+                            <select id="billKind">
+                                <option value="Cash">Cash</option>
+                                <option value="Invoice">Invoice</option>
+                            </select>
+
+                        </div>
+
+
+                        <div class="field">
+
+                            <label for="creditCardYN">
+                                Payment Through Credit Card
+                            </label>
+
+                            <select id="creditCardYN">
+                                <option value="N">No</option>
+                                <option value="Y">Yes</option>
+                            </select>
+
+                        </div>
+
+
+                        <div class="field">
+
+                            <label for="cardCode">
+                                Card Code
+                            </label>
+
+                            <input
+                                type="text"
+                                id="cardCode"
+                                placeholder="If paid by card"
+                            >
+
+                        </div>
+
+
+                        <div class="field">
+
+                            <label for="govtVehicleYN">
+                                Govt. Vehicle
+                            </label>
+
+                            <select id="govtVehicleYN">
+                                <option value="N">No</option>
+                                <option value="Y">Yes</option>
+                            </select>
+
+                        </div>
+
+
+                        <div class="field">
+
+                            <label for="chequeNo">
+                                Cheque No.
+                            </label>
+
+                            <input
+                                type="text"
+                                id="chequeNo"
+                                placeholder="If paid by cheque"
+                            >
+
+                        </div>
+
+
+                        <div class="field">
+
+                            <label for="chequeDate">
+                                Cheque Date
+                            </label>
+
+                            <input
+                                type="date"
+                                id="chequeDate"
+                            >
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
                 <!-- BILLING ADJUSTMENTS -->
 
                 <div class="subsection">
@@ -484,6 +642,23 @@
 
                         <div class="field">
 
+                            <label for="handlingCharge">
+                                Handling Charge
+                            </label>
+
+                            <input
+                                type="number"
+                                id="handlingCharge"
+                                min="0"
+                                step="0.01"
+                                value="0"
+                            >
+
+                        </div>
+
+
+                        <div class="field">
+
                             <label for="otherCharge">
                                 Other Charges
                             </label>
@@ -501,8 +676,25 @@
 
                         <div class="field">
 
+                            <label for="surchargeAmount">
+                                Surcharge
+                            </label>
+
+                            <input
+                                type="number"
+                                id="surchargeAmount"
+                                min="0"
+                                step="0.01"
+                                value="0"
+                            >
+
+                        </div>
+
+
+                        <div class="field">
+
                             <label for="billingDiscount">
-                                Discount
+                                Special Discount (Amount)
                             </label>
 
                             <input
@@ -518,14 +710,49 @@
 
                         <div class="field">
 
+                            <label for="specialDiscountPercent">
+                                Special Discount (%)
+                            </label>
+
+                            <input
+                                type="number"
+                                id="specialDiscountPercent"
+                                min="0"
+                                max="100"
+                                step="0.01"
+                                value="0"
+                            >
+
+                        </div>
+
+
+                        <div class="field">
+
+                            <label for="labourServiceDiscount">
+                                Labour &amp; Service Discount
+                            </label>
+
+                            <input
+                                type="number"
+                                id="labourServiceDiscount"
+                                min="0"
+                                step="0.01"
+                                value="0"
+                            >
+
+                        </div>
+
+
+                        <div class="field grow">
+
                             <label for="billingNotes">
-                                Billing Notes
+                                Details of Work Done / Billing Notes
                             </label>
 
                             <input
                                 type="text"
                                 id="billingNotes"
-                                placeholder="Optional notes"
+                                placeholder="Advance paid ref, amount, mode of payment, work done..."
                             >
 
                         </div>
@@ -540,8 +767,15 @@
                 <div class="billing-summary">
 
                     <div class="summary-row">
-                        <span>Parts Subtotal</span>
+                        <span>Parts Subtotal (Spares/Oils)</span>
                         <strong id="partsSubtotal">
+                            Nu. 0.00
+                        </strong>
+                    </div>
+
+                    <div class="summary-row">
+                        <span>Handling Charge</span>
+                        <strong id="handlingTotal">
                             Nu. 0.00
                         </strong>
                     </div>
@@ -561,10 +795,19 @@
                     </div>
 
                     <div class="summary-row">
-                        <span>Discount</span>
+                        <span>Special Discount (Amt + %)</span>
                         <strong
                             class="discount-value"
                             id="discountTotal">
+                            Nu. 0.00
+                        </strong>
+                    </div>
+
+                    <div class="summary-row">
+                        <span>Labour &amp; Service Discount</span>
+                        <strong
+                            class="discount-value"
+                            id="labourServiceDiscountTotal">
                             Nu. 0.00
                         </strong>
                     </div>
@@ -577,8 +820,29 @@
                     </div>
 
                     <div class="summary-row">
-                        <span>GST</span>
-                        <strong id="gstTotal">
+                        <span>GST on Spares/Oils</span>
+                        <strong id="gstSparesTotal">
+                            Nu. 0.00
+                        </strong>
+                    </div>
+
+                    <div class="summary-row">
+                        <span>GST on Service</span>
+                        <strong id="gstServiceTotal">
+                            Nu. 0.00
+                        </strong>
+                    </div>
+
+                    <div class="summary-row">
+                        <span>Surcharge</span>
+                        <strong id="surchargeTotal">
+                            Nu. 0.00
+                        </strong>
+                    </div>
+
+                    <div class="summary-row">
+                        <span>GST on Surcharge</span>
+                        <strong id="surchargeGstTotal">
                             Nu. 0.00
                         </strong>
                     </div>
@@ -596,6 +860,12 @@
                 <!-- ACTIONS -->
 
                 <div class="action-bar">
+
+                    <button
+                        class="btn btn-secondary"
+                        id="cashMemoBtn">
+                        Preview Cash Memo
+                    </button>
 
                     <button
                         class="btn btn-secondary"
@@ -817,6 +1087,63 @@
 
 
 <!-- =============================================================
+     CASH MEMO / PROFORMA INVOICE MODAL
+     (parts-only pre-bill estimate — does not create a Bill)
+============================================================== -->
+
+<div
+    class="modal-backdrop hidden"
+    id="cashMemoModal">
+
+    <div class="modal invoice-modal">
+
+        <div class="modal-header">
+
+            <div>
+                <span class="section-kicker">
+                    ESTIMATE ONLY — NOT A TAX INVOICE
+                </span>
+
+                <h2>Cash Memo / Proforma Invoice</h2>
+            </div>
+
+            <button
+                class="modal-close"
+                id="closeCashMemoModal">
+                ×
+            </button>
+
+        </div>
+
+
+        <div
+            class="invoice"
+            id="cashMemoContent">
+        </div>
+
+
+        <div class="modal-actions">
+
+            <button
+                class="btn btn-secondary"
+                id="closeCashMemoBtn">
+                Close
+            </button>
+
+            <button
+                class="btn btn-primary"
+                id="printCashMemoBtn">
+                Print Cash Memo
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =============================================================
      TOAST
 ============================================================== -->
 
@@ -826,7 +1153,7 @@
 </div>
 
 
-<script src="clerk_billing.js"></script>
+<script src="billing.js"></script>
 
 </body>
 </html>

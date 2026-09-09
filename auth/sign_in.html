@@ -1,130 +1,445 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sign in · Zimdra DMS</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>Sign in · Zimdra DMS</title>
 
-<!-- Paths assume this file sits at zimdra-dms/auth/sign_in.html.
-     Testing with all files in one folder? Drop the ../assets/css/ prefix. -->
-<link rel="stylesheet" href="../assets/css/zimdra.css">
-<link rel="stylesheet" href="../assets/css/sign_in.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet"
+    >
+
+    <!--
+        Paths assume this file sits at:
+        zimdra-dms/auth/sign_in.html
+
+        Shared design system
+    -->
+    <link rel="stylesheet" href="../assets/css/zimdra.css">
+
+    <!-- Sign-in page styles -->
+    <link rel="stylesheet" href="../assets/css/sign_in.css">
 </head>
 
 <body class="signin-page">
 <main class="signin-card">
 
-  <!-- ==================== Left: the pitch ==================== -->
-  <section class="pitch">
-    <div class="pitch__disc" aria-hidden="true"></div>
-    <div class="pitch__ring" aria-hidden="true"></div>
-    <div class="brand">
-      <div class="brand__mark" aria-hidden="true">ZM</div>
-      <div>
-        <div class="brand__name">Zimdra Automobile</div>
-        <div class="brand__sub">Workshop management system</div>
-      </div>
-    </div>
+    <!-- ============================================================
+         LEFT: PRODUCT / WORKSHOP INFORMATION
+    ============================================================ -->
 
-    <div class="place">
-      <span class="place__rule" aria-hidden="true"></span>
-      <span class="place__text">PHUENTSHOLING &nbsp;·&nbsp; BHUTAN</span>
-    </div>
+    <section class="pitch">
+        <div class="pitch__disc" aria-hidden="true"></div>
+        <div class="pitch__ring" aria-hidden="true"></div>
 
-    <h1 class="pitch__headline">One job card, <em>five desks</em>, one invoice.</h1>
+        <!-- BRAND -->
+        <div class="brand">
 
-    <p class="pitch__blurb">
-      Reception checks the vehicle in, the store issues the parts, the bay signs the
-      work off, billing posts the invoice. Nothing moves on until the desk before it
-      is finished, and every handoff is on the record.
-    </p>
-
-    <div class="facts">
-      <div class="fact">
-        <span class="fact__k">25-point check</span>
-        <span class="fact__v">A job cannot reach Ready with an unsigned check sheet</span>
-      </div>
-      <div class="fact">
-        <span class="fact__k">Nine tax buckets</span>
-        <span class="fact__v">Spares, oils, handling, labour and GST, split on every bill</span>
-      </div>
-      <div class="fact">
-        <span class="fact__k">Numbers at post</span>
-        <span class="fact__v">An abandoned draft leaves no gap in the invoice series</span>
-      </div>
-    </div>
-    <div class="pitch__foot">Zimdra Automobile · authorised service · workshop module</div>
-  </section>
-
-  <!-- ==================== Right: the form ==================== -->
-  <section class="signin-form">
-    <span class="zd-chip">SHOP FLOOR ACCESS</span>
-
-    <h2 class="zd-display signin-form__title">Sign in</h2>
-    <p class="signin-form__meta">Last signed in <span id="lastSeen">—</span> · this terminal</p>
-
-    <form id="signin" novalidate>
-
-      <!-- Desk -->
-      <div class="zd-field">
-        <label class="zd-label" for="desk">Desk</label>
-        <select class="zd-select" id="desk" name="desk"></select>
-        <p class="zd-hint" id="deskHint"></p>
-      </div>
-
-      <!-- User ID -->
-      <div class="zd-field">
-        <label class="zd-label" for="userId">User ID</label>
-        <div class="zd-row zd-row--readonly">
-          <span class="zd-row__tag" aria-hidden="true">ID</span>
-          <div class="zd-row__body">
-            <span class="user-id" id="userId"></span>
-            <span class="user-name" id="userName"></span>
-          </div>
-        </div>
-      </div>
-
-      <!-- PIN -->
-      <div class="zd-field">
-        <div class="zd-field-head">
-          <label class="zd-label" for="pin1">PIN</label>
-          <span class="zd-label-aside">Four digits</span>
-        </div>
-        <div class="zd-row" id="pinRow">
-          <span class="zd-row__tag" aria-hidden="true">••</span>
-          <div class="zd-row__body">
-            <div class="pin" id="pin">
-              <input id="pin1" type="password" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="PIN digit 1">
-              <input id="pin2" type="password" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="PIN digit 2">
-              <input id="pin3" type="password" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="PIN digit 3">
-              <input id="pin4" type="password" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="PIN digit 4">
+            <div class="brand__mark" aria-hidden="true">
+                ZM
             </div>
-          </div>
+
+            <div>
+                <div class="brand__name">
+                    Zimdra Automobile
+                </div>
+
+                <div class="brand__sub">
+                    Workshop management system
+                </div>
+            </div>
+
         </div>
-        <p class="zd-error" id="pinError" role="alert" hidden></p>
-      </div>
-      <label class="zd-check">
-        <input type="checkbox" id="stay" checked>
-        <span>Keep me signed in at this terminal</span>
-      </label>
-      <button class="zd-btn zd-btn--primary zd-btn--block" type="submit" id="submit">
-        Sign in <span class="zd-btn__key" aria-hidden="true">⏎</span>
-      </button>
-      <div class="zd-notice zd-notice--done" id="done" hidden>
-        <div class="zd-notice__title" id="doneTitle"></div>
-        <div class="zd-notice__body" id="doneBody"></div>
-      </div>
-    </form>
-    <div class="signin-form__foot">
-      <span class="zd-status" data-status="ready" id="waiting">—</span>
-      <div class="build">Zimdra DMS · workshop module · build 2026.09.03</div>
-    </div>
-  </section>
+
+        <!-- LOCATION -->
+        <div class="place">
+
+            <span class="place__rule" aria-hidden="true"></span>
+
+            <span class="place__text">
+                PHUENTSHOLING &nbsp;·&nbsp; BHUTAN
+            </span>
+
+        </div>
+
+        <!-- HEADLINE -->
+        <h1 class="pitch__headline">
+            One job card, <em>four desks</em>, one invoice.
+        </h1>
+
+        <p class="pitch__blurb">
+            Job Card Entry starts the job, the Storekeeper issues the parts,
+            Billing prepares the invoice, and Admin keeps the entire workshop
+            operation under control. Every handoff stays on the record.
+        </p>
+
+        <!-- WORKFLOW FACTS -->
+        <div class="facts">
+
+            <div class="fact">
+
+                <span class="fact__k">
+                    Job Card Entry
+                </span>
+
+                <span class="fact__v">
+                    Capture customer, vehicle, complaint, inspection and job details
+                </span>
+
+            </div>
+
+            <div class="fact">
+
+                <span class="fact__k">
+                    Storekeeper
+                </span>
+
+                <span class="fact__v">
+                    Issue requested parts, maintain inventory and record counter sales
+                </span>
+
+            </div>
+
+            <div class="fact">
+
+                <span class="fact__k">
+                    Billing
+                </span>
+
+                <span class="fact__v">
+                    Fetch job details, issued parts, labour and prepare the final invoice
+                </span>
+
+            </div>
+
+            <div class="fact">
+
+                <span class="fact__k">
+                    Admin
+                </span>
+
+                <span class="fact__v">
+                    Manage users, configuration, reports and workshop-wide activity
+                </span>
+
+            </div>
+
+        </div>
+
+        <div class="pitch__foot">
+            Zimdra Automobile · authorised service · workshop module
+        </div>
+
+    </section>
+
+
+    <!-- ============================================================
+         RIGHT: SIGN-IN FORM
+    ============================================================ -->
+
+    <section class="signin-form">
+
+        <span class="zd-chip">
+            WORKSHOP ACCESS
+        </span>
+
+        <h2 class="zd-display signin-form__title">
+            Sign in
+        </h2>
+
+        <p class="signin-form__meta">
+            Last signed in
+            <span id="lastSeen">—</span>
+            · this terminal
+        </p>
+
+
+        <!-- ========================================================
+             SIGN-IN FORM
+        ======================================================== -->
+
+        <form id="signin" novalidate>
+
+            <!-- ====================================================
+                 ROLE / DESK
+            ==================================================== -->
+
+            <div class="zd-field">
+
+                <label class="zd-label" for="desk">
+                    Role / Desk
+                </label>
+
+                <select
+                    class="zd-select"
+                    id="desk"
+                    name="desk"
+                    required
+                >
+
+                    <option value="">
+                        Select your role
+                    </option>
+
+                    <option value="job-card-entry">
+                        Job Card Entry
+                    </option>
+
+                    <option value="storekeeper">
+                        Storekeeper
+                    </option>
+
+                    <option value="billing">
+                        Billing
+                    </option>
+
+                    <option value="admin">
+                        Admin
+                    </option>
+
+                </select>
+
+                <p class="zd-hint" id="deskHint">
+                    Select the desk you are assigned to.
+                </p>
+
+            </div>
+
+
+            <!-- ====================================================
+                 USER ID
+            ==================================================== -->
+
+            <div class="zd-field">
+
+                <label class="zd-label" for="userId">
+                    User ID
+                </label>
+
+                <div class="zd-row zd-row--readonly">
+
+                    <span
+                        class="zd-row__tag"
+                        aria-hidden="true"
+                    >
+                        ID
+                    </span>
+
+                    <div class="zd-row__body">
+
+                        <span
+                            class="user-id"
+                            id="userId"
+                        ></span>
+
+                        <span
+                            class="user-name"
+                            id="userName"
+                        ></span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- ====================================================
+                 PIN
+            ==================================================== -->
+
+            <div class="zd-field">
+
+                <div class="zd-field-head">
+
+                    <label
+                        class="zd-label"
+                        for="pin1"
+                    >
+                        PIN
+                    </label>
+
+                    <span class="zd-label-aside">
+                        Four digits
+                    </span>
+
+                </div>
+
+
+                <div
+                    class="zd-row"
+                    id="pinRow"
+                >
+
+                    <span
+                        class="zd-row__tag"
+                        aria-hidden="true"
+                    >
+                        ••
+                    </span>
+
+                    <div class="zd-row__body">
+
+                        <div
+                            class="pin"
+                            id="pin"
+                        >
+
+                            <input
+                                id="pin1"
+                                type="password"
+                                inputmode="numeric"
+                                maxlength="1"
+                                autocomplete="off"
+                                aria-label="PIN digit 1"
+                            >
+
+                            <input
+                                id="pin2"
+                                type="password"
+                                inputmode="numeric"
+                                maxlength="1"
+                                autocomplete="off"
+                                aria-label="PIN digit 2"
+                            >
+
+                            <input
+                                id="pin3"
+                                type="password"
+                                inputmode="numeric"
+                                maxlength="1"
+                                autocomplete="off"
+                                aria-label="PIN digit 3"
+                            >
+
+                            <input
+                                id="pin4"
+                                type="password"
+                                inputmode="numeric"
+                                maxlength="1"
+                                autocomplete="off"
+                                aria-label="PIN digit 4"
+                            >
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <p
+                    class="zd-error"
+                    id="pinError"
+                    role="alert"
+                    hidden
+                ></p>
+
+            </div>
+
+
+            <!-- ====================================================
+                 KEEP SIGNED IN
+            ==================================================== -->
+
+            <label class="zd-check">
+
+                <input
+                    type="checkbox"
+                    id="stay"
+                    checked
+                >
+
+                <span>
+                    Keep me signed in at this terminal
+                </span>
+
+            </label>
+
+
+            <!-- ====================================================
+                 SIGN IN BUTTON
+            ==================================================== -->
+
+            <button
+                class="zd-btn zd-btn--primary zd-btn--block"
+                type="submit"
+                id="submit"
+            >
+
+                Sign in
+
+                <span
+                    class="zd-btn__key"
+                    aria-hidden="true"
+                >
+                    ⏎
+                </span>
+
+            </button>
+
+
+            <!-- ====================================================
+                 SUCCESS MESSAGE
+            ==================================================== -->
+
+            <div
+                class="zd-notice zd-notice--done"
+                id="done"
+                hidden
+            >
+
+                <div
+                    class="zd-notice__title"
+                    id="doneTitle"
+                ></div>
+
+                <div
+                    class="zd-notice__body"
+                    id="doneBody"
+                ></div>
+
+            </div>
+
+        </form>
+
+
+        <!-- ========================================================
+             FOOTER
+        ======================================================== -->
+
+        <div class="signin-form__foot">
+
+            <span
+                class="zd-status"
+                data-status="ready"
+                id="waiting"
+            >
+                —
+            </span>
+
+            <div class="build">
+                Zimdra DMS · workshop module · build 2026.09.08
+            </div>
+
+        </div>
+
+    </section>
+
 </main>
+
+
+<!-- ================================================================
+     SIGN-IN JAVASCRIPT
+================================================================ -->
+
 <script src="sign_in.js"></script>
+
 </body>
 </html>

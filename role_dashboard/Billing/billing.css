@@ -1464,12 +1464,15 @@ tbody tr:last-child td {
         visibility: hidden;
     }
 
-    #billModal,
-    #billModal * {
+    #billModal:not(.hidden),
+    #billModal:not(.hidden) *,
+    #cashMemoModal:not(.hidden),
+    #cashMemoModal:not(.hidden) * {
         visibility: visible;
     }
 
-    #billModal {
+    #billModal:not(.hidden),
+    #cashMemoModal:not(.hidden) {
         position: absolute;
 
         inset: 0;
