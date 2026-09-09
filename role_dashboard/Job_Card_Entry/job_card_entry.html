@@ -1,2094 +1,1523 @@
 <!doctype html>
 <html lang="en">
-
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <title>Job Card Entry — Zimdra DMS</title>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
     <link
-        href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"
-        rel="stylesheet"
-    >
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
 
-    <link rel="stylesheet" href="job_card_entry.css">
-</head>
+    <link rel="stylesheet" href="job_card_entry.css" />
+  </head>
 
-<body>
-
-<div class="app-shell">
-
-    <!-- =========================================================
+  <body>
+    <div class="app-shell">
+      <!-- =========================================================
          SIDEBAR
          ========================================================= -->
 
-    <aside class="sidebar" id="sidebar">
-
+      <aside class="sidebar" id="sidebar">
         <div class="sidebar__brand">
-            <div class="brand-mark">ZM</div>
+          <div class="brand-mark">ZM</div>
 
-            <div>
-                <div class="brand-name">Zimdra Automobile</div>
-                <div class="brand-sub">Workshop DMS</div>
-            </div>
+          <div>
+            <div class="brand-name">Zimdra Automobile</div>
+            <div class="brand-sub">Workshop DMS</div>
+          </div>
         </div>
 
-        <div class="sidebar__section-label">
-            WORKSHOP
-        </div>
+        <div class="sidebar__section-label">WORKSHOP</div>
 
         <nav class="sidebar__nav">
+          <button
+            type="button"
+            class="nav-item is-active"
+            data-view="dashboard"
+          >
+            <span class="nav-icon">▦</span>
+            <span>Dashboard</span>
+          </button>
 
-            <button
-                type="button"
-                class="nav-item is-active"
-                data-view="dashboard"
-            >
-                <span class="nav-icon">▦</span>
-                <span>Dashboard</span>
-            </button>
-
-            <button
-                type="button"
-                class="nav-item"
-                data-view="arrival"
-            >
-                <span class="nav-icon">＋</span>
-                <span>Vehicle Arrival</span>
-            </button>
-
+          <button type="button" class="nav-item" data-view="arrival">
+            <span class="nav-icon">＋</span>
+            <span>Vehicle Arrival</span>
+          </button>
         </nav>
 
         <div class="sidebar__section-label sidebar__section-label--second">
-            SYSTEM
+          SYSTEM
         </div>
 
         <nav class="sidebar__nav">
+          <button type="button" class="nav-item" data-view="reports">
+            <span class="nav-icon">▥</span>
+            <span>Reports</span>
+          </button>
 
-            <button
-                type="button"
-                class="nav-item"
-                data-view="reports"
-            >
-                <span class="nav-icon">▥</span>
-                <span>Reports</span>
-            </button>
-
-            <button
-                type="button"
-                class="nav-item"
-                data-view="settings"
-            >
-                <span class="nav-icon">⚙</span>
-                <span>Settings</span>
-            </button>
-
+          <button type="button" class="nav-item" data-view="settings">
+            <span class="nav-icon">⚙</span>
+            <span>Settings</span>
+          </button>
         </nav>
 
         <div class="sidebar__bottom">
+          <div class="workshop-status">
+            <span class="status-dot"></span>
 
-            <div class="workshop-status">
-                <span class="status-dot"></span>
+            <div>
+              <div class="workshop-status__title">Workshop Open</div>
 
-                <div>
-                    <div class="workshop-status__title">
-                        Workshop Open
-                    </div>
-
-                    <div class="workshop-status__meta">
-                        08:00 — 17:30
-                    </div>
-                </div>
+              <div class="workshop-status__meta">08:00 — 17:30</div>
             </div>
+          </div>
 
-            <button
-                type="button"
-                class="logout-button"
-                id="logoutBtn"
-            >
-                ↪ Sign out
-            </button>
-
+          <button type="button" class="logout-button" id="logoutBtn">
+            ↪ Sign out
+          </button>
         </div>
+      </aside>
 
-    </aside>
-
-
-    <!-- =========================================================
+      <!-- =========================================================
          MAIN
          ========================================================= -->
 
-    <main class="main">
-
+      <main class="main">
         <header class="topbar">
+          <button
+            type="button"
+            class="mobile-menu-button"
+            id="mobileMenuBtn"
+            aria-label="Open menu"
+          >
+            ☰
+          </button>
 
-            <button
-                type="button"
-                class="mobile-menu-button"
-                id="mobileMenuBtn"
-                aria-label="Open menu"
-            >
-                ☰
-            </button>
+          <div>
+            <div class="topbar__eyebrow">ZIMDRA AUTOMOBILE WORKSHOP</div>
 
-            <div>
-                <div class="topbar__eyebrow">
-                    ZIMDRA AUTOMOBILE WORKSHOP
-                </div>
+            <div class="topbar__title">Job Card Entry</div>
+          </div>
 
-                <div class="topbar__title">
-                    Job Card Entry
-                </div>
+          <div class="topbar__right">
+            <div class="topbar__date">
+              <span class="date-label">TODAY</span>
+              <span id="currentDate">08 SEP 2026</span>
             </div>
 
-            <div class="topbar__right">
+            <div class="topbar__divider"></div>
 
-                <div class="topbar__date">
-                    <span class="date-label">TODAY</span>
-                    <span id="currentDate">08 SEP 2026</span>
-                </div>
+            <div class="user-menu">
+              <div class="user-avatar">SS</div>
 
-                <div class="topbar__divider"></div>
+              <div class="user-details">
+                <div class="user-name">S. Sarkar</div>
 
-                <div class="user-menu">
-
-                    <div class="user-avatar">
-                        SS
-                    </div>
-
-                    <div class="user-details">
-                        <div class="user-name">
-                            S. Sarkar
-                        </div>
-
-                        <div class="user-role">
-                            Service Supervisor
-                        </div>
-                    </div>
-
-                </div>
-
+                <div class="user-role">Service Supervisor</div>
+              </div>
             </div>
-
+          </div>
         </header>
-
 
         <!-- =====================================================
              CONTENT
              ===================================================== -->
 
         <div class="content">
-
-
-            <!-- =================================================
+          <!-- =================================================
                  DASHBOARD
                  ================================================= -->
 
-            <section
-                class="view is-visible"
-                id="view-dashboard"
-            >
+          <section class="view is-visible" id="view-dashboard">
+            <div class="page-heading">
+              <div>
+                <div class="page-kicker">JOB CARD CONTROL</div>
 
-                <div class="page-heading">
+                <h1>Workshop Dashboard</h1>
 
-                    <div>
-                        <div class="page-kicker">
-                            JOB CARD CONTROL
-                        </div>
+                <p>Monitor vehicle arrivals and active workshop job cards.</p>
+              </div>
+            </div>
 
-                        <h1>
-                            Workshop Dashboard
-                        </h1>
-
-                        <p>
-                            Monitor vehicle arrivals and active workshop job cards.
-                        </p>
-                    </div>
-
+            <div class="kpi-grid kpi-grid--four">
+              <div class="kpi-card">
+                <div class="kpi-card__top">
+                  <span class="kpi-label">TODAY'S ARRIVALS</span>
+                  <span>↘</span>
                 </div>
 
+                <div class="kpi-value" id="dashArrivals">00</div>
 
-                <div class="kpi-grid kpi-grid--four">
+                <div class="kpi-meta">Vehicles checked in today</div>
+              </div>
 
-                    <div class="kpi-card">
-                        <div class="kpi-card__top">
-                            <span class="kpi-label">TODAY'S ARRIVALS</span>
-                            <span>↘</span>
-                        </div>
-
-                        <div class="kpi-value" id="dashArrivals">
-                            00
-                        </div>
-
-                        <div class="kpi-meta">
-                            Vehicles checked in today
-                        </div>
-                    </div>
-
-
-                    <div class="kpi-card">
-                        <div class="kpi-card__top">
-                            <span class="kpi-label">OPEN JOB CARDS</span>
-                            <span>→</span>
-                        </div>
-
-                        <div class="kpi-value" id="dashOpen">
-                            00
-                        </div>
-
-                        <div class="kpi-meta">
-                            Active workshop jobs
-                        </div>
-                    </div>
-
-
-                    <div class="kpi-card">
-                        <div class="kpi-card__top">
-                            <span class="kpi-label">WAITING PARTS</span>
-                            <span>Ⅱ</span>
-                        </div>
-
-                        <div class="kpi-value" id="dashParts">
-                            00
-                        </div>
-
-                        <div class="kpi-meta">
-                            Storekeeper action required
-                        </div>
-                    </div>
-
-
-                    <div class="kpi-card">
-                        <div class="kpi-card__top">
-                            <span class="kpi-label">COMPLETED</span>
-                            <span>✓</span>
-                        </div>
-
-                        <div class="kpi-value" id="dashCompleted">
-                            00
-                        </div>
-
-                        <div class="kpi-meta">
-                            Released workshop jobs
-                        </div>
-                    </div>
-
+              <div class="kpi-card">
+                <div class="kpi-card__top">
+                  <span class="kpi-label">OPEN JOB CARDS</span>
+                  <span>→</span>
                 </div>
 
+                <div class="kpi-value" id="dashOpen">00</div>
 
-                <section class="panel">
+                <div class="kpi-meta">Active workshop jobs</div>
+              </div>
 
-                    <div class="panel-header">
+              <div class="kpi-card">
+                <div class="kpi-card__top">
+                  <span class="kpi-label">WAITING PARTS</span>
+                  <span>Ⅱ</span>
+                </div>
 
-                        <div>
-                            <div class="panel-kicker">
-                                WORKSHOP QUEUE
-                            </div>
+                <div class="kpi-value" id="dashParts">00</div>
 
-                            <h2>
-                                Recent Job Cards
-                            </h2>
-                        </div>
+                <div class="kpi-meta">Storekeeper action required</div>
+              </div>
 
-                        <button
-                            type="button"
-                            class="text-button"
-                            data-view="arrival"
-                        >
-                            View all →
-                        </button>
+              <div class="kpi-card">
+                <div class="kpi-card__top">
+                  <span class="kpi-label">COMPLETED</span>
+                  <span>✓</span>
+                </div>
 
-                    </div>
+                <div class="kpi-value" id="dashCompleted">00</div>
 
-                    <div class="table-wrap">
+                <div class="kpi-meta">Released workshop jobs</div>
+              </div>
+            </div>
 
-                        <table class="jobs-table">
+            <section class="panel">
+              <div class="panel-header">
+                <div>
+                  <div class="panel-kicker">WORKSHOP QUEUE</div>
 
-                            <thead>
-                                <tr>
-                                    <th>Job Card</th>
-                                    <th>Vehicle</th>
-                                    <th>Customer</th>
-                                    <th>Service</th>
-                                    <th>Supervisor</th>
-                                    <th>Mechanic</th>
-                                    <th>Status</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
+                  <h2>Recent Job Cards</h2>
+                </div>
 
-                            <tbody id="dashboardJobsBody"></tbody>
+                <button type="button" class="text-button" data-view="arrival">
+                  View all →
+                </button>
+              </div>
 
-                        </table>
+              <div class="table-wrap">
+                <table class="jobs-table">
+                  <thead>
+                    <tr>
+                      <th>Job Card</th>
+                      <th>Vehicle</th>
+                      <th>Customer</th>
+                      <th>Service</th>
+                      <th>Supervisor</th>
+                      <th>Mechanic</th>
+                      <th>Status</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
 
-                    </div>
-
-                </section>
-
+                  <tbody id="dashboardJobsBody"></tbody>
+                </table>
+              </div>
             </section>
+          </section>
 
-
-            <!-- =================================================
+          <!-- =================================================
                  VEHICLE ARRIVAL
                  ================================================= -->
 
-            <section
-                class="view"
-                id="view-arrival"
-            >
+          <section class="view" id="view-arrival">
+            <div class="page-heading">
+              <div>
+                <div class="page-kicker">VEHICLE ARRIVAL & JOB CARD</div>
 
-                <div class="page-heading">
+                <h1>Vehicle Arrival</h1>
 
-                    <div>
-                        <div class="page-kicker">
-                            VEHICLE ARRIVAL & JOB CARD
-                        </div>
+                <p>
+                  Search an existing job card or create a new vehicle arrival.
+                </p>
+              </div>
 
-                        <h1>
-                            Vehicle Arrival
-                        </h1>
+              <!-- ONLY PLACE WITH NEW ARRIVAL BUTTON -->
 
-                        <p>
-                            Search an existing job card or create a new vehicle arrival.
-                        </p>
-                    </div>
+              <button type="button" class="primary-button" id="addArrivalBtn">
+                ＋ Add New Arrival
+              </button>
+            </div>
 
-                    <!-- ONLY PLACE WITH NEW ARRIVAL BUTTON -->
+            <section class="search-panel">
+              <div class="search-panel__main">
+                <div class="panel-kicker">EXISTING JOB CARD</div>
 
-                    <button
-                        type="button"
-                        class="primary-button"
-                        id="addArrivalBtn"
-                    >
-                        ＋ Add New Arrival
-                    </button>
+                <h2>Search Job Card</h2>
 
+                <p>
+                  Search by Job Card number, registration, customer, phone, VIN,
+                  mechanic or group code.
+                </p>
+              </div>
+
+              <div class="search-panel__control">
+                <div class="search-field search-field--large">
+                  <input
+                    type="search"
+                    id="jobSearch"
+                    placeholder="JC-2026-00421, BP-2-A1234, customer name..."
+                    autocomplete="off"
+                  />
+
+                  <button type="button" class="search-button" id="jobSearchBtn">
+                    Search
+                  </button>
                 </div>
-
-
-                <section class="search-panel">
-
-                    <div class="search-panel__main">
-
-                        <div class="panel-kicker">
-                            EXISTING JOB CARD
-                        </div>
-
-                        <h2>
-                            Search Job Card
-                        </h2>
-
-                        <p>
-                            Search by Job Card number, registration,
-                            customer, phone, VIN, mechanic or group code.
-                        </p>
-
-                    </div>
-
-                    <div class="search-panel__control">
-
-                        <div class="search-field search-field--large">
-
-                            <input
-                                type="search"
-                                id="jobSearch"
-                                placeholder="JC-2026-00421, BP-2-A1234, customer name..."
-                                autocomplete="off"
-                            >
-
-                            <button
-                                type="button"
-                                class="search-button"
-                                id="jobSearchBtn"
-                            >
-                                Search
-                            </button>
-
-                        </div>
-
-                    </div>
-
-                </section>
-
-
-                <section class="panel">
-
-                    <div class="panel-header">
-
-                        <div>
-                            <div class="panel-kicker">
-                                JOB CARD REGISTER
-                            </div>
-
-                            <h2>
-                                Vehicle Arrivals
-                            </h2>
-                        </div>
-
-                        <div class="result-count">
-                            <span id="arrivalResultCount">0</span>
-                            records
-                        </div>
-
-                    </div>
-
-                    <div class="table-wrap">
-
-                        <table class="jobs-table">
-
-                            <thead>
-                                <tr>
-                                    <th>Job Card</th>
-                                    <th>Arrival</th>
-                                    <th>Vehicle</th>
-                                    <th>Customer</th>
-                                    <th>Service</th>
-                                    <th>Supervisor</th>
-                                    <th>Promised</th>
-                                    <th>Status</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-
-                            <tbody id="arrivalTableBody"></tbody>
-
-                        </table>
-
-                    </div>
-
-                </section>
-
+              </div>
             </section>
 
+            <section class="panel">
+              <div class="panel-header">
+                <div>
+                  <div class="panel-kicker">JOB CARD REGISTER</div>
 
-            <!-- =================================================
+                  <h2>Vehicle Arrivals</h2>
+                </div>
+
+                <div class="result-count">
+                  <span id="arrivalResultCount">0</span>
+                  records
+                </div>
+              </div>
+
+              <div class="table-wrap">
+                <table class="jobs-table">
+                  <thead>
+                    <tr>
+                      <th>Job Card</th>
+                      <th>Arrival</th>
+                      <th>Vehicle</th>
+                      <th>Customer</th>
+                      <th>Service</th>
+                      <th>Supervisor</th>
+                      <th>Promised</th>
+                      <th>Status</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+
+                  <tbody id="arrivalTableBody"></tbody>
+                </table>
+              </div>
+            </section>
+          </section>
+
+          <!-- =================================================
                  REPORTS
                  ================================================= -->
 
-            <section
-                class="view placeholder-view"
-                id="view-reports"
-            >
+          <section class="view placeholder-view" id="view-reports">
+            <div class="empty-state">
+              <div class="empty-state__icon">▥</div>
 
-                <div class="empty-state">
+              <div class="page-kicker">REPORTING</div>
 
-                    <div class="empty-state__icon">▥</div>
+              <h1>Job Card Reports</h1>
 
-                    <div class="page-kicker">
-                        REPORTING
-                    </div>
+              <p>
+                Job card, vehicle arrival, service and workshop reports can be
+                connected here.
+              </p>
+            </div>
+          </section>
 
-                    <h1>
-                        Job Card Reports
-                    </h1>
-
-                    <p>
-                        Job card, vehicle arrival, service and workshop reports
-                        can be connected here.
-                    </p>
-
-                </div>
-
-            </section>
-
-
-            <!-- =================================================
+          <!-- =================================================
                  SETTINGS
                  ================================================= -->
 
-            <section
-                class="view placeholder-view"
-                id="view-settings"
-            >
+          <section class="view placeholder-view" id="view-settings">
+            <div class="empty-state">
+              <div class="empty-state__icon">⚙</div>
 
-                <div class="empty-state">
+              <div class="page-kicker">SYSTEM</div>
 
-                    <div class="empty-state__icon">⚙</div>
+              <h1>Settings</h1>
 
-                    <div class="page-kicker">
-                        SYSTEM
-                    </div>
-
-                    <h1>
-                        Settings
-                    </h1>
-
-                    <p>
-                        Supervisor and workshop configuration can be managed here.
-                    </p>
-
-                </div>
-
-            </section>
-
+              <p>Supervisor and workshop configuration can be managed here.</p>
+            </div>
+          </section>
         </div>
+      </main>
+    </div>
 
-    </main>
-
-</div>
-
-
-<!-- ===========================================================
+    <!-- ===========================================================
      NEW ARRIVAL MODAL
      =========================================================== -->
 
-<div
-    class="modal-backdrop"
-    id="arrivalModal"
-    hidden
-    aria-hidden="true"
->
-
-    <div
+    <div class="modal-backdrop" id="arrivalModal" hidden aria-hidden="true">
+      <div
         class="arrival-modal"
         role="dialog"
         aria-modal="true"
         aria-labelledby="arrivalModalTitle"
-    >
-
+      >
         <div class="modal-header">
+          <div>
+            <span class="panel-kicker"> VEHICLE ARRIVAL </span>
 
-            <div>
-                <span class="panel-kicker">
-                    VEHICLE ARRIVAL
-                </span>
+            <h2 id="arrivalModalTitle">Create Job Card</h2>
 
-                <h2 id="arrivalModalTitle">
-                    Create Job Card
-                </h2>
+            <p>
+              Capture complete customer, vehicle, service and workshop
+              information.
+            </p>
+          </div>
 
-                <p>
-                    Capture complete customer, vehicle, service and workshop information.
-                </p>
-            </div>
-
-            <button
-                type="button"
-                class="modal-close-btn"
-                id="arrivalModalClose"
-                aria-label="Close"
-            >
-                ✕
-            </button>
-
+          <button
+            type="button"
+            class="modal-close-btn"
+            id="arrivalModalClose"
+            aria-label="Close"
+          >
+            ✕
+          </button>
         </div>
-
 
         <!-- FORM -->
 
         <form id="arrivalForm">
-
-            <div class="modal-body">
-
-
-                <!-- =================================================
+          <div class="modal-body">
+            <!-- =================================================
                      01 CUSTOMER
                      ================================================= -->
 
-                <section class="form-section">
+            <section class="form-section">
+              <div class="form-section__heading">
+                <div class="step-number">01</div>
 
-                    <div class="form-section__heading">
+                <div>
+                  <div class="panel-kicker">CUSTOMER</div>
+                  <h3>Customer Details</h3>
+                </div>
+              </div>
 
-                        <div class="step-number">01</div>
+              <div class="form-grid">
+                <div class="field field--wide">
+                  <label for="customerName">
+                    Customer Name <span>*</span>
+                  </label>
 
-                        <div>
-                            <div class="panel-kicker">CUSTOMER</div>
-                            <h3>Customer Details</h3>
-                        </div>
+                  <input
+                    type="text"
+                    id="customerName"
+                    name="customerName"
+                    required
+                    placeholder="Customer full name"
+                  />
+                </div>
 
-                    </div>
+                <div class="field">
+                  <label for="customerPhone">
+                    Contact Number <span>*</span>
+                  </label>
 
-                    <div class="form-grid">
+                  <input
+                    type="tel"
+                    id="customerPhone"
+                    name="customerPhone"
+                    required
+                    placeholder="+975 17XXXXXX"
+                  />
+                </div>
 
-                        <div class="field field--wide">
-                            <label for="customerName">
-                                Customer Name <span>*</span>
-                            </label>
+                <div class="field">
+                  <label for="customerEmail"> Email </label>
 
-                            <input
-                                type="text"
-                                id="customerName"
-                                name="customerName"
-                                required
-                                placeholder="Customer full name"
-                            >
-                        </div>
+                  <input
+                    type="email"
+                    id="customerEmail"
+                    name="customerEmail"
+                    placeholder="customer@email.com"
+                  />
+                </div>
 
+                <div class="field">
+                  <label for="customerType"> Customer Type </label>
 
-                        <div class="field">
-                            <label for="customerPhone">
-                                Contact Number <span>*</span>
-                            </label>
+                  <select id="customerType" name="customerType">
+                    <option value="Retail">Retail</option>
+                    <option value="Corporate">Corporate</option>
+                    <option value="Fleet">Fleet</option>
+                    <option value="Government">Government</option>
+                  </select>
+                </div>
 
-                            <input
-                                type="tel"
-                                id="customerPhone"
-                                name="customerPhone"
-                                required
-                                placeholder="+975 17XXXXXX"
-                            >
-                        </div>
+                <div class="field">
+                  <label for="customerId"> Customer ID </label>
 
+                  <input
+                    type="text"
+                    id="customerId"
+                    name="customerId"
+                    placeholder="CUS-00000"
+                  />
+                </div>
 
-                        <div class="field">
-                            <label for="customerEmail">
-                                Email
-                            </label>
+                <div class="field field--wide">
+                  <label for="customerAddress"> Customer Address </label>
 
-                            <input
-                                type="email"
-                                id="customerEmail"
-                                name="customerEmail"
-                                placeholder="customer@email.com"
-                            >
-                        </div>
+                  <textarea
+                    id="customerAddress"
+                    name="customerAddress"
+                    rows="3"
+                    placeholder="Address / location"
+                  ></textarea>
+                </div>
+              </div>
+            </section>
 
-
-                        <div class="field">
-                            <label for="customerType">
-                                Customer Type
-                            </label>
-
-                            <select id="customerType" name="customerType">
-                                <option value="Retail">Retail</option>
-                                <option value="Corporate">Corporate</option>
-                                <option value="Fleet">Fleet</option>
-                                <option value="Government">Government</option>
-                            </select>
-                        </div>
-
-
-                        <div class="field">
-                            <label for="customerId">
-                                Customer ID
-                            </label>
-
-                            <input
-                                type="text"
-                                id="customerId"
-                                name="customerId"
-                                placeholder="CUS-00000"
-                            >
-                        </div>
-
-
-                        <div class="field field--wide">
-                            <label for="customerAddress">
-                                Customer Address
-                            </label>
-
-                            <textarea
-                                id="customerAddress"
-                                name="customerAddress"
-                                rows="3"
-                                placeholder="Address / location"
-                            ></textarea>
-                        </div>
-
-                    </div>
-
-                </section>
-
-
-                <!-- =================================================
+            <!-- =================================================
                      02 VEHICLE
                      ================================================= -->
 
-                <section class="form-section">
+            <section class="form-section">
+              <div class="form-section__heading">
+                <div class="step-number">02</div>
 
-                    <div class="form-section__heading">
+                <div>
+                  <div class="panel-kicker">VEHICLE</div>
+                  <h3>Vehicle Details</h3>
+                </div>
+              </div>
 
-                        <div class="step-number">02</div>
+              <div class="form-grid">
+                <div class="field">
+                  <label for="registration">
+                    Registration Number <span>*</span>
+                  </label>
 
-                        <div>
-                            <div class="panel-kicker">VEHICLE</div>
-                            <h3>Vehicle Details</h3>
-                        </div>
+                  <input
+                    type="text"
+                    id="registration"
+                    name="registration"
+                    required
+                    placeholder="BP-2-A1234"
+                  />
+                </div>
 
-                    </div>
+                <div class="field">
+                  <label for="vin"> VIN / Chassis Number </label>
 
-                    <div class="form-grid">
+                  <input
+                    type="text"
+                    id="vin"
+                    name="vin"
+                    placeholder="VIN / chassis number"
+                  />
+                </div>
 
-                        <div class="field">
-                            <label for="registration">
-                                Registration Number <span>*</span>
-                            </label>
+                <div class="field">
+                  <label for="engineNo"> Engine Number </label>
 
-                            <input
-                                type="text"
-                                id="registration"
-                                name="registration"
-                                required
-                                placeholder="BP-2-A1234"
-                            >
-                        </div>
+                  <input
+                    type="text"
+                    id="engineNo"
+                    name="engineNo"
+                    placeholder="Engine number"
+                  />
+                </div>
 
+                <div class="field">
+                  <label for="make"> Make <span>*</span> </label>
 
-                        <div class="field">
-                            <label for="vin">
-                                VIN / Chassis Number
-                            </label>
+                  <select id="make" name="make" required>
+                    <option value="">Select make</option>
+                    <option>Alto</option>
+                    <option>Celerio</option>
+                    <option>Swift</option>
+                    <option>Mahindra</option>
+                    <option>Isuzu</option>
+                    <option>WagonR</option>
+                    <option>Brezza</option>
+                    <option>Baleno</option>
+                  </select>
+                </div>
 
-                            <input
-                                type="text"
-                                id="vin"
-                                name="vin"
-                                placeholder="VIN / chassis number"
-                            >
-                        </div>
+                <div class="field">
+                  <label for="model"> Model <span>*</span> </label>
 
+                  <input
+                    type="text"
+                    id="model"
+                    name="model"
+                    required
+                    placeholder="Vehicle model"
+                  />
+                </div>
 
-                        <div class="field">
-                            <label for="engineNo">
-                                Engine Number
-                            </label>
+                <div class="field">
+                  <label for="modelYear"> Model Year </label>
 
-                            <input
-                                type="text"
-                                id="engineNo"
-                                name="engineNo"
-                                placeholder="Engine number"
-                            >
-                        </div>
+                  <input
+                    type="number"
+                    id="modelYear"
+                    name="modelYear"
+                    min="1900"
+                    max="2100"
+                    placeholder="2024"
+                  />
+                </div>
 
+                <div class="field">
+                  <label for="fuel"> Fuel Type </label>
 
-                        <div class="field">
-                            <label for="make">
-                                Make <span>*</span>
-                            </label>
+                  <select id="fuel" name="fuel">
+                    <option>Petrol</option>
+                    <option>Diesel</option>
+                    <option>Hybrid</option>
+                    <option>EV</option>
+                  </select>
+                </div>
 
-                            <select id="make" name="make" required>
+                <div class="field">
+                  <label for="odometer"> Odometer <span>*</span> </label>
 
-                                <option value="">
-                                    Select make
-                                </option>
+                  <div class="input-unit">
+                    <input
+                      type="number"
+                      id="odometer"
+                      name="odometer"
+                      required
+                      min="0"
+                      placeholder="0"
+                    />
 
-                                <option>Toyota</option>
-                                <option>Hyundai</option>
-                                <option>Ford</option>
-                                <option>Mahindra</option>
-                                <option>Isuzu</option>
-                                <option>Nissan</option>
-                                <option>Mitsubishi</option>
-                                <option>Other</option>
+                    <span>KM</span>
+                  </div>
+                </div>
 
-                            </select>
-                        </div>
+                <div class="field">
+                  <label for="fuelLevel"> Fuel Level </label>
 
+                  <select id="fuelLevel" name="fuelLevel">
+                    <option>Empty</option>
+                    <option>¼</option>
+                    <option selected>½</option>
+                    <option>¾</option>
+                    <option>Full</option>
+                  </select>
+                </div>
 
-                        <div class="field">
-                            <label for="model">
-                                Model <span>*</span>
-                            </label>
+                <div class="field">
+                  <label for="vehicleColor"> Vehicle Colour </label>
 
-                            <input
-                                type="text"
-                                id="model"
-                                name="model"
-                                required
-                                placeholder="Vehicle model"
-                            >
-                        </div>
+                  <input
+                    type="text"
+                    id="vehicleColor"
+                    name="vehicleColor"
+                    placeholder="White / Black / Silver"
+                  />
+                </div>
+              </div>
+            </section>
 
-
-                        <div class="field">
-                            <label for="modelYear">
-                                Model Year
-                            </label>
-
-                            <input
-                                type="number"
-                                id="modelYear"
-                                name="modelYear"
-                                min="1900"
-                                max="2100"
-                                placeholder="2024"
-                            >
-                        </div>
-
-
-                        <div class="field">
-                            <label for="fuel">
-                                Fuel Type
-                            </label>
-
-                            <select id="fuel" name="fuel">
-                                <option>Petrol</option>
-                                <option>Diesel</option>
-                                <option>Hybrid</option>
-                                <option>EV</option>
-                            </select>
-                        </div>
-
-
-                        <div class="field">
-                            <label for="odometer">
-                                Odometer <span>*</span>
-                            </label>
-
-                            <div class="input-unit">
-                                <input
-                                    type="number"
-                                    id="odometer"
-                                    name="odometer"
-                                    required
-                                    min="0"
-                                    placeholder="0"
-                                >
-
-                                <span>KM</span>
-                            </div>
-                        </div>
-
-
-                        <div class="field">
-                            <label for="fuelLevel">
-                                Fuel Level
-                            </label>
-
-                            <select id="fuelLevel" name="fuelLevel">
-                                <option>Empty</option>
-                                <option>¼</option>
-                                <option selected>½</option>
-                                <option>¾</option>
-                                <option>Full</option>
-                            </select>
-                        </div>
-
-
-                        <div class="field">
-                            <label for="vehicleColor">
-                                Vehicle Colour
-                            </label>
-
-                            <input
-                                type="text"
-                                id="vehicleColor"
-                                name="vehicleColor"
-                                placeholder="White / Black / Silver"
-                            >
-                        </div>
-
-                    </div>
-
-                </section>
-
-
-                <!-- =================================================
+            <!-- =================================================
                      03 SERVICE
                      ================================================= -->
 
-                <section class="form-section">
+            <section class="form-section">
+              <div class="form-section__heading">
+                <div class="step-number">03</div>
 
-                    <div class="form-section__heading">
+                <div>
+                  <div class="panel-kicker">SERVICE</div>
+                  <h3>Service Details</h3>
+                </div>
+              </div>
 
-                        <div class="step-number">03</div>
+              <div class="form-grid">
+                <div class="field">
+                  <label for="serviceType"> Service Type <span>*</span> </label>
 
-                        <div>
-                            <div class="panel-kicker">SERVICE</div>
-                            <h3>Service Details</h3>
-                        </div>
+                  <select id="serviceType" name="serviceType" required>
+                    <option value="">Select service group</option>
 
-                    </div>
+                    <option>GROUP-1 SRV</option>
+                    <option>GROUP-2 BODY</option>
+                    <option>GROUP-3 OTHR</option>
+                    <option>GROUP-4 PDI</option>
+                  </select>
+                </div>
 
-                    <div class="form-grid">
+                <div class="field">
+                  <label for="visitType"> Visit Type <span>*</span> </label>
 
-                        <div class="field">
-                            <label for="serviceType">
-                                Service Type <span>*</span>
-                            </label>
+                  <select id="visitType" name="visitType" required>
+                    <option value="">Select visit type</option>
 
-                            <select
-                                id="serviceType"
-                                name="serviceType"
-                                required
-                            >
+                    <option>Service Camp</option>
+                    <option>1st Free Service</option>
+                    <option>2nd Free Service</option>
+                    <option>3rd Free Service</option>
+                    <option>Paid Service</option>
+                    <option>Running Repair</option>
+                    <option>Accidental</option>
+                    <option>Repeat Job</option>
+                    <option>M.O.S</option>
+                    <option>Paid Service Five Point</option>
+                    <option>Paid Service Nine Point</option>
+                  </select>
+                </div>
 
-                                <option value="">
-                                    Select service group
-                                </option>
+                <div class="field">
+                  <label for="serviceAdvisor"> Service Advisor </label>
 
-                                <option>GROUP-1 SRV</option>
-                                <option>GROUP-2 BODY</option>
-                                <option>GROUP-3 OTHR</option>
-                                <option>GROUP-4 PDI</option>
+                  <select id="serviceAdvisor" name="serviceAdvisor">
+                    <option value="">Select advisor</option>
+                    <option>S. Sarkar</option>
+                    <option>P. Dorji</option>
+                    <option>T. Wangchuk</option>
+                  </select>
+                </div>
 
-                            </select>
-                        </div>
+                <div class="field">
+                  <label for="jobPriority"> Job Priority </label>
 
+                  <select id="jobPriority" name="jobPriority">
+                    <option>Normal</option>
+                    <option>High</option>
+                    <option>Urgent</option>
+                  </select>
+                </div>
 
-                        <div class="field">
-                            <label for="visitType">
-                                Visit Type <span>*</span>
-                            </label>
+                <div class="field field--wide">
+                  <label for="complaint">
+                    Customer Complaint / Requested Work <span>*</span>
+                  </label>
 
-                            <select
-                                id="visitType"
-                                name="visitType"
-                                required
-                            >
+                  <textarea
+                    id="complaint"
+                    name="complaint"
+                    rows="5"
+                    required
+                    placeholder="Record the customer's complaint or requested work..."
+                  ></textarea>
+                </div>
 
-                                <option value="">
-                                    Select visit type
-                                </option>
+                <div class="field field--wide">
+                  <label for="additionalWork">
+                    Additional Requested Work
+                  </label>
 
-                                <option>Service Camp</option>
-                                <option>1st Free Service</option>
-                                <option>2nd Free Service</option>
-                                <option>3rd Free Service</option>
-                                <option>Paid Service</option>
-                                <option>Running Repair</option>
-                                <option>Accidental</option>
-                                <option>Repeat Job</option>
-                                <option>M.O.S</option>
-                                <option>Paid Service Five Point</option>
-                                <option>Paid Service Nine Point</option>
+                  <textarea
+                    id="additionalWork"
+                    name="additionalWork"
+                    rows="4"
+                    placeholder="Additional inspection, repair or customer requests..."
+                  ></textarea>
+                </div>
+              </div>
+            </section>
 
-                            </select>
-                        </div>
-
-
-                        <div class="field">
-                            <label for="serviceAdvisor">
-                                Service Advisor
-                            </label>
-
-                            <select
-                                id="serviceAdvisor"
-                                name="serviceAdvisor"
-                            >
-                                <option value="">Select advisor</option>
-                                <option>S. Sarkar</option>
-                                <option>P. Dorji</option>
-                                <option>T. Wangchuk</option>
-                            </select>
-                        </div>
-
-
-                        <div class="field">
-                            <label for="jobPriority">
-                                Job Priority
-                            </label>
-
-                            <select id="jobPriority" name="jobPriority">
-                                <option>Normal</option>
-                                <option>High</option>
-                                <option>Urgent</option>
-                            </select>
-                        </div>
-
-
-                        <div class="field field--wide">
-                            <label for="complaint">
-                                Customer Complaint / Requested Work <span>*</span>
-                            </label>
-
-                            <textarea
-                                id="complaint"
-                                name="complaint"
-                                rows="5"
-                                required
-                                placeholder="Record the customer's complaint or requested work..."
-                            ></textarea>
-                        </div>
-
-
-                        <div class="field field--wide">
-                            <label for="additionalWork">
-                                Additional Requested Work
-                            </label>
-
-                            <textarea
-                                id="additionalWork"
-                                name="additionalWork"
-                                rows="4"
-                                placeholder="Additional inspection, repair or customer requests..."
-                            ></textarea>
-                        </div>
-
-                    </div>
-
-                </section>
-
-
-                <!-- =================================================
+            <!-- =================================================
                      04 WORKSHOP
                      ================================================= -->
 
-                <section class="form-section">
+            <section class="form-section">
+              <div class="form-section__heading">
+                <div class="step-number">04</div>
 
-                    <div class="form-section__heading">
+                <div>
+                  <div class="panel-kicker">WORKSHOP</div>
+                  <h3>Supervisor & Mechanic</h3>
+                </div>
+              </div>
 
-                        <div class="step-number">04</div>
+              <div class="form-grid">
+                <div class="field">
+                  <label for="supervisor"> Supervisor <span>*</span> </label>
 
-                        <div>
-                            <div class="panel-kicker">WORKSHOP</div>
-                            <h3>Supervisor & Mechanic</h3>
-                        </div>
+                  <select id="supervisor" name="supervisor" required>
+                    <option value="">Select supervisor</option>
+                    <option>S. Sarkar</option>
+                    <option>P. Dorji</option>
+                    <option>T. Wangchuk</option>
+                  </select>
+                </div>
 
-                    </div>
+                <div class="field">
+                  <label for="mechanic1"> Mechanic 1 </label>
 
-                    <div class="form-grid">
+                  <select id="mechanic1" name="mechanic1">
+                    <option value="">Select mechanic</option>
+                    <option>E. Rai</option>
+                    <option>P. Wangchuk</option>
+                    <option>T. Dorji</option>
+                    <option>K. Dorji</option>
+                    <option>S. Tamang</option>
+                  </select>
+                </div>
 
-                        <div class="field">
-                            <label for="supervisor">
-                                Supervisor <span>*</span>
-                            </label>
+                <div class="field">
+                  <label for="mechanic2"> Mechanic 2 </label>
 
-                            <select
-                                id="supervisor"
-                                name="supervisor"
-                                required
-                            >
-                                <option value="">Select supervisor</option>
-                                <option>S. Sarkar</option>
-                                <option>P. Dorji</option>
-                                <option>T. Wangchuk</option>
-                            </select>
-                        </div>
+                  <select id="mechanic2" name="mechanic2">
+                    <option value="">Select mechanic</option>
+                    <option>E. Rai</option>
+                    <option>P. Wangchuk</option>
+                    <option>T. Dorji</option>
+                    <option>K. Dorji</option>
+                    <option>S. Tamang</option>
+                  </select>
+                </div>
 
+                <div class="field">
+                  <label for="initialBay"> Initial Bay </label>
 
-                        <div class="field">
-                            <label for="mechanic1">
-                                Mechanic 1
-                            </label>
+                  <select id="initialBay" name="initialBay">
+                    <option>Yard</option>
+                    <option>Bay 01</option>
+                    <option>Bay 02</option>
+                    <option>Bay 03</option>
+                    <option>Bay 04</option>
+                    <option>Bay 05</option>
+                    <option>Bay 06</option>
+                  </select>
+                </div>
 
-                            <select id="mechanic1" name="mechanic1">
-                                <option value="">Select mechanic</option>
-                                <option>E. Rai</option>
-                                <option>P. Wangchuk</option>
-                                <option>T. Dorji</option>
-                                <option>K. Dorji</option>
-                                <option>S. Tamang</option>
-                            </select>
-                        </div>
+                <div class="field">
+                  <label for="roadTestRequired"> Road Test </label>
 
+                  <select id="roadTestRequired" name="roadTestRequired">
+                    <option>No</option>
+                    <option>Yes</option>
+                  </select>
+                </div>
 
-                        <div class="field">
-                            <label for="mechanic2">
-                                Mechanic 2
-                            </label>
+                <div class="field">
+                  <label for="customerApproval"> Customer Approval </label>
 
-                            <select id="mechanic2" name="mechanic2">
-                                <option value="">Select mechanic</option>
-                                <option>E. Rai</option>
-                                <option>P. Wangchuk</option>
-                                <option>T. Dorji</option>
-                                <option>K. Dorji</option>
-                                <option>S. Tamang</option>
-                            </select>
-                        </div>
+                  <select id="customerApproval" name="customerApproval">
+                    <option>Pending</option>
+                    <option>Approved</option>
+                    <option>Not Required</option>
+                  </select>
+                </div>
+              </div>
+            </section>
 
-
-                        <div class="field">
-                            <label for="initialBay">
-                                Initial Bay
-                            </label>
-
-                            <select id="initialBay" name="initialBay">
-                                <option>Yard</option>
-                                <option>Bay 01</option>
-                                <option>Bay 02</option>
-                                <option>Bay 03</option>
-                                <option>Bay 04</option>
-                                <option>Bay 05</option>
-                                <option>Bay 06</option>
-                            </select>
-                        </div>
-
-
-                        <div class="field">
-                            <label for="roadTestRequired">
-                                Road Test
-                            </label>
-
-                            <select
-                                id="roadTestRequired"
-                                name="roadTestRequired"
-                            >
-                                <option>No</option>
-                                <option>Yes</option>
-                            </select>
-                        </div>
-
-
-                        <div class="field">
-                            <label for="customerApproval">
-                                Customer Approval
-                            </label>
-
-                            <select
-                                id="customerApproval"
-                                name="customerApproval"
-                            >
-                                <option>Pending</option>
-                                <option>Approved</option>
-                                <option>Not Required</option>
-                            </select>
-                        </div>
-
-                    </div>
-
-                </section>
-
-
-                <!-- =================================================
+            <!-- =================================================
                      05 GROUP / CONTROL
                      ================================================= -->
 
-                <section class="form-section">
+            <section class="form-section">
+              <div class="form-section__heading">
+                <div class="step-number">05</div>
 
-                    <div class="form-section__heading">
+                <div>
+                  <div class="panel-kicker">GROUP / CONTROL</div>
+                  <h3>Job Card Group Information</h3>
+                </div>
+              </div>
 
-                        <div class="step-number">05</div>
+              <div class="form-grid">
+                <div class="field">
+                  <label for="promisedDate"> Prom. Dt </label>
 
-                        <div>
-                            <div class="panel-kicker">GROUP / CONTROL</div>
-                            <h3>Job Card Group Information</h3>
-                        </div>
+                  <input type="date" id="promisedDate" name="promisedDate" />
+                </div>
 
-                    </div>
+                <div class="field">
+                  <label for="promisedTime"> Promised Time </label>
 
-                    <div class="form-grid">
+                  <input type="time" id="promisedTime" name="promisedTime" />
+                </div>
 
-                        <div class="field">
-                            <label for="promisedDate">
-                                Prom. Dt
-                            </label>
+                <div class="field">
+                  <label for="deliveryDate"> Del. Dt </label>
 
-                            <input
-                                type="date"
-                                id="promisedDate"
-                                name="promisedDate"
-                            >
-                        </div>
+                  <input type="date" id="deliveryDate" name="deliveryDate" />
+                </div>
 
+                <div class="field">
+                  <label for="deliveryTime"> Delivery Time </label>
 
-                        <div class="field">
-                            <label for="promisedTime">
-                                Promised Time
-                            </label>
+                  <input type="time" id="deliveryTime" name="deliveryTime" />
+                </div>
 
-                            <input
-                                type="time"
-                                id="promisedTime"
-                                name="promisedTime"
-                            >
-                        </div>
+                <div class="field">
+                  <label for="groupCode"> GrpCode </label>
 
+                  <select id="groupCode" name="groupCode">
+                    <option value="">Select code</option>
+                    <option>SRV</option>
+                    <option>BODY</option>
+                    <option>OTHR</option>
+                    <option>PDI</option>
+                  </select>
+                </div>
 
-                        <div class="field">
-                            <label for="deliveryDate">
-                                Del. Dt
-                            </label>
+                <div class="field">
+                  <label for="floorSupervisor"> FlorSup </label>
 
-                            <input
-                                type="date"
-                                id="deliveryDate"
-                                name="deliveryDate"
-                            >
-                        </div>
+                  <select id="floorSupervisor" name="floorSupervisor">
+                    <option value="">Select floor supervisor</option>
+                    <option>S. Sarkar</option>
+                    <option>P. Dorji</option>
+                    <option>T. Wangchuk</option>
+                  </select>
+                </div>
 
+                <div class="field">
+                  <label for="receivedBy"> RecdBy </label>
 
-                        <div class="field">
-                            <label for="deliveryTime">
-                                Delivery Time
-                            </label>
+                  <input
+                    type="text"
+                    id="receivedBy"
+                    name="receivedBy"
+                    placeholder="Received by"
+                  />
+                </div>
 
-                            <input
-                                type="time"
-                                id="deliveryTime"
-                                name="deliveryTime"
-                            >
-                        </div>
+                <div class="field">
+                  <label for="deliveredBy"> Delivered By </label>
 
+                  <input
+                    type="text"
+                    id="deliveredBy"
+                    name="deliveredBy"
+                    placeholder="Delivered by"
+                  />
+                </div>
 
-                        <div class="field">
-                            <label for="groupCode">
-                                GrpCode
-                            </label>
+                <div class="field">
+                  <label for="billNo"> Bill No </label>
 
-                            <select id="groupCode" name="groupCode">
-                                <option value="">Select code</option>
-                                <option>SRV</option>
-                                <option>BODY</option>
-                                <option>OTHR</option>
-                                <option>PDI</option>
-                            </select>
-                        </div>
+                  <input
+                    type="text"
+                    id="billNo"
+                    name="billNo"
+                    placeholder="Bill number"
+                  />
+                </div>
 
+                <div class="field">
+                  <label for="insuranceBillNo"> INS.BillNo </label>
 
-                        <div class="field">
-                            <label for="floorSupervisor">
-                                FlorSup
-                            </label>
+                  <input
+                    type="text"
+                    id="insuranceBillNo"
+                    name="insuranceBillNo"
+                    placeholder="Insurance bill number"
+                  />
+                </div>
+              </div>
+            </section>
 
-                            <select
-                                id="floorSupervisor"
-                                name="floorSupervisor"
-                            >
-                                <option value="">Select floor supervisor</option>
-                                <option>S. Sarkar</option>
-                                <option>P. Dorji</option>
-                                <option>T. Wangchuk</option>
-                            </select>
-                        </div>
-
-
-                        <div class="field">
-                            <label for="receivedBy">
-                                RecdBy
-                            </label>
-
-                            <input
-                                type="text"
-                                id="receivedBy"
-                                name="receivedBy"
-                                placeholder="Received by"
-                            >
-                        </div>
-
-
-                        <div class="field">
-                            <label for="deliveredBy">
-                                Delivered By
-                            </label>
-
-                            <input
-                                type="text"
-                                id="deliveredBy"
-                                name="deliveredBy"
-                                placeholder="Delivered by"
-                            >
-                        </div>
-
-
-                        <div class="field">
-                            <label for="billNo">
-                                Bill No
-                            </label>
-
-                            <input
-                                type="text"
-                                id="billNo"
-                                name="billNo"
-                                placeholder="Bill number"
-                            >
-                        </div>
-
-
-                        <div class="field">
-                            <label for="insuranceBillNo">
-                                INS.BillNo
-                            </label>
-
-                            <input
-                                type="text"
-                                id="insuranceBillNo"
-                                name="insuranceBillNo"
-                                placeholder="Insurance bill number"
-                            >
-                        </div>
-
-                    </div>
-
-                </section>
-
-
-                <!-- =================================================
+            <!-- =================================================
                      06 INSURANCE / WARRANTY
                      ================================================= -->
 
-                <section class="form-section">
+            <section class="form-section">
+              <div class="form-section__heading">
+                <div class="step-number">06</div>
 
-                    <div class="form-section__heading">
+                <div>
+                  <div class="panel-kicker">COVERAGE</div>
+                  <h3>Insurance & Warranty</h3>
+                </div>
+              </div>
 
-                        <div class="step-number">06</div>
+              <div class="form-grid">
+                <div class="field">
+                  <label for="insuranceCompany"> Insurance Company </label>
 
-                        <div>
-                            <div class="panel-kicker">COVERAGE</div>
-                            <h3>Insurance & Warranty</h3>
-                        </div>
+                  <input
+                    type="text"
+                    id="insuranceCompany"
+                    name="insuranceCompany"
+                    placeholder="Insurance company"
+                  />
+                </div>
 
-                    </div>
+                <div class="field">
+                  <label for="insurancePolicyNo"> Insurance Policy No. </label>
 
-                    <div class="form-grid">
+                  <input
+                    type="text"
+                    id="insurancePolicyNo"
+                    name="insurancePolicyNo"
+                    placeholder="Policy number"
+                  />
+                </div>
 
-                        <div class="field">
-                            <label for="insuranceCompany">
-                                Insurance Company
-                            </label>
+                <div class="field">
+                  <label for="warrantyStatus"> Warranty </label>
 
-                            <input
-                                type="text"
-                                id="insuranceCompany"
-                                name="insuranceCompany"
-                                placeholder="Insurance company"
-                            >
-                        </div>
+                  <select id="warrantyStatus" name="warrantyStatus">
+                    <option>Not Applicable</option>
+                    <option>Under Warranty</option>
+                    <option>Warranty Claim</option>
+                    <option>Expired</option>
+                  </select>
+                </div>
 
+                <div class="field">
+                  <label for="warrantyNo"> Warranty Reference </label>
 
-                        <div class="field">
-                            <label for="insurancePolicyNo">
-                                Insurance Policy No.
-                            </label>
+                  <input
+                    type="text"
+                    id="warrantyNo"
+                    name="warrantyNo"
+                    placeholder="Warranty reference"
+                  />
+                </div>
+              </div>
+            </section>
 
-                            <input
-                                type="text"
-                                id="insurancePolicyNo"
-                                name="insurancePolicyNo"
-                                placeholder="Policy number"
-                            >
-                        </div>
-
-
-                        <div class="field">
-                            <label for="warrantyStatus">
-                                Warranty
-                            </label>
-
-                            <select
-                                id="warrantyStatus"
-                                name="warrantyStatus"
-                            >
-                                <option>Not Applicable</option>
-                                <option>Under Warranty</option>
-                                <option>Warranty Claim</option>
-                                <option>Expired</option>
-                            </select>
-                        </div>
-
-
-                        <div class="field">
-                            <label for="warrantyNo">
-                                Warranty Reference
-                            </label>
-
-                            <input
-                                type="text"
-                                id="warrantyNo"
-                                name="warrantyNo"
-                                placeholder="Warranty reference"
-                            >
-                        </div>
-
-                    </div>
-
-                </section>
-
-
-                <!-- =================================================
+            <!-- =================================================
                      07 CHECK-IN
                      ================================================= -->
 
-                <section class="form-section">
+            <section class="form-section">
+              <div class="form-section__heading">
+                <div class="step-number">07</div>
 
-                    <div class="form-section__heading">
+                <div>
+                  <div class="panel-kicker">CHECK-IN</div>
+                  <h3>Vehicle Condition & Handover</h3>
+                </div>
+              </div>
 
-                        <div class="step-number">07</div>
+              <div class="form-grid">
+                <div class="field">
+                  <label for="pickupDrop"> Vehicle Handover </label>
 
-                        <div>
-                            <div class="panel-kicker">CHECK-IN</div>
-                            <h3>Vehicle Condition & Handover</h3>
-                        </div>
+                  <select id="pickupDrop" name="pickupDrop">
+                    <option>Customer Drop-off</option>
+                    <option>Pickup by Workshop</option>
+                    <option>Recovery / Towing</option>
+                    <option>Test Vehicle</option>
+                  </select>
+                </div>
 
-                    </div>
+                <div class="field">
+                  <label for="keysReceived"> Keys Received </label>
 
-                    <div class="form-grid">
+                  <select id="keysReceived" name="keysReceived">
+                    <option>Yes</option>
+                    <option>No</option>
+                  </select>
+                </div>
 
-                        <div class="field">
-                            <label for="pickupDrop">
-                                Vehicle Handover
-                            </label>
+                <div class="field">
+                  <label for="accessoriesReceived">
+                    Accessories / Belongings
+                  </label>
 
-                            <select
-                                id="pickupDrop"
-                                name="pickupDrop"
-                            >
-                                <option>Customer Drop-off</option>
-                                <option>Pickup by Workshop</option>
-                                <option>Recovery / Towing</option>
-                                <option>Test Vehicle</option>
-                            </select>
-                        </div>
+                  <input
+                    type="text"
+                    id="accessoriesReceived"
+                    name="accessoriesReceived"
+                    placeholder="Spare tyre, tools, belongings..."
+                  />
+                </div>
 
+                <div class="field field--wide">
+                  <label for="conditionNotes">
+                    Condition / Existing Damage
+                  </label>
 
-                        <div class="field">
-                            <label for="keysReceived">
-                                Keys Received
-                            </label>
+                  <textarea
+                    id="conditionNotes"
+                    name="conditionNotes"
+                    rows="5"
+                    placeholder="Visible damage, warning lights, belongings, observations..."
+                  ></textarea>
+                </div>
 
-                            <select
-                                id="keysReceived"
-                                name="keysReceived"
-                            >
-                                <option>Yes</option>
-                                <option>No</option>
-                            </select>
-                        </div>
+                <div class="field field--wide">
+                  <label for="supervisorNotes"> Supervisor Notes </label>
 
+                  <textarea
+                    id="supervisorNotes"
+                    name="supervisorNotes"
+                    rows="5"
+                    placeholder="Internal workshop notes..."
+                  ></textarea>
+                </div>
+              </div>
+            </section>
 
-                        <div class="field">
-                            <label for="accessoriesReceived">
-                                Accessories / Belongings
-                            </label>
-
-                            <input
-                                type="text"
-                                id="accessoriesReceived"
-                                name="accessoriesReceived"
-                                placeholder="Spare tyre, tools, belongings..."
-                            >
-                        </div>
-
-
-                        <div class="field field--wide">
-                            <label for="conditionNotes">
-                                Condition / Existing Damage
-                            </label>
-
-                            <textarea
-                                id="conditionNotes"
-                                name="conditionNotes"
-                                rows="5"
-                                placeholder="Visible damage, warning lights, belongings, observations..."
-                            ></textarea>
-                        </div>
-
-
-                        <div class="field field--wide">
-                            <label for="supervisorNotes">
-                                Supervisor Notes
-                            </label>
-
-                            <textarea
-                                id="supervisorNotes"
-                                name="supervisorNotes"
-                                rows="5"
-                                placeholder="Internal workshop notes..."
-                            ></textarea>
-                        </div>
-
-                    </div>
-
-                </section>
-
-
-                <!-- =================================================
+            <!-- =================================================
                      STOREKEEPER NOTICE
                      ================================================= -->
 
-                <div class="process-notice">
+            <div class="process-notice">
+              <div class="process-notice__icon">i</div>
 
-                    <div class="process-notice__icon">
-                        i
-                    </div>
+              <div>
+                <strong> Storekeeper integration </strong>
 
-                    <div>
-
-                        <strong>
-                            Storekeeper integration
-                        </strong>
-
-                        <p>
-                            Once the Job Card is created, it is automatically
-                            added to the Storekeeper queue. The Storekeeper
-                            can search this Job Card and issue parts against it.
-                        </p>
-
-                    </div>
-
-                </div>
-
+                <p>
+                  Once the Job Card is created, it is automatically added to the
+                  Storekeeper queue. The Storekeeper can search this Job Card
+                  and issue parts against it.
+                </p>
+              </div>
             </div>
+          </div>
 
-
-            <!-- =================================================
+          <!-- =================================================
                  FOOTER
                  ================================================= -->
 
-            <div class="modal-footer">
+          <div class="modal-footer">
+            <div class="modal-footer__status">
+              <span class="status-dot"></span>
 
-                <div class="modal-footer__status">
-
-                    <span class="status-dot"></span>
-
-                    <span id="formStatusText">
-                        New Job Card
-                    </span>
-
-                </div>
-
-                <div class="modal-footer__actions">
-
-                    <button
-                        type="button"
-                        class="secondary-button"
-                        id="cancelArrivalBtn"
-                    >
-                        Cancel
-                    </button>
-
-                    <button
-                        type="button"
-                        class="secondary-button"
-                        id="saveDraftBtn"
-                    >
-                        Save as Draft
-                    </button>
-
-                    <button
-                        type="submit"
-                        class="primary-button"
-                    >
-                        Create Job Card →
-                    </button>
-
-                </div>
-
+              <span id="formStatusText"> New Job Card </span>
             </div>
 
-        </form>
+            <div class="modal-footer__actions">
+              <button
+                type="button"
+                class="secondary-button"
+                id="cancelArrivalBtn"
+              >
+                Cancel
+              </button>
 
+              <button type="button" class="secondary-button" id="saveDraftBtn">
+                Save as Draft
+              </button>
+
+              <button type="submit" class="primary-button">
+                Create Job Card →
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
     </div>
 
-</div>
-
-
-<!-- ===========================================================
+    <!-- ===========================================================
      JOB CARD VIEW MODAL
      =========================================================== -->
 
-<div
-    class="modal-backdrop"
-    id="jobCardModal"
-    hidden
-    aria-hidden="true"
->
-
-    <div
+    <div class="modal-backdrop" id="jobCardModal" hidden aria-hidden="true">
+      <div
         class="job-view-modal"
         role="dialog"
         aria-modal="true"
         aria-labelledby="viewJobNo"
-    >
-
+      >
         <div class="modal-header">
+          <div>
+            <span class="panel-kicker"> JOB CARD </span>
 
-            <div>
+            <div class="job-title-row">
+              <h2 id="viewJobNo">—</h2>
 
-                <span class="panel-kicker">
-                    JOB CARD
-                </span>
-
-                <div class="job-title-row">
-
-                    <h2 id="viewJobNo">
-                        —
-                    </h2>
-
-                    <span
-                        id="viewStatus"
-                        class="status-badge status-badge--blue"
-                    >
-                        OPEN
-                    </span>
-
-                </div>
-
-                <p id="viewJobMeta">
-                    Vehicle arrival and workshop information
-                </p>
-
+              <span id="viewStatus" class="status-badge status-badge--blue">
+                OPEN
+              </span>
             </div>
 
-            <button
-                type="button"
-                class="modal-close-btn"
-                id="jobCardModalClose"
-            >
-                ✕
-            </button>
+            <p id="viewJobMeta">Vehicle arrival and workshop information</p>
+          </div>
 
+          <button type="button" class="modal-close-btn" id="jobCardModalClose">
+            ✕
+          </button>
         </div>
-
 
         <div class="job-view-body">
-
-            <div class="detail-summary-grid">
-
-                <div class="detail-summary-card">
-                    <span>VEHICLE</span>
-                    <strong id="viewVehicle">—</strong>
-                    <small id="viewVehicleModel">—</small>
-                </div>
-
-                <div class="detail-summary-card">
-                    <span>CUSTOMER</span>
-                    <strong id="viewCustomer">—</strong>
-                    <small id="viewPhone">—</small>
-                </div>
-
-                <div class="detail-summary-card">
-                    <span>SERVICE</span>
-                    <strong id="viewService">—</strong>
-                    <small id="viewVisit">—</small>
-                </div>
-
-                <div class="detail-summary-card">
-                    <span>PROMISED</span>
-                    <strong id="viewPromised">—</strong>
-                    <small id="viewDelivery">—</small>
-                </div>
-
+          <div class="detail-summary-grid">
+            <div class="detail-summary-card">
+              <span>VEHICLE</span>
+              <strong id="viewVehicle">—</strong>
+              <small id="viewVehicleModel">—</small>
             </div>
 
-
-            <section class="detail-section">
-
-                <div class="detail-section__header">
-                    <h3>Customer Information</h3>
-                </div>
-
-                <div class="detail-grid">
-
-                    <div class="detail-item">
-                        <span>Customer Name</span>
-                        <strong id="detailCustomerName">—</strong>
-                    </div>
-
-                    <div class="detail-item">
-                        <span>Customer ID</span>
-                        <strong id="detailCustomerId">—</strong>
-                    </div>
-
-                    <div class="detail-item">
-                        <span>Contact</span>
-                        <strong id="detailPhone">—</strong>
-                    </div>
-
-                    <div class="detail-item">
-                        <span>Email</span>
-                        <strong id="detailEmail">—</strong>
-                    </div>
-
-                    <div class="detail-item">
-                        <span>Customer Type</span>
-                        <strong id="detailCustomerType">—</strong>
-                    </div>
-
-                    <div class="detail-item detail-item--wide">
-                        <span>Address</span>
-                        <strong id="detailCustomerAddress">—</strong>
-                    </div>
-
-                </div>
-
-            </section>
-
-
-            <section class="detail-section">
-
-                <div class="detail-section__header">
-                    <h3>Vehicle Information</h3>
-                </div>
-
-                <div class="detail-grid">
-
-                    <div class="detail-item">
-                        <span>Registration</span>
-                        <strong id="detailRegistration">—</strong>
-                    </div>
-
-                    <div class="detail-item">
-                        <span>VIN / Chassis</span>
-                        <strong id="detailVin">—</strong>
-                    </div>
-
-                    <div class="detail-item">
-                        <span>Engine Number</span>
-                        <strong id="detailEngine">—</strong>
-                    </div>
-
-                    <div class="detail-item">
-                        <span>Make / Model</span>
-                        <strong id="detailModel">—</strong>
-                    </div>
-
-                    <div class="detail-item">
-                        <span>Model Year</span>
-                        <strong id="detailYear">—</strong>
-                    </div>
-
-                    <div class="detail-item">
-                        <span>Fuel Type</span>
-                        <strong id="detailFuel">—</strong>
-                    </div>
-
-                    <div class="detail-item">
-                        <span>Odometer</span>
-                        <strong id="detailOdometer">—</strong>
-                    </div>
-
-                    <div class="detail-item">
-                        <span>Fuel Level</span>
-                        <strong id="detailFuelLevel">—</strong>
-                    </div>
-
-                    <div class="detail-item">
-                        <span>Vehicle Colour</span>
-                        <strong id="detailVehicleColor">—</strong>
-                    </div>
-
-                </div>
-
-            </section>
-
-
-            <section class="detail-section">
-
-                <div class="detail-section__header">
-                    <h3>Service Details</h3>
-                </div>
-
-                <div class="detail-grid">
-
-                    <div class="detail-item">
-                        <span>Service Type</span>
-                        <strong id="detailService">—</strong>
-                    </div>
-
-                    <div class="detail-item">
-                        <span>Visit Type</span>
-                        <strong id="detailVisit">—</strong>
-                    </div>
-
-                    <div class="detail-item">
-                        <span>Service Advisor</span>
-                        <strong id="detailServiceAdvisor">—</strong>
-                    </div>
-
-                    <div class="detail-item">
-                        <span>Priority</span>
-                        <strong id="detailPriority">—</strong>
-                    </div>
-
-                    <div class="detail-item">
-                        <span>Arrival Number</span>
-                        <strong id="detailArrival">—</strong>
-                    </div>
-
-                    <div class="detail-item">
-                        <span>Initial Bay</span>
-                        <strong id="detailBay">—</strong>
-                    </div>
-
-                </div>
-
-                <div class="complaint-box">
-                    <span>CUSTOMER COMPLAINT / REQUESTED WORK</span>
-                    <p id="detailComplaint">—</p>
-                </div>
-
-                <div class="complaint-box">
-                    <span>ADDITIONAL REQUESTED WORK</span>
-                    <p id="detailAdditionalWork">—</p>
-                </div>
-
-            </section>
-
-
-            <section class="detail-section">
-
-                <div class="detail-section__header">
-                    <h3>Workshop Assignment</h3>
-                </div>
-
-                <div class="detail-grid">
-
-                    <div class="detail-item">
-                        <span>Supervisor</span>
-                        <strong id="detailSupervisor">—</strong>
-                    </div>
-
-                    <div class="detail-item">
-                        <span>Mechanic 1</span>
-                        <strong id="detailMechanic1">—</strong>
-                    </div>
-
-                    <div class="detail-item">
-                        <span>Mechanic 2</span>
-                        <strong id="detailMechanic2">—</strong>
-                    </div>
-
-                    <div class="detail-item">
-                        <span>Floor Supervisor</span>
-                        <strong id="detailFloorSupervisor">—</strong>
-                    </div>
-
-                    <div class="detail-item">
-                        <span>Road Test</span>
-                        <strong id="detailRoadTest">—</strong>
-                    </div>
-
-                    <div class="detail-item">
-                        <span>Customer Approval</span>
-                        <strong id="detailCustomerApproval">—</strong>
-                    </div>
-
-                </div>
-
-            </section>
-
-
-            <section class="detail-section">
-
-                <div class="detail-section__header">
-                    <h3>Group / Control</h3>
-                </div>
-
-                <div class="detail-grid">
-
-                    <div class="detail-item">
-                        <span>Promised Date</span>
-                        <strong id="detailPromisedDate">—</strong>
-                    </div>
-
-                    <div class="detail-item">
-                        <span>Promised Time</span>
-                        <strong id="detailPromisedTime">—</strong>
-                    </div>
-
-                    <div class="detail-item">
-                        <span>Delivery Date</span>
-                        <strong id="detailDeliveryDate">—</strong>
-                    </div>
-
-                    <div class="detail-item">
-                        <span>Delivery Time</span>
-                        <strong id="detailDeliveryTime">—</strong>
-                    </div>
-
-                    <div class="detail-item">
-                        <span>GrpCode</span>
-                        <strong id="detailGroupCode">—</strong>
-                    </div>
-
-                    <div class="detail-item">
-                        <span>FlorSup</span>
-                        <strong id="detailFlorSup">—</strong>
-                    </div>
-
-                    <div class="detail-item">
-                        <span>Received By</span>
-                        <strong id="detailReceivedBy">—</strong>
-                    </div>
-
-                    <div class="detail-item">
-                        <span>Delivered By</span>
-                        <strong id="detailDeliveredBy">—</strong>
-                    </div>
-
-                    <div class="detail-item">
-                        <span>Bill No</span>
-                        <strong id="detailBillNo">—</strong>
-                    </div>
-
-                    <div class="detail-item">
-                        <span>INS.BillNo</span>
-                        <strong id="detailInsuranceBillNo">—</strong>
-                    </div>
-
-                </div>
-
-            </section>
-
-
-            <section class="detail-section">
-
-                <div class="detail-section__header">
-                    <h3>Insurance & Warranty</h3>
-                </div>
-
-                <div class="detail-grid">
-
-                    <div class="detail-item">
-                        <span>Insurance Company</span>
-                        <strong id="detailInsuranceCompany">—</strong>
-                    </div>
-
-                    <div class="detail-item">
-                        <span>Policy Number</span>
-                        <strong id="detailInsurancePolicy">—</strong>
-                    </div>
-
-                    <div class="detail-item">
-                        <span>Warranty</span>
-                        <strong id="detailWarrantyStatus">—</strong>
-                    </div>
-
-                    <div class="detail-item">
-                        <span>Warranty Reference</span>
-                        <strong id="detailWarrantyNo">—</strong>
-                    </div>
-
-                </div>
-
-            </section>
-
-
-            <section class="detail-section">
-
-                <div class="detail-section__header">
-                    <h3>Check-in & Handover</h3>
-                </div>
-
-                <div class="detail-grid">
-
-                    <div class="detail-item">
-                        <span>Vehicle Handover</span>
-                        <strong id="detailPickupDrop">—</strong>
-                    </div>
-
-                    <div class="detail-item">
-                        <span>Keys Received</span>
-                        <strong id="detailKeysReceived">—</strong>
-                    </div>
-
-                    <div class="detail-item detail-item--wide">
-                        <span>Accessories / Belongings</span>
-                        <strong id="detailAccessories">—</strong>
-                    </div>
-
-                </div>
-
-                <div class="complaint-box">
-                    <span>VEHICLE CONDITION</span>
-                    <p id="detailCondition">—</p>
-                </div>
-
-                <div class="complaint-box">
-                    <span>SUPERVISOR NOTES</span>
-                    <p id="detailSupervisorNotes">—</p>
-                </div>
-
-            </section>
-
-
-            <section class="storekeeper-status">
-
-                <div class="storekeeper-status__icon">
-                    ▣
-                </div>
-
-                <div>
-                    <div class="panel-kicker">
-                        STOREKEEPER
-                    </div>
-
-                    <h3>
-                        Parts Issue Status
-                    </h3>
-
-                    <p id="viewPartsMessage">
-                        Job Card is available to Storekeeper for parts issue.
-                    </p>
-                </div>
-
-                <span
-                    id="viewPartsStatus"
-                    class="status-badge status-badge--yellow"
-                >
-                    WAITING PARTS
-                </span>
-
-            </section>
-
+            <div class="detail-summary-card">
+              <span>CUSTOMER</span>
+              <strong id="viewCustomer">—</strong>
+              <small id="viewPhone">—</small>
+            </div>
+
+            <div class="detail-summary-card">
+              <span>SERVICE</span>
+              <strong id="viewService">—</strong>
+              <small id="viewVisit">—</small>
+            </div>
+
+            <div class="detail-summary-card">
+              <span>PROMISED</span>
+              <strong id="viewPromised">—</strong>
+              <small id="viewDelivery">—</small>
+            </div>
+          </div>
+
+          <section class="detail-section">
+            <div class="detail-section__header">
+              <h3>Customer Information</h3>
+            </div>
+
+            <div class="detail-grid">
+              <div class="detail-item">
+                <span>Customer Name</span>
+                <strong id="detailCustomerName">—</strong>
+              </div>
+
+              <div class="detail-item">
+                <span>Customer ID</span>
+                <strong id="detailCustomerId">—</strong>
+              </div>
+
+              <div class="detail-item">
+                <span>Contact</span>
+                <strong id="detailPhone">—</strong>
+              </div>
+
+              <div class="detail-item">
+                <span>Email</span>
+                <strong id="detailEmail">—</strong>
+              </div>
+
+              <div class="detail-item">
+                <span>Customer Type</span>
+                <strong id="detailCustomerType">—</strong>
+              </div>
+
+              <div class="detail-item detail-item--wide">
+                <span>Address</span>
+                <strong id="detailCustomerAddress">—</strong>
+              </div>
+            </div>
+          </section>
+
+          <section class="detail-section">
+            <div class="detail-section__header">
+              <h3>Vehicle Information</h3>
+            </div>
+
+            <div class="detail-grid">
+              <div class="detail-item">
+                <span>Registration</span>
+                <strong id="detailRegistration">—</strong>
+              </div>
+
+              <div class="detail-item">
+                <span>VIN / Chassis</span>
+                <strong id="detailVin">—</strong>
+              </div>
+
+              <div class="detail-item">
+                <span>Engine Number</span>
+                <strong id="detailEngine">—</strong>
+              </div>
+
+              <div class="detail-item">
+                <span>Make / Model</span>
+                <strong id="detailModel">—</strong>
+              </div>
+
+              <div class="detail-item">
+                <span>Model Year</span>
+                <strong id="detailYear">—</strong>
+              </div>
+
+              <div class="detail-item">
+                <span>Fuel Type</span>
+                <strong id="detailFuel">—</strong>
+              </div>
+
+              <div class="detail-item">
+                <span>Odometer</span>
+                <strong id="detailOdometer">—</strong>
+              </div>
+
+              <div class="detail-item">
+                <span>Fuel Level</span>
+                <strong id="detailFuelLevel">—</strong>
+              </div>
+
+              <div class="detail-item">
+                <span>Vehicle Colour</span>
+                <strong id="detailVehicleColor">—</strong>
+              </div>
+            </div>
+          </section>
+
+          <section class="detail-section">
+            <div class="detail-section__header">
+              <h3>Service Details</h3>
+            </div>
+
+            <div class="detail-grid">
+              <div class="detail-item">
+                <span>Service Type</span>
+                <strong id="detailService">—</strong>
+              </div>
+
+              <div class="detail-item">
+                <span>Visit Type</span>
+                <strong id="detailVisit">—</strong>
+              </div>
+
+              <div class="detail-item">
+                <span>Service Advisor</span>
+                <strong id="detailServiceAdvisor">—</strong>
+              </div>
+
+              <div class="detail-item">
+                <span>Priority</span>
+                <strong id="detailPriority">—</strong>
+              </div>
+
+              <div class="detail-item">
+                <span>Arrival Number</span>
+                <strong id="detailArrival">—</strong>
+              </div>
+
+              <div class="detail-item">
+                <span>Initial Bay</span>
+                <strong id="detailBay">—</strong>
+              </div>
+            </div>
+
+            <div class="complaint-box">
+              <span>CUSTOMER COMPLAINT / REQUESTED WORK</span>
+              <p id="detailComplaint">—</p>
+            </div>
+
+            <div class="complaint-box">
+              <span>ADDITIONAL REQUESTED WORK</span>
+              <p id="detailAdditionalWork">—</p>
+            </div>
+          </section>
+
+          <section class="detail-section">
+            <div class="detail-section__header">
+              <h3>Workshop Assignment</h3>
+            </div>
+
+            <div class="detail-grid">
+              <div class="detail-item">
+                <span>Supervisor</span>
+                <strong id="detailSupervisor">—</strong>
+              </div>
+
+              <div class="detail-item">
+                <span>Mechanic 1</span>
+                <strong id="detailMechanic1">—</strong>
+              </div>
+
+              <div class="detail-item">
+                <span>Mechanic 2</span>
+                <strong id="detailMechanic2">—</strong>
+              </div>
+
+              <div class="detail-item">
+                <span>Floor Supervisor</span>
+                <strong id="detailFloorSupervisor">—</strong>
+              </div>
+
+              <div class="detail-item">
+                <span>Road Test</span>
+                <strong id="detailRoadTest">—</strong>
+              </div>
+
+              <div class="detail-item">
+                <span>Customer Approval</span>
+                <strong id="detailCustomerApproval">—</strong>
+              </div>
+            </div>
+          </section>
+
+          <section class="detail-section">
+            <div class="detail-section__header">
+              <h3>Group / Control</h3>
+            </div>
+
+            <div class="detail-grid">
+              <div class="detail-item">
+                <span>Promised Date</span>
+                <strong id="detailPromisedDate">—</strong>
+              </div>
+
+              <div class="detail-item">
+                <span>Promised Time</span>
+                <strong id="detailPromisedTime">—</strong>
+              </div>
+
+              <div class="detail-item">
+                <span>Delivery Date</span>
+                <strong id="detailDeliveryDate">—</strong>
+              </div>
+
+              <div class="detail-item">
+                <span>Delivery Time</span>
+                <strong id="detailDeliveryTime">—</strong>
+              </div>
+
+              <div class="detail-item">
+                <span>GrpCode</span>
+                <strong id="detailGroupCode">—</strong>
+              </div>
+
+              <div class="detail-item">
+                <span>FlorSup</span>
+                <strong id="detailFlorSup">—</strong>
+              </div>
+
+              <div class="detail-item">
+                <span>Received By</span>
+                <strong id="detailReceivedBy">—</strong>
+              </div>
+
+              <div class="detail-item">
+                <span>Delivered By</span>
+                <strong id="detailDeliveredBy">—</strong>
+              </div>
+
+              <div class="detail-item">
+                <span>Bill No</span>
+                <strong id="detailBillNo">—</strong>
+              </div>
+
+              <div class="detail-item">
+                <span>INS.BillNo</span>
+                <strong id="detailInsuranceBillNo">—</strong>
+              </div>
+            </div>
+          </section>
+
+          <section class="detail-section">
+            <div class="detail-section__header">
+              <h3>Insurance & Warranty</h3>
+            </div>
+
+            <div class="detail-grid">
+              <div class="detail-item">
+                <span>Insurance Company</span>
+                <strong id="detailInsuranceCompany">—</strong>
+              </div>
+
+              <div class="detail-item">
+                <span>Policy Number</span>
+                <strong id="detailInsurancePolicy">—</strong>
+              </div>
+
+              <div class="detail-item">
+                <span>Warranty</span>
+                <strong id="detailWarrantyStatus">—</strong>
+              </div>
+
+              <div class="detail-item">
+                <span>Warranty Reference</span>
+                <strong id="detailWarrantyNo">—</strong>
+              </div>
+            </div>
+          </section>
+
+          <section class="detail-section">
+            <div class="detail-section__header">
+              <h3>Check-in & Handover</h3>
+            </div>
+
+            <div class="detail-grid">
+              <div class="detail-item">
+                <span>Vehicle Handover</span>
+                <strong id="detailPickupDrop">—</strong>
+              </div>
+
+              <div class="detail-item">
+                <span>Keys Received</span>
+                <strong id="detailKeysReceived">—</strong>
+              </div>
+
+              <div class="detail-item detail-item--wide">
+                <span>Accessories / Belongings</span>
+                <strong id="detailAccessories">—</strong>
+              </div>
+            </div>
+
+            <div class="complaint-box">
+              <span>VEHICLE CONDITION</span>
+              <p id="detailCondition">—</p>
+            </div>
+
+            <div class="complaint-box">
+              <span>SUPERVISOR NOTES</span>
+              <p id="detailSupervisorNotes">—</p>
+            </div>
+          </section>
+
+          <section class="storekeeper-status">
+            <div class="storekeeper-status__icon">▣</div>
+
+            <div>
+              <div class="panel-kicker">STOREKEEPER</div>
+
+              <h3>Parts Issue Status</h3>
+
+              <p id="viewPartsMessage">
+                Job Card is available to Storekeeper for parts issue.
+              </p>
+            </div>
+
+            <span
+              id="viewPartsStatus"
+              class="status-badge status-badge--yellow"
+            >
+              WAITING PARTS
+            </span>
+          </section>
         </div>
-
 
         <div class="modal-footer">
+          <div class="modal-footer__status">
+            <span class="status-dot"></span>
 
-            <div class="modal-footer__status">
+            <span id="viewFooterStatus"> Job Card Active </span>
+          </div>
 
-                <span class="status-dot"></span>
+          <div class="modal-footer__actions">
+            <button type="button" class="danger-button" id="deleteJobBtn">
+              Delete
+            </button>
 
-                <span id="viewFooterStatus">
-                    Job Card Active
-                </span>
+            <button type="button" class="secondary-button" id="draftJobBtn">
+              Save as Draft
+            </button>
 
-            </div>
+            <button type="button" class="secondary-button" id="printJobBtn">
+              ⎙ Print
+            </button>
 
-            <div class="modal-footer__actions">
-
-                <button
-                    type="button"
-                    class="danger-button"
-                    id="deleteJobBtn"
-                >
-                    Delete
-                </button>
-
-                <button
-                    type="button"
-                    class="secondary-button"
-                    id="draftJobBtn"
-                >
-                    Save as Draft
-                </button>
-
-                <button
-                    type="button"
-                    class="secondary-button"
-                    id="printJobBtn"
-                >
-                    ⎙ Print
-                </button>
-
-                <button
-                    type="button"
-                    class="primary-button"
-                    id="editJobBtn"
-                >
-                    Edit
-                </button>
-
-            </div>
-
+            <button type="button" class="primary-button" id="editJobBtn">
+              Edit
+            </button>
+          </div>
         </div>
-
+      </div>
     </div>
 
-</div>
-
-
-<!-- ===========================================================
+    <!-- ===========================================================
      TOAST
      =========================================================== -->
 
-<div
-    class="toast"
-    id="toast"
-    hidden
->
+    <div class="toast" id="toast" hidden>
+      <div class="toast__icon">✓</div>
 
-    <div class="toast__icon">
-        ✓
-    </div>
-
-    <div>
+      <div>
         <strong id="toastTitle">Done</strong>
         <span id="toastMessage">Operation completed.</span>
+      </div>
     </div>
 
-</div>
-
-
-<script src="job_card_entry.js"></script>
-
-</body>
+    <script src="job_card_entry.js"></script>
+  </body>
 </html>
