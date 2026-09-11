@@ -6,7 +6,7 @@
 document.addEventListener("DOMContentLoaded", () => {
   const STORAGE_KEY = "zimdra_billing_clerk_v1";
 
-  const GST_RATE = 18;
+  const GST_RATE = 5;
 
   let state = loadState();
 
@@ -16,6 +16,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let toastTimer = null;
 
+  /*
+   * Itemised "Mechanic Work Charge" lines added against the
+   * currently fetched Job Card's mechanic(s). Reset whenever a
+   * different Job Card is fetched, the Billing screen is
+   * cleared, or a bill is saved.
+   */
+  let mechanicItems = [];
+
   /* ============================================================
        DEMO DATA
 
@@ -23,6 +31,11 @@ document.addEventListener("DOMContentLoaded", () => {
        "Load Demo Data" button in the sidebar now calls this
        same function instead of keeping its own separate copy,
        so the two entry points can never drift out of sync.
+
+       GST on all parts is now 5% (was 18%). The three historical
+       demo bills below have been recalculated at 5% so the
+       figures stay internally consistent, with every money
+       amount rounded to a whole number.
     ============================================================ */
 
   function demoState() {
@@ -62,7 +75,7 @@ document.addEventListener("DOMContentLoaded", () => {
               requestedQty: 1,
               issuedQty: 1,
               unitPrice: 850,
-              gstRate: 18,
+              gstRate: 5,
             },
 
             {
@@ -72,7 +85,7 @@ document.addEventListener("DOMContentLoaded", () => {
               requestedQty: 1,
               issuedQty: 1,
               unitPrice: 1200,
-              gstRate: 18,
+              gstRate: 5,
             },
 
             {
@@ -82,7 +95,7 @@ document.addEventListener("DOMContentLoaded", () => {
               requestedQty: 2,
               issuedQty: 2,
               unitPrice: 2500,
-              gstRate: 18,
+              gstRate: 5,
             },
           ],
         },
@@ -121,7 +134,7 @@ document.addEventListener("DOMContentLoaded", () => {
               requestedQty: 1,
               issuedQty: 1,
               unitPrice: 2500,
-              gstRate: 18,
+              gstRate: 5,
             },
 
             {
@@ -131,7 +144,7 @@ document.addEventListener("DOMContentLoaded", () => {
               requestedQty: 1,
               issuedQty: 1,
               unitPrice: 480,
-              gstRate: 18,
+              gstRate: 5,
             },
           ],
         },
@@ -170,7 +183,7 @@ document.addEventListener("DOMContentLoaded", () => {
               requestedQty: 4,
               issuedQty: 4,
               unitPrice: 950,
-              gstRate: 18,
+              gstRate: 5,
             },
 
             {
@@ -180,7 +193,7 @@ document.addEventListener("DOMContentLoaded", () => {
               requestedQty: 1,
               issuedQty: 1,
               unitPrice: 850,
-              gstRate: 18,
+              gstRate: 5,
             },
           ],
         },
@@ -219,7 +232,7 @@ document.addEventListener("DOMContentLoaded", () => {
               requestedQty: 1,
               issuedQty: 0,
               unitPrice: 850,
-              gstRate: 18,
+              gstRate: 5,
             },
           ],
         },
@@ -262,10 +275,10 @@ document.addEventListener("DOMContentLoaded", () => {
               name: "Toyota Oil Filter",
               qty: 1,
               unitPrice: 850,
-              gstRate: 18,
+              gstRate: 5,
               subtotal: 850,
-              gst: 153,
-              total: 1003,
+              gst: 43,
+              total: 893,
             },
 
             {
@@ -273,10 +286,10 @@ document.addEventListener("DOMContentLoaded", () => {
               name: "Toyota Air Filter",
               qty: 1,
               unitPrice: 1200,
-              gstRate: 18,
+              gstRate: 5,
               subtotal: 1200,
-              gst: 216,
-              total: 1416,
+              gst: 60,
+              total: 1260,
             },
 
             {
@@ -284,12 +297,16 @@ document.addEventListener("DOMContentLoaded", () => {
               name: "Front Brake Pad Set",
               qty: 2,
               unitPrice: 2500,
-              gstRate: 18,
+              gstRate: 5,
               subtotal: 5000,
-              gst: 900,
-              total: 5900,
+              gst: 250,
+              total: 5250,
             },
           ],
+
+          mechanicItems: [],
+
+          mechanicTotal: 0,
 
           partsSubtotal: 7050,
 
@@ -309,15 +326,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
           taxable: 9750,
 
-          gstSpares: 1269,
+          gstSpares: 353,
 
-          gstService: 486,
+          gstService: 135,
 
-          gst: 1755,
+          gst: 488,
 
           surchargeGst: 0,
 
-          grandTotal: 11505,
+          grandTotal: 10238,
 
           notes:
             "General service, brake inspection and oil filter replacement.",
@@ -371,10 +388,10 @@ document.addEventListener("DOMContentLoaded", () => {
               name: "Front Brake Pad Set",
               qty: 1,
               unitPrice: 2500,
-              gstRate: 18,
+              gstRate: 5,
               subtotal: 2500,
-              gst: 450,
-              total: 2950,
+              gst: 125,
+              total: 2625,
             },
 
             {
@@ -382,12 +399,16 @@ document.addEventListener("DOMContentLoaded", () => {
               name: "Brake Fluid 500ml",
               qty: 1,
               unitPrice: 480,
-              gstRate: 18,
+              gstRate: 5,
               subtotal: 480,
-              gst: 86.4,
-              total: 566.4,
+              gst: 24,
+              total: 504,
             },
           ],
+
+          mechanicItems: [],
+
+          mechanicTotal: 0,
 
           partsSubtotal: 2980,
 
@@ -407,15 +428,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
           taxable: 4680,
 
-          gstSpares: 536.4,
+          gstSpares: 149,
 
-          gstService: 306,
+          gstService: 85,
 
-          gst: 842.4,
+          gst: 234,
 
           surchargeGst: 0,
 
-          grandTotal: 5522.4,
+          grandTotal: 4914,
 
           notes: "Front brake pad replacement and brake fluid service.",
 
@@ -468,10 +489,10 @@ document.addEventListener("DOMContentLoaded", () => {
               name: "Engine Oil 5W-30 1L",
               qty: 4,
               unitPrice: 950,
-              gstRate: 18,
+              gstRate: 5,
               subtotal: 3800,
-              gst: 684,
-              total: 4484,
+              gst: 190,
+              total: 3990,
             },
 
             {
@@ -479,12 +500,16 @@ document.addEventListener("DOMContentLoaded", () => {
               name: "Toyota Oil Filter",
               qty: 1,
               unitPrice: 850,
-              gstRate: 18,
+              gstRate: 5,
               subtotal: 850,
-              gst: 153,
-              total: 1003,
+              gst: 43,
+              total: 893,
             },
           ],
+
+          mechanicItems: [],
+
+          mechanicTotal: 0,
 
           partsSubtotal: 4650,
 
@@ -504,15 +529,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
           taxable: 7000,
 
-          gstSpares: 795.6,
+          gstSpares: 233,
 
-          gstService: 464.4,
+          gstService: 129,
 
-          gst: 1260,
+          gst: 362,
 
           surchargeGst: 0,
 
-          grandTotal: 8260,
+          grandTotal: 7362,
 
           notes: "Engine oil replacement and periodic engine service.",
 
@@ -522,7 +547,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
           amountPaid: 8500,
 
-          change: 240,
+          change: 1138,
 
           createdAt: "2026-09-07T15:20:00",
 
@@ -578,22 +603,31 @@ document.addEventListener("DOMContentLoaded", () => {
     return document.getElementById(id);
   }
 
-  function money(value) {
-    const amount = Number(value) || 0;
-
-    return (
-      "Nu. " +
-      amount.toLocaleString("en-BT", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })
-    );
-  }
-
   function number(value) {
     const n = parseFloat(value);
 
     return Number.isFinite(n) ? n : 0;
+  }
+
+  /*
+   * All monetary amounts are whole numbers (no decimals) — GST at
+   * 5% (or any percentage) can otherwise produce fractions, so
+   * every computed amount is rounded before it is stored or shown.
+   */
+  function roundMoney(value) {
+    return Math.round(number(value));
+  }
+
+  function money(value) {
+    const amount = roundMoney(value);
+
+    return (
+      "Nu. " +
+      amount.toLocaleString("en-BT", {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      })
+    );
   }
 
   function escapeHtml(value) {
@@ -746,6 +780,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     currentJob = job;
 
+    /*
+     * A fresh Job Card means fresh mechanic work items — any
+     * items added for a previously fetched Job Card should not
+     * carry over.
+     */
+    mechanicItems = [];
+
     $("jobCardInput").value = job.id;
 
     renderJobDetails();
@@ -807,6 +848,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     $("jobDeliveredBy").textContent = currentJob.deliveredBy || "—";
 
+    $("mechanicSectionSupervisor").textContent =
+      currentJob.supervisor || "—";
+
     const status = currentJob.status || "Pending";
 
     const badge = $("jobStatusBadge");
@@ -825,6 +869,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     renderBillingParts();
+
+    renderMechanicItems();
 
     updateBillingTotals();
   }
@@ -867,7 +913,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const base = qty * unitPrice;
 
-      const gst = (base * gstRate) / 100;
+      const gst = roundMoney((base * gstRate) / 100);
 
       const total = base + gst;
 
@@ -910,17 +956,239 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /* ============================================================
+       MECHANIC WORK CHARGE (itemised "Add Mechanic" lines)
+
+       These are extra labour/work lines added by the Billing
+       Clerk against the Job Card's assigned mechanic(s), on top
+       of the flat Labour Charges / Handling Charge / Other
+       Charges fields (which are unchanged). Each item is
+       Description, Qty, Unit Price and Remarks, with the Amount
+       auto-calculated (Qty × Unit Price, rounded to a whole
+       number). The combined total is taxed the same way as
+       Labour/Other/Handling (see calculateBill).
+    ============================================================ */
+
+  function populateMechanicSelect() {
+    const select = $("mechanicNameSelect");
+
+    select.innerHTML = "";
+
+    if (!currentJob) {
+      return;
+    }
+
+    const names = [currentJob.mechanic, currentJob.mechanic2].filter(
+      (name) => name && name.trim(),
+    );
+
+    if (!names.length) {
+      const option = document.createElement("option");
+
+      option.value = "";
+
+      option.textContent = "Not assigned";
+
+      select.appendChild(option);
+
+      return;
+    }
+
+    names.forEach((name) => {
+      const option = document.createElement("option");
+
+      option.value = name;
+
+      option.textContent = name;
+
+      select.appendChild(option);
+    });
+  }
+
+  function updateMechanicAmountPreview() {
+    const qty = Math.max(0, number($("mechanicQty").value));
+
+    const unitPrice = Math.max(0, number($("mechanicUnitPrice").value));
+
+    $("mechanicAmountPreview").textContent = money(qty * unitPrice);
+  }
+
+  ["mechanicQty", "mechanicUnitPrice"].forEach((id) => {
+    $(id).addEventListener("input", updateMechanicAmountPreview);
+  });
+
+  $("addMechanicBtn").addEventListener("click", () => {
+    if (!currentJob) {
+      showError("Please fetch a Job Card before adding mechanic work.");
+
+      return;
+    }
+
+    clearError();
+
+    populateMechanicSelect();
+
+    $("mechanicDescription").value = "";
+
+    $("mechanicQty").value = "1";
+
+    $("mechanicUnitPrice").value = "0";
+
+    $("mechanicRemarks").value = "";
+
+    updateMechanicAmountPreview();
+
+    $("addMechanicModal").classList.remove("hidden");
+  });
+
+  function closeAddMechanicModal() {
+    $("addMechanicModal").classList.add("hidden");
+  }
+
+  $("closeAddMechanicModal").addEventListener("click", closeAddMechanicModal);
+
+  $("cancelAddMechanicBtn").addEventListener("click", closeAddMechanicModal);
+
+  $("addMechanicModal").addEventListener("click", (event) => {
+    if (event.target === $("addMechanicModal")) {
+      closeAddMechanicModal();
+    }
+  });
+
+  $("confirmAddMechanicBtn").addEventListener("click", () => {
+    const mechanicName = $("mechanicNameSelect").value;
+
+    const description = $("mechanicDescription").value.trim();
+
+    const qty = Math.max(0, number($("mechanicQty").value));
+
+    const unitPrice = Math.max(0, number($("mechanicUnitPrice").value));
+
+    const remarks = $("mechanicRemarks").value.trim();
+
+    if (!description) {
+      showToast("Please enter a description for the mechanic work.", "error");
+
+      return;
+    }
+
+    if (qty <= 0) {
+      showToast("Please enter a quantity greater than zero.", "error");
+
+      return;
+    }
+
+    mechanicItems.push({
+      mechanic: mechanicName || "—",
+
+      description,
+
+      qty,
+
+      unitPrice,
+
+      remarks,
+
+      amount: roundMoney(qty * unitPrice),
+    });
+
+    renderMechanicItems();
+
+    updateBillingTotals();
+
+    closeAddMechanicModal();
+
+    showToast("Mechanic work item added.", "success");
+  });
+
+  function renderMechanicItems() {
+    const tbody = $("mechanicItemsBody");
+
+    const empty = $("noMechanicItemsMessage");
+
+    tbody.innerHTML = "";
+
+    if (!mechanicItems.length) {
+      empty.classList.remove("hidden");
+
+      return;
+    }
+
+    empty.classList.add("hidden");
+
+    mechanicItems.forEach((item, index) => {
+      const row = document.createElement("tr");
+
+      row.innerHTML = `
+
+                <td>
+                    ${escapeHtml(item.mechanic)}
+                </td>
+
+                <td>
+                    ${escapeHtml(item.description)}
+                </td>
+
+                <td>
+                    ${item.qty}
+                </td>
+
+                <td>
+                    ${money(item.unitPrice)}
+                </td>
+
+                <td>
+                    ${escapeHtml(item.remarks || "—")}
+                </td>
+
+                <td>
+                    <strong>
+                        ${money(item.amount)}
+                    </strong>
+                </td>
+
+                <td>
+                    <button
+                        type="button"
+                        class="row-remove"
+                        data-index="${index}"
+                        title="Remove">
+                        ✕
+                    </button>
+                </td>
+
+            `;
+
+      tbody.appendChild(row);
+    });
+
+    tbody.querySelectorAll(".row-remove").forEach((button) => {
+      button.addEventListener("click", () => {
+        const index = Number(button.dataset.index);
+
+        mechanicItems.splice(index, 1);
+
+        renderMechanicItems();
+
+        updateBillingTotals();
+      });
+    });
+  }
+
+  /* ============================================================
        BILLING TOTALS
 
        Extended to cover the legacy "Bill Preparation" charge
        set: Handling Charge and Surcharge (each own GST line),
        a Special Discount that can be entered as an amount and/or
-       a percentage, and a Labour & Service Discount applied
-       specifically against labour/other/handling charges.
+       a percentage, a Labour & Service Discount applied
+       specifically against labour/other/handling/mechanic
+       charges, and the itemised Mechanic Work Charge lines
+       (added via "Add Mechanic").
 
        Existing fields (partsSubtotal, labour, other, discount,
        taxable, gst, grandTotal) keep the same meaning as before
-       so older saved bills still render correctly.
+       so older saved bills still render correctly. GST is 5%
+       (GST_RATE) and every amount is rounded to a whole number.
     ============================================================ */
 
   function calculateBill() {
@@ -952,6 +1220,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const other = Math.max(0, number($("otherCharge").value));
 
+    const mechanicTotal = mechanicItems.reduce(
+      (sum, item) => sum + number(item.amount),
+      0,
+    );
+
     const surcharge = Math.max(0, number($("surchargeAmount").value));
 
     const discountAmountEntered = Math.max(
@@ -969,7 +1242,8 @@ document.addEventListener("DOMContentLoaded", () => {
       number($("labourServiceDiscount").value),
     );
 
-    const beforeDiscount = partsSubtotal + labour + other + handling;
+    const beforeDiscount =
+      partsSubtotal + labour + other + handling + mechanicTotal;
 
     /*
      * Special Discount is recorded on the legacy paper form as
@@ -988,11 +1262,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     /*
      * Labour & Service Discount is a separate discount bucket
-     * specific to labour + other + handling (the "service" side
-     * of the bill), capped so it never exceeds those charges.
+     * specific to labour + other + handling + mechanic work (the
+     * "service" side of the bill), capped so it never exceeds
+     * those charges.
      */
 
-    const serviceCharges = labour + other + handling;
+    const serviceCharges = labour + other + handling + mechanicTotal;
 
     const labourServiceDiscount = Math.min(
       labourServiceDiscountEntered,
@@ -1008,24 +1283,23 @@ document.addEventListener("DOMContentLoaded", () => {
      * For prototype purposes, GST is calculated on:
      *
      * GST on Spares/Oils (parts GST, after proportional discount)
-     * + GST on Service (labour + other + handling GST, after
-     *   proportional discount)
+     * + GST on Service (labour + other + handling + mechanic work
+     *   GST, after proportional discount)
      *
      * Surcharge is not discounted and carries its own GST line,
-     * matching the legacy form's separate "Surcharge" + "GST 5%"
-     * rows.
+     * matching the legacy form's separate "Surcharge" + GST rows.
      */
 
     const discountRatio =
       beforeDiscount > 0 ? actualDiscount / beforeDiscount : 0;
-
-    const discountedPartsTaxable = partsSubtotal * (1 - discountRatio);
 
     const discountedLabour = labour * (1 - discountRatio);
 
     const discountedOther = other * (1 - discountRatio);
 
     const discountedHandling = handling * (1 - discountRatio);
+
+    const discountedMechanic = mechanicTotal * (1 - discountRatio);
 
     const partsGSTAfterDiscount = partsGST * (1 - discountRatio);
 
@@ -1035,7 +1309,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const handlingGST = (discountedHandling * GST_RATE) / 100;
 
-    const gstService = labourGST + otherGST + handlingGST;
+    const mechanicGST = (discountedMechanic * GST_RATE) / 100;
+
+    const gstService = labourGST + otherGST + handlingGST + mechanicGST;
 
     const taxable = beforeDiscount - actualDiscount;
 
@@ -1046,37 +1322,37 @@ document.addEventListener("DOMContentLoaded", () => {
     const grandTotal = taxable + gst + surcharge + surchargeGst;
 
     return {
-      partsSubtotal,
+      partsSubtotal: roundMoney(partsSubtotal),
 
-      labour,
+      labour: roundMoney(labour),
 
-      handling,
+      handling: roundMoney(handling),
 
-      other,
+      other: roundMoney(other),
 
-      surcharge,
+      mechanicTotal: roundMoney(mechanicTotal),
 
-      discount: specialDiscount,
+      surcharge: roundMoney(surcharge),
+
+      discount: roundMoney(specialDiscount),
 
       specialDiscountPercent,
 
-      labourServiceDiscount,
+      labourServiceDiscount: roundMoney(labourServiceDiscount),
 
-      taxable,
+      taxable: roundMoney(taxable),
 
-      gstSpares: partsGSTAfterDiscount,
+      gstSpares: roundMoney(partsGSTAfterDiscount),
 
-      gstService,
+      gstService: roundMoney(gstService),
 
-      gst,
+      gst: roundMoney(gst),
 
-      surchargeGst,
+      surchargeGst: roundMoney(surchargeGst),
 
-      grandTotal,
+      grandTotal: roundMoney(grandTotal),
 
-      partsGST,
-
-      discountedPartsTaxable,
+      partsGST: roundMoney(partsGST),
     };
   }
 
@@ -1084,6 +1360,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const totals = calculateBill();
 
     $("partsSubtotal").textContent = money(totals.partsSubtotal);
+
+    $("mechanicWorkTotal").textContent = money(totals.mechanicTotal);
 
     $("handlingTotal").textContent = money(totals.handling);
 
@@ -1129,6 +1407,8 @@ document.addEventListener("DOMContentLoaded", () => {
   $("clearBillingBtn").addEventListener("click", () => {
     currentJob = null;
 
+    mechanicItems = [];
+
     $("jobCardInput").value = "";
 
     $("jobDetails").classList.add("hidden");
@@ -1160,6 +1440,8 @@ document.addEventListener("DOMContentLoaded", () => {
     $("chequeNo").value = "";
 
     $("chequeDate").value = "";
+
+    renderMechanicItems();
 
     clearError();
 
@@ -1246,7 +1528,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const subtotal = qty * unitPrice;
 
-      const gst = (subtotal * gstRate) / 100;
+      const gst = roundMoney((subtotal * gstRate) / 100);
 
       return {
         partId: part.partId,
@@ -1314,6 +1596,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
       items,
 
+      mechanicItems: mechanicItems.map((item) => ({ ...item })),
+
       partsSubtotal: totals.partsSubtotal,
 
       labour: totals.labour,
@@ -1321,6 +1605,8 @@ document.addEventListener("DOMContentLoaded", () => {
       handling: totals.handling,
 
       other: totals.other,
+
+      mechanicTotal: totals.mechanicTotal,
 
       surcharge: totals.surcharge,
 
@@ -1377,9 +1663,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     currentJob = null;
 
+    mechanicItems = [];
+
     $("jobCardInput").value = "";
 
     $("jobDetails").classList.add("hidden");
+
+    renderMechanicItems();
   }
 
   /* ============================================================
@@ -1743,6 +2033,83 @@ document.addEventListener("DOMContentLoaded", () => {
       )
       .join("");
 
+    const mechanicRows =
+      bill.mechanicItems && bill.mechanicItems.length
+        ? `
+
+                <div class="invoice-subhead">
+                    <h4>Mechanic Work Items</h4>
+                </div>
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Mechanic</th>
+
+                            <th>Description</th>
+
+                            <th>Qty</th>
+
+                            <th>Unit Price</th>
+
+                            <th>Remarks</th>
+
+                            <th>Amount</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        ${bill.mechanicItems
+                          .map(
+                            (item) => `
+
+                                <tr>
+
+                                    <td>
+                                        ${escapeHtml(item.mechanic)}
+                                    </td>
+
+                                    <td>
+                                        ${escapeHtml(item.description)}
+                                    </td>
+
+                                    <td>
+                                        ${item.qty}
+                                    </td>
+
+                                    <td>
+                                        ${money(item.unitPrice)}
+                                    </td>
+
+                                    <td>
+                                        ${escapeHtml(item.remarks || "—")}
+                                    </td>
+
+                                    <td>
+                                        <strong>
+                                            ${money(item.amount)}
+                                        </strong>
+                                    </td>
+
+                                </tr>
+
+                            `,
+                          )
+                          .join("")}
+
+                    </tbody>
+
+                </table>
+
+            `
+        : "";
+
     $("invoiceContent").innerHTML = `
 
             <div class="invoice-header">
@@ -1921,7 +2288,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div>
 
                     <span>
-                        G.P. No. (Gate Pass)
+                        Gate Pass No. (G.P. No.)
                     </span>
 
                     <strong>
@@ -2003,6 +2370,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
             </table>
 
+            ${mechanicRows}
+
 
             <div class="invoice-total">
 
@@ -2014,6 +2383,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     <strong>
                         ${money(bill.partsSubtotal)}
+                    </strong>
+
+                </div>
+
+
+                <div class="total-line">
+
+                    <span>
+                        Mechanic Work Charge
+                    </span>
+
+                    <strong>
+                        ${money(bill.mechanicTotal || 0)}
                     </strong>
 
                 </div>
@@ -2252,9 +2634,11 @@ document.addEventListener("DOMContentLoaded", () => {
        (legacy "Cash Memo" — a parts-only pre-bill estimate)
 
        This is a preview only: it reads the currently fetched
-       Job Card's issued parts and renders an estimate. It does
-       NOT create a Bill and does not touch state.bills, so it
-       cannot interfere with the existing billing flow.
+       Job Card's issued parts and any mechanic work items added
+       so far, and renders an estimate carrying the same full set
+       of Job Card fields as the final invoice. It does NOT create
+       a Bill and does not touch state.bills, so it cannot
+       interfere with the existing billing flow.
     ============================================================ */
 
   function renderCashMemo(job) {
@@ -2299,6 +2683,74 @@ document.addEventListener("DOMContentLoaded", () => {
                 `;
       })
       .join("");
+
+    const mechanicEstimate = mechanicItems.length
+      ? `
+
+                <div class="invoice-subhead">
+                    <h4>Mechanic Work Items (Estimate)</h4>
+                </div>
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Mechanic</th>
+
+                            <th>Description</th>
+
+                            <th>Qty</th>
+
+                            <th>Unit Price</th>
+
+                            <th>Remarks</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        ${mechanicItems
+                          .map(
+                            (item) => `
+
+                                <tr>
+
+                                    <td>
+                                        ${escapeHtml(item.mechanic)}
+                                    </td>
+
+                                    <td>
+                                        ${escapeHtml(item.description)}
+                                    </td>
+
+                                    <td>
+                                        ${item.qty}
+                                    </td>
+
+                                    <td>
+                                        ${money(item.unitPrice)}
+                                    </td>
+
+                                    <td>
+                                        ${escapeHtml(item.remarks || "—")}
+                                    </td>
+
+                                </tr>
+
+                            `,
+                          )
+                          .join("")}
+
+                    </tbody>
+
+                </table>
+
+            `
+      : "";
 
     $("cashMemoContent").innerHTML = `
 
@@ -2346,11 +2798,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div>
 
                     <span>
-                        Customer Name
+                        Customer / Code
                     </span>
 
                     <strong>
                         ${escapeHtml(job.customer || "—")}
+                        ${job.customerCode ? " / " + escapeHtml(job.customerCode) : ""}
                     </strong>
 
                 </div>
@@ -2359,11 +2812,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div>
 
                     <span>
-                        PIN
+                        Job Order No.
                     </span>
 
                     <strong>
-                        ${escapeHtml(job.pin || "—")}
+                        ${escapeHtml(job.id)}
                     </strong>
 
                 </div>
@@ -2372,11 +2825,24 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div>
 
                     <span>
-                        Telephone
+                        Mobile
                     </span>
 
                     <strong>
                         ${escapeHtml(job.mobile || "—")}
+                    </strong>
+
+                </div>
+
+
+                <div>
+
+                    <span>
+                        Vehicle / Model
+                    </span>
+
+                    <strong>
+                        ${escapeHtml(job.vehicle || "—")}
                     </strong>
 
                 </div>
@@ -2398,11 +2864,116 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div>
 
                     <span>
-                        Model
+                        Chassis No.
                     </span>
 
                     <strong>
-                        ${escapeHtml(job.vehicle || "—")}
+                        ${escapeHtml(job.chassisNo || "—")}
+                    </strong>
+
+                </div>
+
+
+                <div>
+
+                    <span>
+                        Job Date
+                    </span>
+
+                    <strong>
+                        ${job.jobDate ? formatDate(job.jobDate) : "—"}
+                    </strong>
+
+                </div>
+
+
+                <div>
+
+                    <span>
+                        O.MLG (Odometer)
+                    </span>
+
+                    <strong>
+                        ${job.omlg === undefined || job.omlg === "" ? "—" : escapeHtml(String(job.omlg))}
+                    </strong>
+
+                </div>
+
+
+                <div>
+
+                    <span>
+                        Bay
+                    </span>
+
+                    <strong>
+                        ${escapeHtml(job.bay || "—")}
+                    </strong>
+
+                </div>
+
+
+                <div>
+
+                    <span>
+                        Govt. Vehicle
+                    </span>
+
+                    <strong>
+                        ${job.govtVehicle ? yesNo(job.govtVehicle) : "—"}
+                    </strong>
+
+                </div>
+
+
+                <div>
+
+                    <span>
+                        Gate Pass No. (G.P. No.)
+                    </span>
+
+                    <strong>
+                        ${escapeHtml(job.gpNo || "—")}
+                    </strong>
+
+                </div>
+
+
+                <div>
+
+                    <span>
+                        Mechanic / Mechanic 2
+                    </span>
+
+                    <strong>
+                        ${escapeHtml(job.mechanic || "—")}
+                        ${job.mechanic2 ? " / " + escapeHtml(job.mechanic2) : ""}
+                    </strong>
+
+                </div>
+
+
+                <div>
+
+                    <span>
+                        Floor Supervisor
+                    </span>
+
+                    <strong>
+                        ${escapeHtml(job.supervisor || "—")}
+                    </strong>
+
+                </div>
+
+
+                <div>
+
+                    <span>
+                        Delivered By
+                    </span>
+
+                    <strong>
+                        ${escapeHtml(job.deliveredBy || "—")}
                     </strong>
 
                 </div>
@@ -2438,6 +3009,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 </tbody>
 
             </table>
+
+            ${mechanicEstimate}
 
 
             <div class="invoice-total">
@@ -2475,8 +3048,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 This is a Cash Memo / proforma estimate for the
                 customer's reference only — it is not a tax
                 invoice and GST is not shown. Labour, other
-                charges, discounts and GST are finalised on the
-                Workshop Bill.
+                charges, mechanic work, discounts and GST are
+                finalised on the Workshop Bill.
 
             </div>
 
@@ -2558,6 +3131,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     currentJob = null;
 
+    mechanicItems = [];
+
     saveState();
 
     renderAll();
@@ -2565,6 +3140,8 @@ document.addEventListener("DOMContentLoaded", () => {
     $("jobDetails").classList.add("hidden");
 
     $("jobCardInput").value = "";
+
+    renderMechanicItems();
 
     showToast("Demo billing data loaded.", "success");
   });
@@ -2592,6 +3169,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     currentJob = null;
 
+    mechanicItems = [];
+
     saveState();
 
     renderAll();
@@ -2599,6 +3178,8 @@ document.addEventListener("DOMContentLoaded", () => {
     $("jobDetails").classList.add("hidden");
 
     $("jobCardInput").value = "";
+
+    renderMechanicItems();
 
     showToast("Billing data cleared.", "success");
   });
@@ -2630,6 +3211,8 @@ document.addEventListener("DOMContentLoaded", () => {
   /* ============================================================
        INITIALISE
     ============================================================ */
+
+  renderMechanicItems();
 
   saveState();
 

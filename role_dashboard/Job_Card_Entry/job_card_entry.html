@@ -506,13 +506,24 @@
                 </div>
 
                 <div class="field">
-                  <label for="vin"> VIN / Chassis Number </label>
+                  <label for="vin"> VIN Number </label>
 
                   <input
                     type="text"
                     id="vin"
                     name="vin"
-                    placeholder="VIN / chassis number"
+                    placeholder="VIN number"
+                  />
+                </div>
+
+                <div class="field">
+                  <label for="chassisNo"> Chassis Number </label>
+
+                  <input
+                    type="text"
+                    id="chassisNo"
+                    name="chassisNo"
+                    placeholder="Chassis number"
                   />
                 </div>
 
@@ -597,6 +608,17 @@
                 </div>
 
                 <div class="field">
+                  <label for="mileage"> Mileage </label>
+
+                  <input
+                    type="text"
+                    id="mileage"
+                    name="mileage"
+                    placeholder="e.g. 14 km/l"
+                  />
+                </div>
+
+                <div class="field">
                   <label for="fuelLevel"> Fuel Level </label>
 
                   <select id="fuelLevel" name="fuelLevel">
@@ -670,10 +692,10 @@
                 </div>
 
                 <div class="field">
-                  <label for="serviceAdvisor"> Service Advisor </label>
+                  <label for="supervisor"> Supervisor <span>*</span> </label>
 
-                  <select id="serviceAdvisor" name="serviceAdvisor">
-                    <option value="">Select advisor</option>
+                  <select id="supervisor" name="supervisor" required>
+                    <option value="">Select supervisor</option>
                     <option>S. Sarkar</option>
                     <option>P. Dorji</option>
                     <option>T. Wangchuk</option>
@@ -720,99 +742,12 @@
             </section>
 
             <!-- =================================================
-                     04 WORKSHOP
+                     04 GROUP / CONTROL
                      ================================================= -->
 
             <section class="form-section">
               <div class="form-section__heading">
                 <div class="step-number">04</div>
-
-                <div>
-                  <div class="panel-kicker">WORKSHOP</div>
-                  <h3>Supervisor & Mechanic</h3>
-                </div>
-              </div>
-
-              <div class="form-grid">
-                <div class="field">
-                  <label for="supervisor"> Supervisor <span>*</span> </label>
-
-                  <select id="supervisor" name="supervisor" required>
-                    <option value="">Select supervisor</option>
-                    <option>S. Sarkar</option>
-                    <option>P. Dorji</option>
-                    <option>T. Wangchuk</option>
-                  </select>
-                </div>
-
-                <div class="field">
-                  <label for="mechanic1"> Mechanic 1 </label>
-
-                  <select id="mechanic1" name="mechanic1">
-                    <option value="">Select mechanic</option>
-                    <option>E. Rai</option>
-                    <option>P. Wangchuk</option>
-                    <option>T. Dorji</option>
-                    <option>K. Dorji</option>
-                    <option>S. Tamang</option>
-                  </select>
-                </div>
-
-                <div class="field">
-                  <label for="mechanic2"> Mechanic 2 </label>
-
-                  <select id="mechanic2" name="mechanic2">
-                    <option value="">Select mechanic</option>
-                    <option>E. Rai</option>
-                    <option>P. Wangchuk</option>
-                    <option>T. Dorji</option>
-                    <option>K. Dorji</option>
-                    <option>S. Tamang</option>
-                  </select>
-                </div>
-
-                <div class="field">
-                  <label for="initialBay"> Initial Bay </label>
-
-                  <select id="initialBay" name="initialBay">
-                    <option>Yard</option>
-                    <option>Bay 01</option>
-                    <option>Bay 02</option>
-                    <option>Bay 03</option>
-                    <option>Bay 04</option>
-                    <option>Bay 05</option>
-                    <option>Bay 06</option>
-                  </select>
-                </div>
-
-                <div class="field">
-                  <label for="roadTestRequired"> Road Test </label>
-
-                  <select id="roadTestRequired" name="roadTestRequired">
-                    <option>No</option>
-                    <option>Yes</option>
-                  </select>
-                </div>
-
-                <div class="field">
-                  <label for="customerApproval"> Customer Approval </label>
-
-                  <select id="customerApproval" name="customerApproval">
-                    <option>Pending</option>
-                    <option>Approved</option>
-                    <option>Not Required</option>
-                  </select>
-                </div>
-              </div>
-            </section>
-
-            <!-- =================================================
-                     05 GROUP / CONTROL
-                     ================================================= -->
-
-            <section class="form-section">
-              <div class="form-section__heading">
-                <div class="step-number">05</div>
 
                 <div>
                   <div class="panel-kicker">GROUP / CONTROL</div>
@@ -915,12 +850,12 @@
             </section>
 
             <!-- =================================================
-                     06 INSURANCE / WARRANTY
+                     05 INSURANCE / WARRANTY
                      ================================================= -->
 
             <section class="form-section">
               <div class="form-section__heading">
-                <div class="step-number">06</div>
+                <div class="step-number">05</div>
 
                 <div>
                   <div class="panel-kicker">COVERAGE</div>
@@ -976,12 +911,12 @@
             </section>
 
             <!-- =================================================
-                     07 CHECK-IN
+                     06 CHECK-IN
                      ================================================= -->
 
             <section class="form-section">
               <div class="form-section__heading">
-                <div class="step-number">07</div>
+                <div class="step-number">06</div>
 
                 <div>
                   <div class="panel-kicker">CHECK-IN</div>
@@ -1209,8 +1144,13 @@
               </div>
 
               <div class="detail-item">
-                <span>VIN / Chassis</span>
+                <span>VIN Number</span>
                 <strong id="detailVin">—</strong>
+              </div>
+
+              <div class="detail-item">
+                <span>Chassis Number</span>
+                <strong id="detailChassisNo">—</strong>
               </div>
 
               <div class="detail-item">
@@ -1236,6 +1176,11 @@
               <div class="detail-item">
                 <span>Odometer</span>
                 <strong id="detailOdometer">—</strong>
+              </div>
+
+              <div class="detail-item">
+                <span>Mileage</span>
+                <strong id="detailMileage">—</strong>
               </div>
 
               <div class="detail-item">
@@ -1267,8 +1212,8 @@
               </div>
 
               <div class="detail-item">
-                <span>Service Advisor</span>
-                <strong id="detailServiceAdvisor">—</strong>
+                <span>Supervisor</span>
+                <strong id="detailSupervisor">—</strong>
               </div>
 
               <div class="detail-item">
@@ -1280,11 +1225,6 @@
                 <span>Arrival Number</span>
                 <strong id="detailArrival">—</strong>
               </div>
-
-              <div class="detail-item">
-                <span>Initial Bay</span>
-                <strong id="detailBay">—</strong>
-              </div>
             </div>
 
             <div class="complaint-box">
@@ -1295,44 +1235,6 @@
             <div class="complaint-box">
               <span>ADDITIONAL REQUESTED WORK</span>
               <p id="detailAdditionalWork">—</p>
-            </div>
-          </section>
-
-          <section class="detail-section">
-            <div class="detail-section__header">
-              <h3>Workshop Assignment</h3>
-            </div>
-
-            <div class="detail-grid">
-              <div class="detail-item">
-                <span>Supervisor</span>
-                <strong id="detailSupervisor">—</strong>
-              </div>
-
-              <div class="detail-item">
-                <span>Mechanic 1</span>
-                <strong id="detailMechanic1">—</strong>
-              </div>
-
-              <div class="detail-item">
-                <span>Mechanic 2</span>
-                <strong id="detailMechanic2">—</strong>
-              </div>
-
-              <div class="detail-item">
-                <span>Floor Supervisor</span>
-                <strong id="detailFloorSupervisor">—</strong>
-              </div>
-
-              <div class="detail-item">
-                <span>Road Test</span>
-                <strong id="detailRoadTest">—</strong>
-              </div>
-
-              <div class="detail-item">
-                <span>Customer Approval</span>
-                <strong id="detailCustomerApproval">—</strong>
-              </div>
             </div>
           </section>
 

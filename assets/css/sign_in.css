@@ -5,6 +5,7 @@
 
    Roles:
      - Job Card Entry
+     - Supervisor
      - Storekeeper
      - Billing
      - Admin
@@ -240,7 +241,8 @@
 
     align-items: baseline;
 
-    padding: clamp(6px, 1.3vh, 11px) 13px;
+    /* Tightened from clamp(6px, 1.3vh, 11px) to fit the fifth desk row. */
+    padding: clamp(5px, 1.1vh, 10px) 13px;
 
     border-bottom:
         1px solid rgba(255, 255, 255, .20);

@@ -1,445 +1,1482 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sign in · Zimdra DMS — Dealer Portal</title>
 
-    <title>Sign in · Zimdra DMS</title>
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
     <link
-        href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"
-        rel="stylesheet"
-    >
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
 
-    <!--
-        Paths assume this file sits at:
-        zimdra-dms/auth/sign_in.html
+    <style>
+      /* ============================================================
+             TOKENS
+        ============================================================ */
 
-        Shared design system
-    -->
-    <link rel="stylesheet" href="../assets/css/zimdra.css">
+      :root {
+        --sky-top: #241246; /* dusk sky, top   */
+        --sky-mid: #6a3de8; /* dusk sky, mid   */
+        --sky-glow: #ff6b4a; /* sunset horizon  */
+        --sun: #ffd23f;
 
-    <!-- Sign-in page styles -->
-    <link rel="stylesheet" href="../assets/css/sign_in.css">
-</head>
+        --road: #221331;
+        --road-edge: #150b1f;
+        --lane: #ffd23f;
 
-<body class="signin-page">
-<main class="signin-card">
+        --car-a: #ff3d77; /* pink   */
+        --car-b: #2ec4b6; /* teal   */
+        --car-c: #ffd23f; /* yellow */
 
-    <!-- ============================================================
-         LEFT: PRODUCT / WORKSHOP INFORMATION
+        --paper: #ffffff;
+        --tint: #fff6ef;
+        --ink: #1b1145;
+        --mute: #766e93;
+
+        --cta-1: #ff6b4a;
+        --cta-2: #ff3d77;
+        --focus: #2ec4b6;
+
+        --radius-s: 8px;
+        --radius-m: 16px;
+
+        --font-display: "Poppins", sans-serif;
+        --font-body: "Inter", sans-serif;
+        --font-mono: "Space Mono", monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        height: 100%;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: var(--font-body);
+        color: var(--ink);
+        background: #170b29;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.001ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.001ms !important;
+        }
+      }
+
+      body.signin-page {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 28px;
+        box-sizing: border-box;
+      }
+
+      /* ============================================================
+             CARD SHELL
+        ============================================================ */
+
+      .signin-card {
+        width: 100%;
+        max-width: 1060px;
+        min-height: 640px;
+        display: grid;
+        grid-template-columns: 1.05fr 1fr;
+        background: var(--paper);
+        border-radius: 22px;
+        overflow: hidden;
+        box-shadow: 0 40px 90px -30px rgba(20, 8, 40, 0.65);
+      }
+
+      @media (max-width: 860px) {
+        .signin-card {
+          grid-template-columns: 1fr;
+          min-height: 0;
+        }
+      }
+
+      /* ============================================================
+             LEFT — DUSK HIGHWAY SCENE
+        ============================================================ */
+
+      .pitch {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        color: #fff;
+        padding: 40px 38px 0;
+        overflow: hidden;
+        background: linear-gradient(
+          180deg,
+          var(--sky-top) 0%,
+          var(--sky-mid) 55%,
+          var(--sky-glow) 100%
+        );
+      }
+
+      .sun {
+        position: absolute;
+        top: 58%;
+        left: 50%;
+        width: 220px;
+        height: 220px;
+        transform: translate(-50%, -50%);
+        border-radius: 50%;
+        background: radial-gradient(
+          circle at 50% 50%,
+          var(--sun) 0%,
+          rgba(255, 210, 63, 0) 70%
+        );
+        opacity: 0.85;
+        pointer-events: none;
+      }
+
+      .cloud {
+        position: absolute;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.16);
+        filter: blur(1px);
+        pointer-events: none;
+      }
+      .cloud--1 {
+        width: 130px;
+        height: 26px;
+        top: 16%;
+        left: -140px;
+        animation: drift 34s linear infinite;
+      }
+      .cloud--2 {
+        width: 90px;
+        height: 18px;
+        top: 30%;
+        left: -100px;
+        animation: drift 46s linear infinite 6s;
+      }
+
+      @keyframes drift {
+        from {
+          transform: translateX(0);
+        }
+        to {
+          transform: translateX(calc(100vw));
+        }
+      }
+
+      .skyline {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 112px;
+        height: 90px;
+        pointer-events: none;
+        opacity: 0.9;
+      }
+
+      .content {
+        position: relative;
+        z-index: 2;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 26px;
+      }
+
+      .brand__mark {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: var(--font-display);
+        font-weight: 800;
+        font-size: 15px;
+        background: linear-gradient(135deg, var(--cta-1), var(--cta-2));
+        color: #fff;
+        flex: none;
+        box-shadow: 0 8px 18px -6px rgba(255, 61, 119, 0.55);
+      }
+
+      .brand__name {
+        font-family: var(--font-display);
+        font-weight: 700;
+        font-size: 17px;
+        color: #ffffff;
+      }
+
+      .brand__sub {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: #f4c9e8;
+        margin-top: 2px;
+      }
+
+      .place {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 18px;
+      }
+
+      .place__rule {
+        width: 22px;
+        height: 2px;
+        background: var(--sun);
+        border-radius: 2px;
+      }
+
+      .place__text {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        color: #f0d9f0;
+      }
+
+      .pitch__headline {
+        font-family: var(--font-display);
+        font-weight: 800;
+        font-size: clamp(26px, 3vw, 32px);
+        line-height: 1.2;
+        margin: 0 0 12px;
+        max-width: 15ch;
+        color: #ffffff;
+      }
+
+      .pitch__headline em {
+        font-style: normal;
+        background: linear-gradient(90deg, var(--sun), var(--cta-1));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+
+      .pitch__blurb {
+        font-size: 14px;
+        line-height: 1.6;
+        color: #eee1f7;
+        max-width: 40ch;
+        margin: 0 0 22px;
+      }
+
+      /* -------- workflow pills -------- */
+
+      .flow {
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+        margin-bottom: 18px;
+      }
+
+      .flow__item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 999px;
+        padding: 8px 16px 8px 8px;
+        backdrop-filter: blur(2px);
+      }
+
+      .flow__icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: none;
+        font-size: 15px;
+      }
+
+      .flow__item:nth-child(1) .flow__icon {
+        background: var(--car-a);
+      }
+      .flow__item:nth-child(2) .flow__icon {
+        background: var(--car-b);
+      }
+      .flow__item:nth-child(3) .flow__icon {
+        background: var(--car-c);
+        color: #3a2e00;
+      }
+      .flow__item:nth-child(4) .flow__icon {
+        background: #b18bff;
+      }
+
+      .flow__k {
+        font-weight: 600;
+        font-size: 13.5px;
+        color: #fff;
+        margin-right: 4px;
+      }
+
+      .flow__v {
+        font-size: 12px;
+        color: #e4d6f2;
+      }
+
+      /* -------- animated road -------- */
+
+      .road {
+        position: relative;
+        margin-top: auto;
+        height: 112px;
+        background: linear-gradient(
+          180deg,
+          var(--road-edge) 0%,
+          var(--road) 100%
+        );
+        overflow: hidden;
+        flex: none;
+      }
+
+      .road::before {
+        /* moving lane dashes */
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 6px;
+        transform: translateY(-50%);
+        background-image: repeating-linear-gradient(
+          90deg,
+          var(--lane) 0 26px,
+          transparent 26px 52px
+        );
+        animation: lane-move 1.1s linear infinite;
+        opacity: 0.85;
+      }
+
+      @keyframes lane-move {
+        from {
+          background-position: 0 0;
+        }
+        to {
+          background-position: -52px 0;
+        }
+      }
+
+      .car {
+        position: absolute;
+        bottom: 14px;
+        width: 84px;
+        filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.35));
+      }
+
+      .car--a {
+        bottom: 46px;
+        width: 60px;
+        opacity: 0.8;
+        animation: drive 7s linear infinite;
+      }
+      .car--b {
+        bottom: 12px;
+        width: 92px;
+        animation: drive 4.6s linear infinite 0.6s;
+      }
+      .car--c {
+        bottom: 12px;
+        width: 78px;
+        animation: drive 5.6s linear infinite 2.4s;
+      }
+
+      @keyframes drive {
+        from {
+          transform: translateX(-140px);
+        }
+        to {
+          transform: translateX(calc(100% + 140px));
+        }
+      }
+
+      /* ============================================================
+             RIGHT — SIGN-IN FORM
+        ============================================================ */
+
+      .signin-form {
+        position: relative;
+        background: var(--paper);
+        padding: 44px 44px 28px;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .zd-chip {
+        display: inline-flex;
+        align-self: flex-start;
+        align-items: center;
+        gap: 7px;
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        letter-spacing: 0.08em;
+        color: #b4308e;
+        background: linear-gradient(
+          90deg,
+          rgba(255, 107, 74, 0.12),
+          rgba(255, 61, 119, 0.12)
+        );
+        border: 1px solid rgba(255, 61, 119, 0.3);
+        border-radius: 999px;
+        padding: 5px 12px 5px 9px;
+        margin-bottom: 18px;
+      }
+
+      .zd-chip::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: linear-gradient(90deg, var(--cta-1), var(--cta-2));
+      }
+
+      .signin-form__title {
+        font-family: var(--font-display);
+        font-weight: 800;
+        font-size: 28px;
+        margin: 0 0 6px;
+        color: var(--ink);
+      }
+
+      .signin-form__meta {
+        font-size: 12.5px;
+        color: var(--mute);
+        margin: 0 0 26px;
+      }
+
+      .signin-form__meta span {
+        font-family: var(--font-mono);
+        color: var(--ink);
+      }
+
+      form#signin {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+
+      .zd-field {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+      }
+
+      .zd-field-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+      }
+
+      .zd-label {
+        font-size: 12.5px;
+        font-weight: 600;
+        color: var(--ink);
+      }
+
+      .zd-label-aside {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--mute);
+      }
+
+      .zd-hint {
+        font-size: 11.5px;
+        color: var(--mute);
+        margin: 0;
+      }
+
+      .zd-select {
+        width: 100%;
+        appearance: none;
+        font-family: var(--font-body);
+        font-size: 14px;
+        color: var(--ink);
+        background: var(--tint)
+          url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="8"><path d="M1 1l5 5 5-5" fill="none" stroke="%23A093C2" stroke-width="1.5"/></svg>')
+          no-repeat right 14px center;
+        border: 1.5px solid #efe3f7;
+        border-radius: var(--radius-s);
+        padding: 12px 34px 12px 14px;
+        transition:
+          border-color 0.15s ease,
+          box-shadow 0.15s ease;
+      }
+
+      .zd-select:focus {
+        outline: none;
+        border-color: var(--focus);
+        box-shadow: 0 0 0 4px rgba(46, 196, 182, 0.16);
+      }
+
+      .zd-row {
+        display: flex;
+        align-items: stretch;
+        border: 1.5px solid #efe3f7;
+        border-radius: var(--radius-s);
+        background: var(--tint);
+        overflow: hidden;
+      }
+
+      .zd-row--readonly {
+        background: #f7f1fc;
+      }
+
+      .zd-row__tag {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--mute);
+        background: #efe3f7;
+        display: flex;
+        align-items: center;
+        padding: 0 12px;
+        flex: none;
+      }
+
+      .zd-row__body {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 11px 14px;
+        min-height: 22px;
+      }
+
+      .user-id {
+        font-family: var(--font-mono);
+        font-size: 14px;
+        color: var(--ink);
+      }
+
+      .user-id:empty::before {
+        content: "Select a role to load your ID";
+        font-family: var(--font-body);
+        color: var(--mute);
+      }
+
+      .user-name {
+        font-size: 12.5px;
+        color: var(--mute);
+      }
+
+      .pin {
+        display: flex;
+        gap: 9px;
+      }
+
+      .pin input {
+        width: 42px;
+        height: 42px;
+        text-align: center;
+        font-family: var(--font-mono);
+        font-size: 18px;
+        border: 1.5px solid #efe3f7;
+        border-radius: var(--radius-s);
+        background: #ffffff;
+        color: var(--ink);
+        transition:
+          border-color 0.15s ease,
+          box-shadow 0.15s ease,
+          transform 0.1s ease;
+      }
+
+      .pin input:focus {
+        outline: none;
+        border-color: var(--focus);
+        box-shadow: 0 0 0 4px rgba(46, 196, 182, 0.16);
+        transform: translateY(-1px);
+      }
+
+      .zd-error {
+        font-size: 12px;
+        color: var(--cta-2);
+        margin: 0;
+      }
+
+      .zd-row.is-error {
+        border-color: var(--cta-2);
+        box-shadow: 0 0 0 4px rgba(255, 61, 119, 0.14);
+      }
+      .zd-row.is-success {
+        border-color: #1f8a7d;
+        box-shadow: 0 0 0 4px rgba(31, 138, 125, 0.14);
+      }
+
+      .zd-check {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        font-size: 13px;
+        color: var(--ink);
+        cursor: pointer;
+        user-select: none;
+      }
+
+      .zd-check input {
+        width: 16px;
+        height: 16px;
+        accent-color: var(--cta-2);
+      }
+
+      .zd-btn {
+        font-family: var(--font-body);
+        font-weight: 600;
+        font-size: 14.5px;
+        border: none;
+        border-radius: var(--radius-s);
+        cursor: pointer;
+        padding: 14px 18px;
+        transition:
+          filter 0.15s ease,
+          transform 0.08s ease;
+      }
+
+      .zd-btn--block {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+      }
+
+      .zd-btn--primary {
+        background: linear-gradient(90deg, var(--cta-1), var(--cta-2));
+        color: #ffffff;
+        box-shadow: 0 12px 24px -10px rgba(255, 61, 119, 0.6);
+      }
+
+      .zd-btn--primary:hover {
+        filter: brightness(1.06);
+      }
+      .zd-btn--primary:active {
+        transform: translateY(1px);
+      }
+
+      .zd-btn__key {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        border-radius: 4px;
+        padding: 1px 6px;
+        opacity: 0.9;
+      }
+
+      .zd-notice {
+        border-radius: var(--radius-s);
+        padding: 13px 14px;
+        font-size: 13px;
+      }
+
+      .zd-notice--done {
+        background: rgba(46, 196, 182, 0.1);
+        border: 1px solid rgba(46, 196, 182, 0.35);
+      }
+
+      .zd-notice__title {
+        font-weight: 700;
+        color: #1f8a7d;
+        margin-bottom: 3px;
+      }
+      .zd-notice__body {
+        color: #3c4a40;
+      }
+
+      .signin-form__foot {
+        margin-top: auto;
+        padding-top: 22px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .zd-status {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        letter-spacing: 0.04em;
+        color: var(--mute);
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+
+      .zd-status::before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #e0d3ee;
+      }
+      .zd-status[data-status="ready"]::before {
+        background: #e0d3ee;
+      }
+      .zd-status[data-status="checking"]::before {
+        background: var(--sun);
+      }
+      .zd-status[data-status="signed-in"]::before {
+        background: #1f8a7d;
+      }
+
+      .build {
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        color: var(--mute);
+      }
+
+      /* -------- entrance: content fades up once -------- */
+
+      .content > * {
+        opacity: 0;
+        animation: rise 0.55s ease forwards;
+      }
+      .brand {
+        animation-delay: 0.05s;
+      }
+      .place {
+        animation-delay: 0.15s;
+      }
+      .pitch__headline {
+        animation-delay: 0.25s;
+      }
+      .pitch__blurb {
+        animation-delay: 0.35s;
+      }
+      .flow {
+        animation-delay: 0.45s;
+      }
+
+      @keyframes rise {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
+  </head>
+
+  <body class="signin-page">
+    <main class="signin-card">
+      <!-- ============================================================
+         LEFT: DUSK HIGHWAY SCENE
     ============================================================ -->
 
-    <section class="pitch">
-        <div class="pitch__disc" aria-hidden="true"></div>
-        <div class="pitch__ring" aria-hidden="true"></div>
+      <section class="pitch">
+        <div class="sun" aria-hidden="true"></div>
+        <div class="cloud cloud--1" aria-hidden="true"></div>
+        <div class="cloud cloud--2" aria-hidden="true"></div>
 
-        <!-- BRAND -->
-        <div class="brand">
-
-            <div class="brand__mark" aria-hidden="true">
-                ZM
-            </div>
-
+        <div class="content">
+          <!-- BRAND -->
+          <div class="brand">
+            <div class="brand__mark" aria-hidden="true">ZM</div>
             <div>
-                <div class="brand__name">
-                    Zimdra Automobile
-                </div>
-
-                <div class="brand__sub">
-                    Workshop management system
-                </div>
+              <div class="brand__name">Zimdra Automobile</div>
+              <div class="brand__sub">Dealer &amp; supplier portal</div>
             </div>
+          </div>
 
-        </div>
-
-        <!-- LOCATION -->
-        <div class="place">
-
+          <!-- LOCATION -->
+          <div class="place">
             <span class="place__rule" aria-hidden="true"></span>
+            <span class="place__text">PHUENTSHOLING &nbsp;·&nbsp; BHUTAN</span>
+          </div>
 
-            <span class="place__text">
-                PHUENTSHOLING &nbsp;·&nbsp; BHUTAN
-            </span>
+          <!-- HEADLINE -->
+          <h1 class="pitch__headline">
+            One purchase order, <em>four desks</em>, one invoice.
+          </h1>
 
+          <p class="pitch__blurb">
+            The Purchase Desk raises the order, the Supplier confirms and
+            delivers, Goods Receipt checks it in, and Admin keeps the entire
+            dealer network under control. Every handoff stays on the record.
+          </p>
+
+          <!-- WORKFLOW -->
+          <div class="flow">
+            <div class="flow__item">
+              <span class="flow__icon" aria-hidden="true">🧾</span>
+              <span
+                ><span class="flow__k">Purchase Desk</span
+                ><span class="flow__v">— raises the order</span></span
+              >
+            </div>
+
+            <div class="flow__item">
+              <span class="flow__icon" aria-hidden="true">🚚</span>
+              <span
+                ><span class="flow__k">Supplier / Dealer</span
+                ><span class="flow__v">— confirms &amp; delivers</span></span
+              >
+            </div>
+
+            <div class="flow__item">
+              <span class="flow__icon" aria-hidden="true">📦</span>
+              <span
+                ><span class="flow__k">Goods Receipt</span
+                ><span class="flow__v">— checks it in</span></span
+              >
+            </div>
+
+            <div class="flow__item">
+              <span class="flow__icon" aria-hidden="true">⚙️</span>
+              <span
+                ><span class="flow__k">Admin</span
+                ><span class="flow__v">— runs the network</span></span
+              >
+            </div>
+          </div>
         </div>
 
-        <!-- HEADLINE -->
-        <h1 class="pitch__headline">
-            One job card, <em>four desks</em>, one invoice.
-        </h1>
+        <!-- ANIMATED ROAD -->
+        <div class="road" aria-hidden="true">
+          <svg
+            class="car car--a"
+            viewBox="0 0 120 50"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <rect
+              x="8"
+              y="24"
+              width="104"
+              height="16"
+              rx="6"
+              fill="var(--car-b)"
+            />
+            <path d="M26 24 Q36 8 58 8 H78 Q92 8 96 24 Z" fill="var(--car-b)" />
+            <rect x="40" y="12" width="34" height="12" rx="3" fill="#EAFBFA" />
+            <circle cx="32" cy="42" r="9" fill="#1B1145" />
+            <circle cx="90" cy="42" r="9" fill="#1B1145" />
+          </svg>
 
-        <p class="pitch__blurb">
-            Job Card Entry starts the job, the Storekeeper issues the parts,
-            Billing prepares the invoice, and Admin keeps the entire workshop
-            operation under control. Every handoff stays on the record.
-        </p>
+          <svg
+            class="car car--b"
+            viewBox="0 0 120 50"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <rect
+              x="6"
+              y="22"
+              width="108"
+              height="18"
+              rx="7"
+              fill="var(--car-a)"
+            />
+            <path d="M24 22 Q34 6 58 6 H80 Q94 6 98 22 Z" fill="var(--car-a)" />
+            <rect x="38" y="10" width="36" height="12" rx="3" fill="#FFEAF1" />
+            <circle cx="30" cy="41" r="9.5" fill="#1B1145" />
+            <circle cx="92" cy="41" r="9.5" fill="#1B1145" />
+            <rect x="4" y="27" width="8" height="5" rx="2" fill="#FFD23F" />
+          </svg>
 
-        <!-- WORKFLOW FACTS -->
-        <div class="facts">
-
-            <div class="fact">
-
-                <span class="fact__k">
-                    Job Card Entry
-                </span>
-
-                <span class="fact__v">
-                    Capture customer, vehicle, complaint, inspection and job details
-                </span>
-
-            </div>
-
-            <div class="fact">
-
-                <span class="fact__k">
-                    Storekeeper
-                </span>
-
-                <span class="fact__v">
-                    Issue requested parts, maintain inventory and record counter sales
-                </span>
-
-            </div>
-
-            <div class="fact">
-
-                <span class="fact__k">
-                    Billing
-                </span>
-
-                <span class="fact__v">
-                    Fetch job details, issued parts, labour and prepare the final invoice
-                </span>
-
-            </div>
-
-            <div class="fact">
-
-                <span class="fact__k">
-                    Admin
-                </span>
-
-                <span class="fact__v">
-                    Manage users, configuration, reports and workshop-wide activity
-                </span>
-
-            </div>
-
+          <svg
+            class="car car--c"
+            viewBox="0 0 120 50"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <rect
+              x="8"
+              y="24"
+              width="104"
+              height="16"
+              rx="6"
+              fill="var(--car-c)"
+            />
+            <path d="M26 24 Q36 9 58 9 H78 Q92 9 96 24 Z" fill="var(--car-c)" />
+            <rect
+              x="40"
+              y="13"
+              width="34"
+              height="11"
+              rx="3"
+              fill="#3A2E00"
+              opacity=".18"
+            />
+            <circle cx="32" cy="42" r="9" fill="#1B1145" />
+            <circle cx="90" cy="42" r="9" fill="#1B1145" />
+          </svg>
         </div>
+      </section>
 
-        <div class="pitch__foot">
-            Zimdra Automobile · authorised service · workshop module
-        </div>
-
-    </section>
-
-
-    <!-- ============================================================
+      <!-- ============================================================
          RIGHT: SIGN-IN FORM
     ============================================================ -->
 
-    <section class="signin-form">
+      <section class="signin-form">
+        <span class="zd-chip">SUPPLIER ACCESS</span>
 
-        <span class="zd-chip">
-            WORKSHOP ACCESS
-        </span>
-
-        <h2 class="zd-display signin-form__title">
-            Sign in
-        </h2>
+        <h2 class="signin-form__title">Sign in</h2>
 
         <p class="signin-form__meta">
-            Last signed in
-            <span id="lastSeen">—</span>
-            · this terminal
+          Last signed in <span id="lastSeen">—</span> · this terminal
         </p>
 
-
-        <!-- ========================================================
-             SIGN-IN FORM
-        ======================================================== -->
-
         <form id="signin" novalidate>
+          <!-- ROLE / DESK -->
+          <div class="zd-field">
+            <label class="zd-label" for="desk">Role / Desk</label>
 
-            <!-- ====================================================
-                 ROLE / DESK
-            ==================================================== -->
+            <select class="zd-select" id="desk" name="desk" required>
+              <option value="">Select your role</option>
+              <option value="job-card-entry">Jobcard Desk</option>
+              <option value="supervisor">Supervisor</option>
+              <option value="storekeeper">Storekeeper</option>
+              <option value="billing">Billing Section</option>
+              <option value="admin">Admin</option>
+            </select>
 
-            <div class="zd-field">
+            <p class="zd-hint" id="deskHint">
+              Select the desk you are assigned to.
+            </p>
+          </div>
 
-                <label class="zd-label" for="desk">
-                    Role / Desk
-                </label>
+          <!-- USER ID -->
+          <div class="zd-field">
+            <label class="zd-label" for="userId">User ID</label>
 
-                <select
-                    class="zd-select"
-                    id="desk"
-                    name="desk"
-                    required
-                >
+            <div class="zd-row zd-row--readonly">
+              <span class="zd-row__tag" aria-hidden="true">ID</span>
+              <div class="zd-row__body">
+                <span class="user-id" id="userId"></span>
+                <span class="user-name" id="userName"></span>
+              </div>
+            </div>
+          </div>
 
-                    <option value="">
-                        Select your role
-                    </option>
-
-                    <option value="job-card-entry">
-                        Job Card Entry
-                    </option>
-
-                    <option value="storekeeper">
-                        Storekeeper
-                    </option>
-
-                    <option value="billing">
-                        Billing
-                    </option>
-
-                    <option value="admin">
-                        Admin
-                    </option>
-
-                </select>
-
-                <p class="zd-hint" id="deskHint">
-                    Select the desk you are assigned to.
-                </p>
-
+          <!-- PIN -->
+          <div class="zd-field">
+            <div class="zd-field-head">
+              <label class="zd-label" for="pin1">PIN</label>
+              <span class="zd-label-aside">Four digits</span>
             </div>
 
-
-            <!-- ====================================================
-                 USER ID
-            ==================================================== -->
-
-            <div class="zd-field">
-
-                <label class="zd-label" for="userId">
-                    User ID
-                </label>
-
-                <div class="zd-row zd-row--readonly">
-
-                    <span
-                        class="zd-row__tag"
-                        aria-hidden="true"
-                    >
-                        ID
-                    </span>
-
-                    <div class="zd-row__body">
-
-                        <span
-                            class="user-id"
-                            id="userId"
-                        ></span>
-
-                        <span
-                            class="user-name"
-                            id="userName"
-                        ></span>
-
-                    </div>
-
+            <div class="zd-row" id="pinRow">
+              <span class="zd-row__tag" aria-hidden="true">••</span>
+              <div class="zd-row__body">
+                <div class="pin" id="pin">
+                  <input
+                    id="pin1"
+                    type="password"
+                    inputmode="numeric"
+                    maxlength="1"
+                    autocomplete="off"
+                    aria-label="PIN digit 1"
+                  />
+                  <input
+                    id="pin2"
+                    type="password"
+                    inputmode="numeric"
+                    maxlength="1"
+                    autocomplete="off"
+                    aria-label="PIN digit 2"
+                  />
+                  <input
+                    id="pin3"
+                    type="password"
+                    inputmode="numeric"
+                    maxlength="1"
+                    autocomplete="off"
+                    aria-label="PIN digit 3"
+                  />
+                  <input
+                    id="pin4"
+                    type="password"
+                    inputmode="numeric"
+                    maxlength="1"
+                    autocomplete="off"
+                    aria-label="PIN digit 4"
+                  />
                 </div>
-
+              </div>
             </div>
 
+            <p class="zd-error" id="pinError" role="alert" hidden></p>
+          </div>
 
-            <!-- ====================================================
-                 PIN
-            ==================================================== -->
+          <!-- KEEP SIGNED IN -->
+          <label class="zd-check">
+            <input type="checkbox" id="stay" checked />
+            <span>Keep me signed in at this terminal</span>
+          </label>
 
-            <div class="zd-field">
+          <!-- SUBMIT -->
+          <button
+            class="zd-btn zd-btn--primary zd-btn--block"
+            type="submit"
+            id="submit"
+          >
+            Sign in
+            <span class="zd-btn__key" aria-hidden="true">⏎</span>
+          </button>
 
-                <div class="zd-field-head">
-
-                    <label
-                        class="zd-label"
-                        for="pin1"
-                    >
-                        PIN
-                    </label>
-
-                    <span class="zd-label-aside">
-                        Four digits
-                    </span>
-
-                </div>
-
-
-                <div
-                    class="zd-row"
-                    id="pinRow"
-                >
-
-                    <span
-                        class="zd-row__tag"
-                        aria-hidden="true"
-                    >
-                        ••
-                    </span>
-
-                    <div class="zd-row__body">
-
-                        <div
-                            class="pin"
-                            id="pin"
-                        >
-
-                            <input
-                                id="pin1"
-                                type="password"
-                                inputmode="numeric"
-                                maxlength="1"
-                                autocomplete="off"
-                                aria-label="PIN digit 1"
-                            >
-
-                            <input
-                                id="pin2"
-                                type="password"
-                                inputmode="numeric"
-                                maxlength="1"
-                                autocomplete="off"
-                                aria-label="PIN digit 2"
-                            >
-
-                            <input
-                                id="pin3"
-                                type="password"
-                                inputmode="numeric"
-                                maxlength="1"
-                                autocomplete="off"
-                                aria-label="PIN digit 3"
-                            >
-
-                            <input
-                                id="pin4"
-                                type="password"
-                                inputmode="numeric"
-                                maxlength="1"
-                                autocomplete="off"
-                                aria-label="PIN digit 4"
-                            >
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-                <p
-                    class="zd-error"
-                    id="pinError"
-                    role="alert"
-                    hidden
-                ></p>
-
-            </div>
-
-
-            <!-- ====================================================
-                 KEEP SIGNED IN
-            ==================================================== -->
-
-            <label class="zd-check">
-
-                <input
-                    type="checkbox"
-                    id="stay"
-                    checked
-                >
-
-                <span>
-                    Keep me signed in at this terminal
-                </span>
-
-            </label>
-
-
-            <!-- ====================================================
-                 SIGN IN BUTTON
-            ==================================================== -->
-
-            <button
-                class="zd-btn zd-btn--primary zd-btn--block"
-                type="submit"
-                id="submit"
-            >
-
-                Sign in
-
-                <span
-                    class="zd-btn__key"
-                    aria-hidden="true"
-                >
-                    ⏎
-                </span>
-
-            </button>
-
-
-            <!-- ====================================================
-                 SUCCESS MESSAGE
-            ==================================================== -->
-
-            <div
-                class="zd-notice zd-notice--done"
-                id="done"
-                hidden
-            >
-
-                <div
-                    class="zd-notice__title"
-                    id="doneTitle"
-                ></div>
-
-                <div
-                    class="zd-notice__body"
-                    id="doneBody"
-                ></div>
-
-            </div>
-
+          <!-- SUCCESS -->
+          <div class="zd-notice zd-notice--done" id="done" hidden>
+            <div class="zd-notice__title" id="doneTitle"></div>
+            <div class="zd-notice__body" id="doneBody"></div>
+          </div>
         </form>
 
-
-        <!-- ========================================================
-             FOOTER
-        ======================================================== -->
-
         <div class="signin-form__foot">
-
-            <span
-                class="zd-status"
-                data-status="ready"
-                id="waiting"
-            >
-                —
-            </span>
-
-            <div class="build">
-                Zimdra DMS · workshop module · build 2026.09.08
-            </div>
-
+          <span class="zd-status" data-status="ready" id="waiting">—</span>
+          <div class="build">
+            Zimdra DMS · dealer &amp; supplier module · build 2026.09.10
+          </div>
         </div>
+      </section>
+    </main>
 
-    </section>
+    <script>
+      (function () {
+        "use strict";
 
-</main>
+        /* ========================================================================
+       1. ROLE CONFIGURATION
+       ======================================================================== */
 
+        const ROLES = {
+          "job-card-entry": {
+            label: "Job Card Entry",
+            userId: "JCE-001",
+            userName: "Job Card Officer",
+            hint: "Create job cards, capture customer and vehicle information, and start workshop jobs.",
+            status: "Job Card Entry desk ready.",
+            redirect: "../role_dashboard/Job_Card_Entry/job_card_entry.html",
+          },
 
-<!-- ================================================================
-     SIGN-IN JAVASCRIPT
-================================================================ -->
+          supervisor: {
+            label: "Supervisor",
+            userId: "SUP-001",
+            userName: "Supervisor",
+            hint: "Manage inventory, process parts requests, issue parts and handle counter sales.",
+            status: "Storekeeper desk ready.",
+            redirect: "../role_dashboard/Supervisor/supervisor.html",
+          },
+          storekeeper: {
+            label: "Storekeeper",
+            userId: "STR-001",
+            userName: "Storekeeper",
+            hint: "Manage inventory, process parts requests, issue parts and handle counter sales.",
+            status: "Storekeeper desk ready.",
+            redirect: "../role_dashboard/Storekeeper/storekeeper.html",
+          },
 
-<script src="sign_in.js"></script>
+          billing: {
+            label: "Billing",
+            userId: "BIL-001",
+            userName: "Billing Clerk",
+            hint: "Fetch completed job cards, review issued parts and labour, calculate taxes and prepare invoices.",
+            status: "Billing desk ready.",
+            redirect: "../role_dashboard/Billing/billing.html",
+          },
 
-</body>
+          admin: {
+            label: "Admin",
+            userId: "ADM-001",
+            userName: "System Administrator",
+            hint: "Manage users, workshop configuration, reports, controls and overall system activity.",
+            status: "Administrator access ready.",
+            redirect: "../role_dashboard/Admin/admin.html",
+          },
+        };
+
+        /* ========================================================================
+       2. DOM REFERENCES
+       ======================================================================== */
+
+        const desk = document.getElementById("desk");
+        const deskHint = document.getElementById("deskHint");
+        const userId = document.getElementById("userId");
+        const userName = document.getElementById("userName");
+        const pin = document.getElementById("pin");
+        const pinInputs = Array.from(pin.querySelectorAll("input"));
+        const pinRow = document.getElementById("pinRow");
+        const pinError = document.getElementById("pinError");
+        const stay = document.getElementById("stay");
+        const submit = document.getElementById("submit");
+        const signin = document.getElementById("signin");
+        const done = document.getElementById("done");
+        const doneTitle = document.getElementById("doneTitle");
+        const doneBody = document.getElementById("doneBody");
+        const waiting = document.getElementById("waiting");
+        const lastSeen = document.getElementById("lastSeen");
+
+        /* ========================================================================
+       3. STORAGE KEYS
+       ======================================================================== */
+
+        const STORAGE = {
+          session: "zimdra_dms_session",
+          terminal: "zimdra_dms_terminal_user",
+          lastSeen: "zimdra_dms_last_seen",
+        };
+
+        /* ========================================================================
+       4. HELPERS
+       ======================================================================== */
+
+        function getRole() {
+          return ROLES[desk.value] || null;
+        }
+
+        function getPin() {
+          return pinInputs
+            .map(function (input) {
+              return input.value;
+            })
+            .join("");
+        }
+
+        function clearPin() {
+          pinInputs.forEach(function (input) {
+            input.value = "";
+          });
+          pinInputs[0].focus();
+        }
+
+        function setWaiting(message, state) {
+          waiting.textContent = message || "—";
+          waiting.dataset.status = state || "ready";
+        }
+
+        function showError(message) {
+          pinError.textContent = message;
+          pinError.hidden = false;
+          pinRow.classList.add("is-error");
+          pinRow.classList.remove("is-success");
+          setWaiting("Sign-in requires attention.", "error");
+        }
+
+        function clearError() {
+          pinError.textContent = "";
+          pinError.hidden = true;
+          pinRow.classList.remove("is-error");
+        }
+
+        function showSuccess() {
+          pinError.textContent = "";
+          pinError.hidden = true;
+          pinRow.classList.remove("is-error");
+          pinRow.classList.add("is-success");
+        }
+
+        function formatDateTime(date) {
+          return new Intl.DateTimeFormat("en-BT", {
+            dateStyle: "medium",
+            timeStyle: "short",
+          }).format(date);
+        }
+
+        /* ========================================================================
+       5. LAST SIGN-IN
+       ======================================================================== */
+
+        function renderLastSeen() {
+          const stored = localStorage.getItem(STORAGE.lastSeen);
+          if (!stored) {
+            lastSeen.textContent = "—";
+            return;
+          }
+          const date = new Date(stored);
+          if (Number.isNaN(date.getTime())) {
+            lastSeen.textContent = "—";
+            return;
+          }
+          lastSeen.textContent = formatDateTime(date);
+        }
+
+        /* ========================================================================
+       6. ROLE INFORMATION
+       ======================================================================== */
+
+        function updateRoleInformation() {
+          clearError();
+          const role = getRole();
+
+          if (!role) {
+            userId.textContent = "";
+            userName.textContent = "";
+            deskHint.textContent = "Select the desk you are assigned to.";
+            setWaiting("Select a role to continue.", "ready");
+            return;
+          }
+
+          userId.textContent = role.userId;
+          userName.textContent = role.userName;
+          deskHint.textContent = role.hint;
+          setWaiting(role.status, "ready");
+        }
+
+        /* ========================================================================
+       7. PIN INPUT BEHAVIOUR
+       ======================================================================== */
+
+        function bindPinInputs() {
+          pinInputs.forEach(function (input, index) {
+            input.addEventListener("input", function () {
+              const value = input.value.replace(/\D/g, "");
+              input.value = value.slice(0, 1);
+              clearError();
+
+              if (input.value && index < pinInputs.length - 1) {
+                pinInputs[index + 1].focus();
+              }
+
+              if (getPin().length === 4) {
+                setWaiting("PIN entered. Ready to sign in.", "ready");
+              }
+            });
+
+            input.addEventListener("keydown", function (event) {
+              if (event.key === "Backspace" && !input.value && index > 0) {
+                pinInputs[index - 1].focus();
+                pinInputs[index - 1].value = "";
+                event.preventDefault();
+              }
+              if (event.key === "ArrowLeft" && index > 0) {
+                pinInputs[index - 1].focus();
+                event.preventDefault();
+              }
+              if (event.key === "ArrowRight" && index < pinInputs.length - 1) {
+                pinInputs[index + 1].focus();
+                event.preventDefault();
+              }
+            });
+
+            input.addEventListener("paste", function (event) {
+              event.preventDefault();
+              const pasted = (event.clipboardData || window.clipboardData)
+                .getData("text")
+                .replace(/\D/g, "")
+                .slice(0, 4);
+
+              if (!pasted) return;
+
+              pasted.split("").forEach(function (digit, digitIndex) {
+                if (pinInputs[digitIndex]) {
+                  pinInputs[digitIndex].value = digit;
+                }
+              });
+
+              const nextIndex = Math.min(pasted.length, pinInputs.length - 1);
+              pinInputs[nextIndex].focus();
+              clearError();
+            });
+          });
+        }
+
+        /* ========================================================================
+       8. FORM VALIDATION
+       ======================================================================== */
+
+        function validateForm() {
+          const role = getRole();
+
+          if (!role) {
+            showError("Please select your role before signing in.");
+            desk.focus();
+            return false;
+          }
+
+          const enteredPin = getPin();
+
+          if (!/^\d{4}$/.test(enteredPin)) {
+            showError("Enter a four-digit PIN.");
+            const firstEmpty = pinInputs.find(function (input) {
+              return !input.value;
+            });
+            (firstEmpty || pinInputs[0]).focus();
+            return false;
+          }
+
+          return true;
+        }
+
+        /* ========================================================================
+       9. CREATE SESSION
+       ======================================================================== */
+
+        function createSession(role) {
+          const now = new Date();
+
+          const session = {
+            authenticated: true,
+            roleKey: desk.value,
+            role: role.label,
+            userId: role.userId,
+            userName: role.userName,
+            signedInAt: now.toISOString(),
+            terminal: "this-terminal",
+          };
+
+          if (stay.checked) {
+            localStorage.setItem(STORAGE.session, JSON.stringify(session));
+            localStorage.setItem(STORAGE.terminal, JSON.stringify(session));
+          } else {
+            sessionStorage.setItem(STORAGE.session, JSON.stringify(session));
+          }
+
+          localStorage.setItem(STORAGE.lastSeen, now.toISOString());
+
+          return session;
+        }
+
+        /* ========================================================================
+       10. SHOW SUCCESS MESSAGE
+       ======================================================================== */
+
+        function showDone(role) {
+          doneTitle.textContent = "Signed in successfully";
+          doneBody.textContent =
+            role.label + " · " + role.userName + " · opening workspace…";
+          done.hidden = false;
+          showSuccess();
+          setWaiting("Access granted.", "success");
+        }
+
+        /* ========================================================================
+       11. REDIRECT
+       ======================================================================== */
+
+        function redirectToRole(role) {
+          window.setTimeout(function () {
+            window.location.href = role.redirect;
+          }, 500);
+        }
+
+        /* ========================================================================
+       12. SUBMIT
+       ======================================================================== */
+
+        function handleSubmit(event) {
+          event.preventDefault();
+          clearError();
+
+          if (!validateForm()) return;
+
+          const role = getRole();
+
+          /*
+           * DEMO AUTHENTICATION
+           * -------------------
+           * Any four-digit PIN is accepted.
+           */
+
+          submit.disabled = true;
+          submit.setAttribute("aria-busy", "true");
+          setWaiting("Checking access…", "working");
+
+          window.setTimeout(function () {
+            createSession(role);
+            showDone(role);
+            redirectToRole(role);
+          }, 350);
+        }
+
+        /* ========================================================================
+       13. ROLE CHANGE
+       ======================================================================== */
+
+        function handleRoleChange() {
+          updateRoleInformation();
+          clearPin();
+          submit.disabled = false;
+          submit.removeAttribute("aria-busy");
+        }
+
+        /* ========================================================================
+       14. ENTER KEY
+       ======================================================================== */
+
+        function bindKeyboardSubmit() {
+          signin.addEventListener("keydown", function (event) {
+            if (
+              event.key === "Enter" &&
+              document.activeElement.tagName !== "SELECT"
+            ) {
+              if (getPin().length === 4) {
+                event.preventDefault();
+                signin.requestSubmit();
+              }
+            }
+          });
+        }
+
+        /* ========================================================================
+       15. RESTORE PREVIOUS TERMINAL USER
+    ======================================================================== */
+
+        function restoreTerminalUser() {
+          const stored = localStorage.getItem(STORAGE.terminal);
+          if (!stored) return;
+
+          try {
+            const session = JSON.parse(stored);
+            if (!session || !session.roleKey || !ROLES[session.roleKey]) return;
+
+            desk.value = session.roleKey;
+            updateRoleInformation();
+            setWaiting("Previous terminal user: " + session.userName, "ready");
+          } catch (error) {
+            console.warn("Unable to restore terminal user.", error);
+          }
+        }
+
+        /* ========================================================================
+       16. CHECK EXISTING SESSION
+    ======================================================================== */
+
+        function hasExistingSession() {
+          const local = localStorage.getItem(STORAGE.session);
+          const temporary = sessionStorage.getItem(STORAGE.session);
+          return !!(local || temporary);
+        }
+
+        /* ========================================================================
+       17. INITIALIZE
+    ======================================================================== */
+
+        function init() {
+          updateRoleInformation();
+          renderLastSeen();
+          bindPinInputs();
+          bindKeyboardSubmit();
+
+          desk.addEventListener("change", handleRoleChange);
+          signin.addEventListener("submit", handleSubmit);
+
+          restoreTerminalUser();
+
+          if (hasExistingSession()) {
+            setWaiting("Previous terminal session found.", "ready");
+          }
+
+          desk.focus();
+        }
+
+        /* ========================================================================
+       18. START APPLICATION
+    ======================================================================== */
+
+        init();
+      })();
+    </script>
+  </body>
 </html>

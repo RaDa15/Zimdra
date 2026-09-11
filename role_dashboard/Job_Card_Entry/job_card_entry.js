@@ -198,25 +198,24 @@
 
                 registration: "BP-2-A1234",
                 vin: "JTDBR32E720123456",
+                chassisNo: "MR053BB3402123456",
                 engineNo: "2ZR-FAE-001234",
                 make: "Toyota",
                 model: "Corolla",
                 modelYear: "2022",
                 fuel: "Petrol",
                 odometer: "48200",
+                mileage: "14 km/l",
                 fuelLevel: "½",
                 vehicleColor: "White",
 
                 serviceType: "GROUP-1 SRV",
                 visitType: "Paid Service",
-                serviceAdvisor: "S. Sarkar",
+                supervisor: "S. Sarkar",
                 jobPriority: "Normal",
                 complaint: "Periodic maintenance and brake inspection.",
                 additionalWork: "Check front suspension noise.",
 
-                supervisor: "S. Sarkar",
-                mechanic1: "E. Rai",
-                mechanic2: "P. Wangchuk",
                 initialBay: "Bay 02",
                 roadTestRequired: "Yes",
                 customerApproval: "Approved",
@@ -263,25 +262,24 @@
 
                 registration: "BP-1-C7788",
                 vin: "KMHXXXXXX12345678",
+                chassisNo: "KMHCT41BBCU112233",
                 engineNo: "G4NA-889912",
                 make: "Hyundai",
                 model: "Creta",
                 modelYear: "2023",
                 fuel: "Petrol",
                 odometer: "28700",
+                mileage: "15 km/l",
                 fuelLevel: "¾",
                 vehicleColor: "Silver",
 
                 serviceType: "GROUP-1 SRV",
                 visitType: "2nd Free Service",
-                serviceAdvisor: "P. Dorji",
+                supervisor: "P. Dorji",
                 jobPriority: "Normal",
                 complaint: "Second free service.",
                 additionalWork: "Inspect AC cooling.",
 
-                supervisor: "P. Dorji",
-                mechanic1: "P. Wangchuk",
-                mechanic2: "",
                 initialBay: "Bay 03",
                 roadTestRequired: "Yes",
                 customerApproval: "Approved",
@@ -328,25 +326,24 @@
 
                 registration: "BP-3-D4567",
                 vin: "MROXXXXXX1234567",
+                chassisNo: "MROFZ29G701122334",
                 engineNo: "1GD-998877",
                 make: "Toyota",
                 model: "Hilux",
                 modelYear: "2021",
                 fuel: "Diesel",
                 odometer: "76800",
+                mileage: "10 km/l",
                 fuelLevel: "¼",
                 vehicleColor: "Black",
 
                 serviceType: "GROUP-3 OTHR",
                 visitType: "Running Repair",
-                serviceAdvisor: "T. Wangchuk",
+                supervisor: "T. Wangchuk",
                 jobPriority: "High",
                 complaint: "Engine warning light is ON.",
                 additionalWork: "Check engine diagnostics.",
 
-                supervisor: "T. Wangchuk",
-                mechanic1: "K. Dorji",
-                mechanic2: "E. Rai",
                 initialBay: "Bay 04",
                 roadTestRequired: "Yes",
                 customerApproval: "Pending",
@@ -393,25 +390,24 @@
 
                 registration: "BP-2-B9001",
                 vin: "MITSXXXXXX000111",
+                chassisNo: "MMBJNKB40LH000111",
                 engineNo: "4N15-778899",
                 make: "Mitsubishi",
                 model: "Pajero Sport",
                 modelYear: "2020",
                 fuel: "Diesel",
                 odometer: "93400",
+                mileage: "9 km/l",
                 fuelLevel: "½",
                 vehicleColor: "Grey",
 
                 serviceType: "GROUP-2 BODY",
                 visitType: "Accidental",
-                serviceAdvisor: "P. Dorji",
+                supervisor: "P. Dorji",
                 jobPriority: "High",
                 complaint: "Rear bumper damage.",
                 additionalWork: "Inspect rear parking sensors.",
 
-                supervisor: "P. Dorji",
-                mechanic1: "S. Tamang",
-                mechanic2: "",
                 initialBay: "Bay 05",
                 roadTestRequired: "No",
                 customerApproval: "Approved",
@@ -457,25 +453,24 @@
 
                 registration: "BP-4-E2211",
                 vin: "MAHXXXXXX990011",
+                chassisNo: "MA1YB2GK5LB990011",
                 engineNo: "D22-334455",
                 make: "Mahindra",
                 model: "Scorpio",
                 modelYear: "2021",
                 fuel: "Diesel",
                 odometer: "66200",
+                mileage: "11 km/l",
                 fuelLevel: "½",
                 vehicleColor: "White",
 
                 serviceType: "GROUP-1 SRV",
                 visitType: "Paid Service",
-                serviceAdvisor: "S. Sarkar",
+                supervisor: "S. Sarkar",
                 jobPriority: "Normal",
                 complaint: "General service.",
                 additionalWork: "Check tyre condition.",
 
-                supervisor: "S. Sarkar",
-                mechanic1: "K. Dorji",
-                mechanic2: "",
                 initialBay: "Bay 01",
                 roadTestRequired: "Yes",
                 customerApproval: "Approved",
@@ -521,25 +516,24 @@
 
                 registration: "BP-1-F3322",
                 vin: "FORTXXXXXX112233",
+                chassisNo: "MHFYZ59G701112233",
                 engineNo: "1GD-123456",
                 make: "Toyota",
                 model: "Fortuner",
                 modelYear: "2020",
                 fuel: "Diesel",
                 odometer: "85100",
+                mileage: "8 km/l",
                 fuelLevel: "¾",
                 vehicleColor: "Black",
 
                 serviceType: "GROUP-3 OTHR",
                 visitType: "Repeat Job",
-                serviceAdvisor: "T. Wangchuk",
+                supervisor: "T. Wangchuk",
                 jobPriority: "Normal",
                 complaint: "Repeat complaint regarding AC.",
                 additionalWork: "Inspect previous repair.",
 
-                supervisor: "T. Wangchuk",
-                mechanic1: "E. Rai",
-                mechanic2: "",
                 initialBay: "Bay 06",
                 roadTestRequired: "Yes",
                 customerApproval: "Approved",
@@ -866,6 +860,7 @@
 
                     job.registration,
                     job.vin,
+                    job.chassisNo,
                     job.engineNo,
 
                     job.make,
@@ -1447,6 +1442,7 @@
 
         setDetail("detailRegistration", job.registration);
         setDetail("detailVin", job.vin);
+        setDetail("detailChassisNo", job.chassisNo);
         setDetail("detailEngine", job.engineNo);
 
         setDetail(
@@ -1460,28 +1456,19 @@
             "detailOdometer",
             job.odometer ? `${job.odometer} KM` : ""
         );
+        setDetail("detailMileage", job.mileage);
         setDetail("detailFuelLevel", job.fuelLevel);
         setDetail("detailVehicleColor", job.vehicleColor);
 
 
         setDetail("detailService", job.serviceType);
         setDetail("detailVisit", job.visitType);
-        setDetail("detailServiceAdvisor", job.serviceAdvisor);
+        setDetail("detailSupervisor", job.supervisor);
         setDetail("detailPriority", job.jobPriority);
         setDetail("detailArrival", job.arrivalNo);
-        setDetail("detailBay", job.initialBay);
 
         setDetail("detailComplaint", job.complaint);
         setDetail("detailAdditionalWork", job.additionalWork);
-
-
-        setDetail("detailSupervisor", job.supervisor);
-        setDetail("detailMechanic1", job.mechanic1);
-        setDetail("detailMechanic2", job.mechanic2);
-        setDetail("detailFloorSupervisor", job.floorSupervisor);
-
-        setDetail("detailRoadTest", job.roadTestRequired);
-        setDetail("detailCustomerApproval", job.customerApproval);
 
 
         setDetail(
@@ -1782,31 +1769,25 @@
             ["Address", job.customerAddress],
 
             ["Registration", job.registration],
-            ["VIN / Chassis", job.vin],
+            ["VIN Number", job.vin],
+            ["Chassis Number", job.chassisNo],
             ["Engine Number", job.engineNo],
             ["Make", job.make],
             ["Model", job.model],
             ["Model Year", job.modelYear],
             ["Fuel", job.fuel],
             ["Odometer", job.odometer ? `${job.odometer} KM` : ""],
+            ["Mileage", job.mileage],
             ["Fuel Level", job.fuelLevel],
             ["Colour", job.vehicleColor],
 
             ["Service Type", job.serviceType],
             ["Visit Type", job.visitType],
-            ["Service Advisor", job.serviceAdvisor],
+            ["Supervisor", job.supervisor],
             ["Priority", job.jobPriority],
 
             ["Complaint", job.complaint],
             ["Additional Work", job.additionalWork],
-
-            ["Supervisor", job.supervisor],
-            ["Mechanic 1", job.mechanic1],
-            ["Mechanic 2", job.mechanic2],
-            ["Initial Bay", job.initialBay],
-
-            ["Road Test", job.roadTestRequired],
-            ["Customer Approval", job.customerApproval],
 
             ["Promised Date", formatDate(job.promisedDate)],
             ["Promised Time", job.promisedTime],

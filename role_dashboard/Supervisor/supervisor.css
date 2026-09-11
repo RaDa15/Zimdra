@@ -1657,6 +1657,10 @@ tbody tr:hover {
     width: min(850px, 100%);
 }
 
+.mrn-form-modal {
+    width: min(960px, 100%);
+}
+
 .modal-header {
     min-height: 66px;
 

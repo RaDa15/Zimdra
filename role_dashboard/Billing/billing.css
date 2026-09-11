@@ -629,6 +629,18 @@ button:disabled {
     font-size: 12px;
 }
 
+.mechanic-section-header {
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: flex-start;
+
+    gap: 14px;
+
+    flex-wrap: wrap;
+}
+
 
 /* ================================================================
    TABLE
@@ -841,6 +853,74 @@ tbody tr:last-child td {
         repeat(4, minmax(0, 1fr));
 
     gap: 12px;
+}
+
+
+/* ================================================================
+   MECHANIC ITEMS / MODAL
+================================================================ */
+
+.mechanic-items-wrap {
+    margin-bottom: 10px;
+}
+
+.mechanic-modal {
+    width: min(620px, 100%);
+}
+
+.mechanic-form {
+    padding: 20px;
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 12px;
+}
+
+.mechanic-form strong {
+    display: block;
+
+    min-height: 39px;
+
+    display: flex;
+    align-items: center;
+
+    border: 1px solid var(--line);
+
+    border-radius: 8px;
+
+    background: #fafbfd;
+
+    padding: 0 11px;
+
+    font-size: 15px;
+
+    color: var(--blue);
+}
+
+.row-remove {
+    width: 26px;
+    height: 26px;
+
+    border: 1px solid var(--line);
+
+    background: white;
+
+    color: var(--red);
+
+    border-radius: 6px;
+
+    padding: 0;
+
+    font-size: 12px;
+
+    line-height: 1;
+}
+
+.row-remove:hover {
+    background: var(--red-bg);
 }
 
 
@@ -1216,6 +1296,26 @@ tbody tr:last-child td {
     font-size: 10px;
 }
 
+.invoice-subhead {
+    margin: 18px 0 10px;
+
+    padding-top: 16px;
+
+    border-top: 1px solid var(--line);
+}
+
+.invoice-subhead h4 {
+    margin: 0;
+
+    font-size: 12px;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.5px;
+
+    color: var(--muted);
+}
+
 .invoice-total {
     width: 330px;
 
@@ -1347,6 +1447,10 @@ tbody tr:last-child td {
     .charges-grid {
         grid-template-columns:
             repeat(2, 1fr);
+    }
+
+    .mechanic-form {
+        grid-template-columns: 1fr;
     }
 }
 

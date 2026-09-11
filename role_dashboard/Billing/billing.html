@@ -185,7 +185,7 @@
 
                     <div>
                         <span>Total Billed</span>
-                        <strong id="statTotalValue">Nu. 0.00</strong>
+                        <strong id="statTotalValue">Nu. 0</strong>
                     </div>
 
                 </div>
@@ -605,23 +605,72 @@
                 </div>
 
 
-                <!-- BILLING ADJUSTMENTS -->
+                <!-- MECHANIC WORK CHARGE (renamed from "Billing Charges") -->
 
                 <div class="subsection">
 
-                    <div class="subsection-header">
+                    <div class="subsection-header mechanic-section-header">
 
                         <div>
-                            <h4>Billing Charges</h4>
+                            <h4>Mechanic Work Charge</h4>
                             <p>
                                 Add labour and other workshop charges.
+                                Floor Supervisor:
+                                <strong id="mechanicSectionSupervisor">—</strong>
                             </p>
                         </div>
+
+                        <button
+                            type="button"
+                            class="btn btn-secondary"
+                            id="addMechanicBtn">
+                            + Add Mechanic
+                        </button>
 
                     </div>
 
 
-                    <div class="charges-grid">
+                    <!-- Itemised mechanic work added against this Job Card's mechanic(s) -->
+
+                    <div class="table-wrap mechanic-items-wrap">
+
+                        <table>
+
+                            <thead>
+                                <tr>
+                                    <th>Mechanic</th>
+                                    <th>Description</th>
+                                    <th>Qty</th>
+                                    <th>Unit Price</th>
+                                    <th>Remarks</th>
+                                    <th>Amount</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="mechanicItemsBody"></tbody>
+
+                        </table>
+
+                    </div>
+
+                    <div
+                        class="empty-state hidden"
+                        id="noMechanicItemsMessage">
+
+                        <div class="empty-icon">+</div>
+
+                        <strong>No Mechanic Work Added</strong>
+
+                        <p>
+                            Use "Add Mechanic" to add labour work items
+                            for this Job Card's mechanic(s).
+                        </p>
+
+                    </div>
+
+
+                    <div class="charges-grid" style="margin-top: 16px;">
 
                         <div class="field">
 
@@ -769,28 +818,35 @@
                     <div class="summary-row">
                         <span>Parts Subtotal (Spares/Oils)</span>
                         <strong id="partsSubtotal">
-                            Nu. 0.00
+                            Nu. 0
+                        </strong>
+                    </div>
+
+                    <div class="summary-row">
+                        <span>Mechanic Work Charge</span>
+                        <strong id="mechanicWorkTotal">
+                            Nu. 0
                         </strong>
                     </div>
 
                     <div class="summary-row">
                         <span>Handling Charge</span>
                         <strong id="handlingTotal">
-                            Nu. 0.00
+                            Nu. 0
                         </strong>
                     </div>
 
                     <div class="summary-row">
                         <span>Labour Charges</span>
                         <strong id="labourTotal">
-                            Nu. 0.00
+                            Nu. 0
                         </strong>
                     </div>
 
                     <div class="summary-row">
                         <span>Other Charges</span>
                         <strong id="otherTotal">
-                            Nu. 0.00
+                            Nu. 0
                         </strong>
                     </div>
 
@@ -799,7 +855,7 @@
                         <strong
                             class="discount-value"
                             id="discountTotal">
-                            Nu. 0.00
+                            Nu. 0
                         </strong>
                     </div>
 
@@ -808,49 +864,49 @@
                         <strong
                             class="discount-value"
                             id="labourServiceDiscountTotal">
-                            Nu. 0.00
+                            Nu. 0
                         </strong>
                     </div>
 
                     <div class="summary-row">
                         <span>Taxable Amount</span>
                         <strong id="taxableTotal">
-                            Nu. 0.00
+                            Nu. 0
                         </strong>
                     </div>
 
                     <div class="summary-row">
                         <span>GST on Spares/Oils</span>
                         <strong id="gstSparesTotal">
-                            Nu. 0.00
+                            Nu. 0
                         </strong>
                     </div>
 
                     <div class="summary-row">
                         <span>GST on Service</span>
                         <strong id="gstServiceTotal">
-                            Nu. 0.00
+                            Nu. 0
                         </strong>
                     </div>
 
                     <div class="summary-row">
                         <span>Surcharge</span>
                         <strong id="surchargeTotal">
-                            Nu. 0.00
+                            Nu. 0
                         </strong>
                     </div>
 
                     <div class="summary-row">
                         <span>GST on Surcharge</span>
                         <strong id="surchargeGstTotal">
-                            Nu. 0.00
+                            Nu. 0
                         </strong>
                     </div>
 
                     <div class="summary-row grand-total">
                         <span>Grand Total</span>
                         <strong id="grandTotal">
-                            Nu. 0.00
+                            Nu. 0
                         </strong>
                     </div>
 
@@ -1134,6 +1190,143 @@
                 class="btn btn-primary"
                 id="printCashMemoBtn">
                 Print Cash Memo
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =============================================================
+     ADD MECHANIC MODAL
+     Adds an itemised mechanic work-charge line (Description, Qty,
+     Unit Price, Remarks) against the Job Card's mechanic(s).
+============================================================== -->
+
+<div
+    class="modal-backdrop hidden"
+    id="addMechanicModal">
+
+    <div class="modal mechanic-modal">
+
+        <div class="modal-header">
+
+            <div>
+                <span class="section-kicker">
+                    MECHANIC WORK
+                </span>
+
+                <h2>Add Mechanic Work Item</h2>
+            </div>
+
+            <button
+                class="modal-close"
+                id="closeAddMechanicModal">
+                ×
+            </button>
+
+        </div>
+
+
+        <div class="mechanic-form">
+
+            <div class="field">
+
+                <label for="mechanicNameSelect">
+                    Mechanic
+                </label>
+
+                <select id="mechanicNameSelect"></select>
+
+            </div>
+
+            <div class="field">
+
+                <label for="mechanicRemarks">
+                    Remarks
+                </label>
+
+                <input
+                    type="text"
+                    id="mechanicRemarks"
+                    placeholder="Optional remarks"
+                >
+
+            </div>
+
+            <div class="field grow" style="grid-column: 1 / -1;">
+
+                <label for="mechanicDescription">
+                    Description
+                </label>
+
+                <input
+                    type="text"
+                    id="mechanicDescription"
+                    placeholder="e.g. Wheel alignment"
+                >
+
+            </div>
+
+            <div class="field">
+
+                <label for="mechanicQty">
+                    Qty
+                </label>
+
+                <input
+                    type="number"
+                    id="mechanicQty"
+                    min="0"
+                    step="1"
+                    value="1"
+                >
+
+            </div>
+
+            <div class="field">
+
+                <label for="mechanicUnitPrice">
+                    Unit Price
+                </label>
+
+                <input
+                    type="number"
+                    id="mechanicUnitPrice"
+                    min="0"
+                    step="1"
+                    value="0"
+                >
+
+            </div>
+
+            <div class="field" style="grid-column: 1 / -1;">
+
+                <label>
+                    Amount
+                </label>
+
+                <strong id="mechanicAmountPreview">Nu. 0</strong>
+
+            </div>
+
+        </div>
+
+
+        <div class="modal-actions">
+
+            <button
+                class="btn btn-secondary"
+                id="cancelAddMechanicBtn">
+                Cancel
+            </button>
+
+            <button
+                class="btn btn-primary"
+                id="confirmAddMechanicBtn">
+                Add Item
             </button>
 
         </div>

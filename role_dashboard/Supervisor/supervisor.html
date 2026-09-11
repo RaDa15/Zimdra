@@ -1005,11 +1005,41 @@
                 </div>
 
 
-                <div id="mrnFormWrapper" style="display: none;">
+                <div id="mrnFormModal" class="modal">
+
+                <div
+                    class="modal-backdrop"
+                    data-close-modal="mrnFormModal">
+                </div>
+
+                <div class="modal-card mrn-form-modal">
+
+                <div class="modal-header">
+
+                    <div>
+
+                        <div class="kicker">
+                            STOCK RECEIVING
+                        </div>
+
+                        <h3>
+                            New Material Receipt
+                        </h3>
+
+                    </div>
+
+                    <button
+                        type="button"
+                        class="modal-close"
+                        id="closeMrnFormBtn">
+                        ×
+                    </button>
+
+                </div>
 
                 <form
                     id="mrnForm"
-                    class="panel mrn-form">
+                    class="mrn-form">
 
 
                     <div class="mrn-section">
@@ -1839,10 +1869,12 @@
 
                 </div>
 
+                </div>
+
 
                 <!-- MRN HISTORY -->
 
-                <div class="panel">
+                <div class="panel" id="mrnHistoryPanel">
 
                     <div class="panel-header">
 

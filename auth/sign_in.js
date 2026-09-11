@@ -11,9 +11,10 @@
 
    Roles:
      1. Job Card Entry
-     2. Storekeeper
-     3. Billing
-     4. Admin
+     2. Supervisor
+     3. Storekeeper
+     4. Billing
+     5. Admin
 
    Responsibilities:
      - Populate role dropdown
@@ -40,6 +41,15 @@
       hint: "Create job cards, capture customer and vehicle information, and start workshop jobs.",
       status: "Job Card Entry desk ready.",
       redirect: "../role_dashboard/Job_Card_Entry/job_card_entry.html",
+    },
+
+    supervisor: {
+      label: "Supervisor",
+      userId: "SUP-001",
+      userName: "Workshop Supervisor",
+      hint: "Assign job cards to mechanics by trade, balance bay load and monitor job progress.",
+      status: "Supervisor desk ready.",
+      redirect: "../role_dashboard/Supervisor/supervisor.html",
     },
 
     storekeeper: {

@@ -3378,6 +3378,28 @@
             .getElementById(id)
             ?.classList.add("open");
 
+        /*
+         * The Material Receipt form opens as a modal over the
+         * Material Receipt tab. While it's open, hide the MRN
+         * History panel underneath so it doesn't show alongside
+         * the form (instead of just being dimmed by the backdrop).
+         */
+
+        if (id === "mrnFormModal") {
+
+            const historyPanel =
+                document.getElementById(
+                    "mrnHistoryPanel"
+                );
+
+            if (historyPanel) {
+
+                historyPanel.style.display = "none";
+
+            }
+
+        }
+
     }
 
 
@@ -3386,6 +3408,21 @@
         document
             .getElementById(id)
             ?.classList.remove("open");
+
+        if (id === "mrnFormModal") {
+
+            const historyPanel =
+                document.getElementById(
+                    "mrnHistoryPanel"
+                );
+
+            if (historyPanel) {
+
+                historyPanel.style.display = "";
+
+            }
+
+        }
 
     }
 
@@ -5267,15 +5304,7 @@
         calculateMrn();
 
 
-        const mrnFormWrapper = document.getElementById(
-            "mrnFormWrapper"
-        );
-
-        if (mrnFormWrapper) {
-
-            mrnFormWrapper.style.display = "none";
-
-        }
+        closeModal("mrnFormModal");
 
 
         showToast(
@@ -12461,23 +12490,9 @@
                 "click",
                 function () {
 
-                    const wrapper =
-                        document.getElementById(
-                            "mrnFormWrapper"
-                        );
-
-                    if (wrapper) {
-
-                        wrapper.style.display = "";
-
-                    }
-
                     initializeMrn();
 
-                    wrapper?.scrollIntoView({
-                        behavior: "smooth",
-                        block: "start"
-                    });
+                    openModal("mrnFormModal");
 
                 }
             );
@@ -12493,16 +12508,21 @@
 
                     clearMrn();
 
-                    const wrapper =
-                        document.getElementById(
-                            "mrnFormWrapper"
-                        );
+                    closeModal("mrnFormModal");
 
-                    if (wrapper) {
+                }
+            );
 
-                        wrapper.style.display = "none";
 
-                    }
+        document
+            .getElementById(
+                "closeMrnFormBtn"
+            )
+            ?.addEventListener(
+                "click",
+                function () {
+
+                    closeModal("mrnFormModal");
 
                 }
             );
