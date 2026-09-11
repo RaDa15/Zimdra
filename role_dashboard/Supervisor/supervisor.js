@@ -1,13470 +1,1812 @@
 /* =========================================================
-   STOREKEEPER.JS
+   SUPERVISOR.JS
    ZIMDRA DMS
+   ---------------------------------------------------------
+   PROTOTYPE ONLY
+
+   Pages
+     1. Dashboard        counters, load by trade, mechanic status
+     2. Assign Mechanic  job card register + assignment modal
+     3. Mechanic Roster  every mechanic grouped by trade
+
+   The Supervisor does not create job cards. Job Card Entry
+   creates them; this desk decides WHO works on them.
+
+   Assignment rule
+     Every line of work on a job card carries the trade it
+     needs. A job card cannot go to a bay until each of those
+     trades has a mechanic on the crew, one mechanic is named
+     lead, and a bay is chosen.
+
+   Storage
+     zimdra_dms_session       written by auth/sign_in.js
+     zimdra_dms_job_cards     written by Job Card Entry (read only here)
+     zimdra_dms_assignments   written by this desk
+
+   The module is exported on the global object so the Node VM
+   harness can test the rules without a DOM.
 ========================================================= */
 
-(function () {
-
+(function (global) {
     "use strict";
 
-
-    /* =========================================================
-       STORAGE
-    ========================================================= */
-
-    const STORAGE_KEY = "zimdra_storekeeper_v7";
-
-    let state = null;
-
-    let counterCart = [];
-
-    let mrnLines = [];
-
-    let quotationCart = [];
-
-    let partyCart = [];
-
-    let transferLines = [];
-
-    let transferMyBranch = "Thimphu";
-
-    let currentQuotationViewId = null;
-
-    let selectedCashSaleId = null;
-
-    let selectedPaymentMethod = "Cash";
-
-    let inventoryExpanded = false;
-
-    let quotationExpanded = false;
-
-    let toastTimer = null;
-
-    /* Add Parts modal - searchable part picker */
-
-    let addPartFiltered = [];
-
-    let addPartActiveIndex = -1;
-
-    /* Branch Transfer - Request Part searchable picker */
-
-    let transferPartFiltered = [];
-
-    let transferPartActiveIndex = -1;
-
-    /* Cash Counter - Bank / Cheque payment fields */
-
-    const BANK_OPTIONS = [
-        "BOB", "BNB", "PNB", "BDBL", "T-BANK", "DK"
-    ];
-
-    let paymentBankName = BANK_OPTIONS[0];
-
-    let paymentJournalNo = "";
-
-    let paymentRemarks = "";
-
-    let paymentChequeNo = "";
-
-    let paymentChequeDate = "";
-
-    let paymentChequeBank = BANK_OPTIONS[0];
-
-    let paymentChequeRemarks = "";
-
-
-    /* =========================================================
-       HELPERS
-    ========================================================= */
-
-    function escapeHtml(value) {
-
-        return String(value ?? "")
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-
-    }
-
-
-    function money(value) {
-
-        const number = Math.round(Number(value) || 0);
-
-        return `Nu. ${number.toLocaleString("en-IN", {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0
-        })}`;
-
-    }
-
-
-    function bankOptionsHtml(selected) {
-
-        return BANK_OPTIONS.map(function (bank) {
-
-            return `<option value="${bank}" ${
-                selected === bank ? "selected" : ""
-            }>${bank}</option>`;
-
-        }).join("");
-
-    }
-
-
-    function today() {
-
-        const date = new Date();
-
-        const year = date.getFullYear();
-
-        const month = String(date.getMonth() + 1).padStart(2, "0");
-
-        const day = String(date.getDate()).padStart(2, "0");
-
-        return `${year}-${month}-${day}`;
-
-    }
-
-
-    function formatDate(value) {
-
-        if (!value) {
-            return "-";
-        }
-
-        const date = new Date(value);
-
-        if (Number.isNaN(date.getTime())) {
-            return value;
-        }
-
-        return date.toLocaleDateString("en-IN", {
-            day: "2-digit",
-            month: "short",
-            year: "numeric"
-        });
-
-    }
-
-
-    function uid(prefix) {
-
-        return `${prefix}-${Date.now()}-${Math.random()
-            .toString(36)
-            .slice(2, 8)}`;
-
-    }
-
-
-    function showToast(message, type = "success") {
-
-        const toast = document.getElementById("toast");
-
-        if (!toast) {
-            return;
-        }
-
-        clearTimeout(toastTimer);
-
-        toast.textContent = message;
-
-        toast.className = `toast show ${type}`;
-
-        toastTimer = setTimeout(function () {
-
-            toast.className = "toast";
-
-        }, 2800);
-
-    }
-
-
-    function saveState() {
-
-        localStorage.setItem(
-            STORAGE_KEY,
-            JSON.stringify(state)
-        );
-
-    }
-
-
-    /* =========================================================
-       DUMMY DATA
-    ========================================================= */
-
-    function createDummyState() {
-
-        const inventory = [
-
-            {
-                id: "PRD-001",
-                partNo: "FLT-001",
-                name: "Toyota Oil Filter",
-                description: "Toyota genuine oil filter",
-                category: "Filters",
-                serialNumber: "",
-                model: "Toyota",
-                salePrice: 420,
-                costPrice: 300,
-                tax: 7,
-                unit: "pcs",
-                stock: 18,
-                reorderLevel: 5,
-                location: "Thimphu",
-                image: "",
-                details: "Common Toyota service replacement part."
-            },
-
-            {
-                id: "PRD-002",
-                partNo: "FLT-002",
-                name: "Toyota Air Filter",
-                description: "Toyota genuine engine air filter",
-                category: "Filters",
-                serialNumber: "",
-                model: "Toyota",
-                salePrice: 950,
-                costPrice: 700,
-                tax: 7,
-                unit: "pcs",
-                stock: 7,
-                reorderLevel: 5,
-                location: "Thimphu",
-                image: "",
-                details: "Engine air filter for Toyota vehicles."
-            },
-
-            {
-                id: "PRD-003",
-                partNo: "BRK-001",
-                name: "Front Brake Pad Set",
-                description: "Front axle brake pad set",
-                category: "Brake System",
-                serialNumber: "",
-                model: "Toyota",
-                salePrice: 2800,
-                costPrice: 2200,
-                tax: 7,
-                unit: "set",
-                stock: 4,
-                reorderLevel: 6,
-                location: "Phuntsholing",
-                image: "",
-                details: "Front brake pad set for workshop repairs."
-            },
-
-            {
-                id: "PRD-004",
-                partNo: "LUB-001",
-                name: "Toyota Engine Oil 5W-30",
-                description: "Toyota genuine engine oil 5W-30",
-                category: "Lubricants",
-                serialNumber: "",
-                model: "Toyota",
-                salePrice: 1650,
-                costPrice: 1350,
-                tax: 7,
-                unit: "litre",
-                stock: 30,
-                reorderLevel: 10,
-                location: "Thimphu",
-                image: "",
-                details: "Fully synthetic engine oil."
-            },
-
-            {
-                id: "PRD-005",
-                partNo: "ELC-001",
-                name: "12V Battery",
-                description: "12V automotive battery",
-                category: "Electrical",
-                serialNumber: "",
-                model: "Universal",
-                salePrice: 8200,
-                costPrice: 7000,
-                tax: 7,
-                unit: "pcs",
-                stock: 3,
-                reorderLevel: 4,
-                location: "Phuntsholing",
-                image: "",
-                details: "12V automotive starting battery."
-            },
-
-            {
-                id: "PRD-006",
-                partNo: "FLT-003",
-                name: "Cabin Air Filter",
-                description: "Cabin air filter",
-                category: "Filters",
-                serialNumber: "",
-                model: "Toyota",
-                salePrice: 780,
-                costPrice: 590,
-                tax: 7,
-                unit: "pcs",
-                stock: 12,
-                reorderLevel: 5,
-                location: "Thimphu",
-                image: "",
-                details: "Cabin air filtration element."
-            },
-
-            {
-                id: "PRD-007",
-                partNo: "BRK-002",
-                name: "Rear Brake Shoe Set",
-                description: "Rear brake shoe set",
-                category: "Brake System",
-                serialNumber: "",
-                model: "Toyota",
-                salePrice: 2450,
-                costPrice: 1950,
-                tax: 7,
-                unit: "set",
-                stock: 9,
-                reorderLevel: 5,
-                location: "Phuntsholing",
-                image: "",
-                details: "Rear brake shoe set."
-            }
-
-        ];
-
-
-        const jobs = [
-
-            {
-                id: "JC-2026-001",
-
-                customer: "Karma Dorji",
-
-                vehicle: "Toyota Hilux",
-
-                registration: "BP-1-A1234",
-
-                mechanic: "Pema Tshering",
-
-                supervisor: "Sonam Wangchuk",
-
-                jobType: "General Service",
-
-                status: "Open",
-
-                createdDate: "2026-09-08",
-
-                requisitionNo: "",
-
-                requisitionDate: "",
-
-                warranty: "No",
-
-                bCov: "No",
-
-                requestedParts: []
-
-            },
-
-
-            {
-                id: "JC-2026-002",
-
-                customer: "Tashi Wangmo",
-
-                vehicle: "Toyota Fortuner",
-
-                registration: "BP-2-B7788",
-
-                mechanic: "Dorji Wangchuk",
-
-                supervisor: "Kezang Norbu",
-
-                jobType: "Brake Service",
-
-                status: "Open",
-
-                createdDate: "2026-09-08",
-
-                requisitionNo: "",
-
-                requisitionDate: "",
-
-                warranty: "No",
-
-                bCov: "No",
-
-                requestedParts: []
-
-            },
-
-
-            {
-                id: "JC-2026-003",
-
-                customer: "Dorji Tshering",
-
-                vehicle: "Toyota Prado",
-
-                registration: "BP-3-C3322",
-
-                mechanic: "Pema Tshering",
-
-                supervisor: "Sonam Wangchuk",
-
-                jobType: "Periodic Maintenance",
-
-                status: "Open",
-
-                createdDate: "2026-09-09",
-
-                requisitionNo: "",
-
-                requisitionDate: "",
-
-                warranty: "No",
-
-                bCov: "No",
-
-                requestedParts: []
-
-            }
-
-        ];
-
-
-        const pendingSales = [
-
-            {
-                id: "CS-2026-001",
-
-                customerName: "Sonam Trading",
-
-                customerPhone: "17654321",
-
-                date: today(),
-
-                status: "Pending Payment",
-
-                items: [
-
-                    {
-                        productId: "PRD-001",
-                        partNo: "FLT-001",
-                        name: "Toyota Oil Filter",
-                        qty: 2,
-                        price: 420,
-                        tax: 7
-                    },
-
-                    {
-                        productId: "PRD-004",
-                        partNo: "LUB-001",
-                        name: "Toyota Engine Oil 5W-30",
-                        qty: 1,
-                        price: 1650,
-                        tax: 7
-                    }
-
-                ]
-
-            }
-
-        ];
-
-
-        const transactions = [
-
-            {
-                id: "TRX-2026-0001",
-                reference: "INV-2026-0001",
-                date: "2026-09-08",
-                customer: "Tashi Motors",
-                type: "Counter Sale",
-                amount: 2996,
-                status: "Completed"
-            }
-
-        ];
-
-
-        return {
-
-            jobs,
-
-            inventory,
-
-            sales: [],
-
-            pendingSales,
-
-            transactions,
-
-            categories: [
-
-                "Filters",
-                "Brake System",
-                "Lubricants",
-                "Electrical",
-                "Service Parts",
-                "Accessories"
-
-            ],
-
-            units: [
-
-                "pcs",
-                "set",
-                "litre",
-                "box",
-                "pair"
-
-            ],
-
-            groupPrices: [],
-
-            materialReceipts: [
-                {
-                    id: "MRN-SEED-0002",
-                    mrnNo: "MRN-0002",
-                    receiptType: "Cash",
-                    refNo: "",
-                    downloadMail: "No",
-                    date: "2026-09-05",
-                    vendorCode: "TM",
-                    vendorName: "Tashi Motors Parts, Phuntsholing",
-                    rateType: "Cost",
-                    invoiceNo: "CASH-2209",
-                    invoiceDate: "2026-09-05",
-                    taxOnFp: "No",
-                    vatSrvTaxOnHand: "No",
-                    formNo: "",
-                    lines: [
-                        {
-                            id: "MRN-LINE-SEED-1",
-                            partNo: "BRK-001",
-                            description: "Front axle brake pad set",
-                            category: "Brake System",
-                            unit: "set",
-                            gst: 7,
-                            qtyInvoiced: 6,
-                            qtyReceived: 6,
-                            qtyRejected: 0,
-                            rate: 2200,
-                            freightRate: 20,
-                            rlRate: 2800,
-                            discComm: 0,
-                            stockBin: "Phuntsholing"
-                        },
-                        {
-                            id: "MRN-LINE-SEED-2",
-                            partNo: "ELC-001",
-                            description: "12V automotive battery",
-                            category: "Electrical",
-                            unit: "pcs",
-                            gst: 7,
-                            qtyInvoiced: 3,
-                            qtyReceived: 3,
-                            qtyRejected: 0,
-                            rate: 7000,
-                            freightRate: 50,
-                            rlRate: 8200,
-                            discComm: 0,
-                            stockBin: "Phuntsholing"
-                        }
-                    ],
-                    totals: {
-                        assessable: 34470,
-                        discount: 0,
-                        gst: 2412.9,
-                        handling: 0,
-                        vorSurcharge: 0,
-                        serviceTax: 0,
-                        eCess: 0,
-                        excise: 0,
-                        taxSurcharge: 0,
-                        netTotal: 36882.9
-                    }
-                },
-                {
-                    id: "MRN-SEED-0001",
-                    mrnNo: "MRN-0001",
-                    receiptType: "Invoice",
-                    refNo: "",
-                    downloadMail: "No",
-                    date: "2026-09-01",
-                    vendorCode: "BW",
-                    vendorName: "Babesa W/Shop, Thimphu",
-                    rateType: "Purchase",
-                    invoiceNo: "INV-VND-1042",
-                    invoiceDate: "2026-08-30",
-                    taxOnFp: "No",
-                    vatSrvTaxOnHand: "No",
-                    formNo: "",
-                    lines: [
-                        {
-                            id: "MRN-LINE-SEED-3",
-                            partNo: "FLT-001",
-                            description: "Toyota genuine oil filter",
-                            category: "Filters",
-                            unit: "pcs",
-                            gst: 7,
-                            qtyInvoiced: 20,
-                            qtyReceived: 20,
-                            qtyRejected: 0,
-                            rate: 300,
-                            freightRate: 5,
-                            rlRate: 420,
-                            discComm: 0,
-                            stockBin: "Thimphu"
-                        },
-                        {
-                            id: "MRN-LINE-SEED-4",
-                            partNo: "LUB-001",
-                            description: "Toyota genuine engine oil 5W-30",
-                            category: "Lubricants",
-                            unit: "litre",
-                            gst: 7,
-                            qtyInvoiced: 15,
-                            qtyReceived: 15,
-                            qtyRejected: 0,
-                            rate: 1350,
-                            freightRate: 10,
-                            rlRate: 1650,
-                            discComm: 0,
-                            stockBin: "Thimphu"
-                        }
-                    ],
-                    totals: {
-                        assessable: 26500,
-                        discount: 0,
-                        gst: 1855,
-                        handling: 0,
-                        vorSurcharge: 0,
-                        serviceTax: 0,
-                        eCess: 0,
-                        excise: 0,
-                        taxSurcharge: 0,
-                        netTotal: 28355
-                    }
-                }
-            ],
-
-            quotations: [],
-
-            branchTransfers: [],
-
-            sequences: {
-
-                sale: 2,
-                invoice: 2,
-                mrn: 3,
-                transaction: 2,
-                product: 8,
-                requisition: 1,
-                gatePass: 1,
-                partySale: 1,
-                quotation: 1,
-                transfer: 1
-
-            },
-
-            lastInvoice: null
-
-        };
-
-    }
-
-
-    /* =========================================================
-       NORMALIZE STATE
-    ========================================================= */
-
-    function normalizeState(data) {
-
-        const dummy = createDummyState();
-
-        const normalized = {
-
-            ...dummy,
-
-            ...(data || {})
-
-        };
-
-        normalized.jobs = Array.isArray(data?.jobs)
-            ? data.jobs
-            : dummy.jobs;
-
-        normalized.inventory = Array.isArray(data?.inventory)
-            ? data.inventory
-            : dummy.inventory;
-
-        normalized.pendingSales = Array.isArray(data?.pendingSales)
-            ? data.pendingSales
-            : dummy.pendingSales;
-
-        normalized.transactions = Array.isArray(data?.transactions)
-            ? data.transactions
-            : dummy.transactions;
-
-        normalized.categories = Array.isArray(data?.categories)
-            ? data.categories
-            : dummy.categories;
-
-        normalized.units = Array.isArray(data?.units)
-            ? data.units
-            : dummy.units;
-
-        normalized.groupPrices = Array.isArray(data?.groupPrices)
-            ? data.groupPrices
-            : [];
-
-        normalized.materialReceipts = Array.isArray(data?.materialReceipts)
-            ? data.materialReceipts
-            : [];
-
-        normalized.quotations = Array.isArray(data?.quotations)
-            ? data.quotations
-            : [];
-
-        normalized.branchTransfers = Array.isArray(data?.branchTransfers)
-            ? data.branchTransfers
-            : [];
-
-        normalized.sequences = {
-
-            ...dummy.sequences,
-
-            ...(data?.sequences || {})
-
-        };
-
-        return normalized;
-
-    }
-
-
-    /* =========================================================
-       LOAD STATE
-    ========================================================= */
-
-    function loadState() {
-
-        try {
-
-            const raw = localStorage.getItem(STORAGE_KEY);
-
-            if (raw) {
-
-                state = normalizeState(
-                    JSON.parse(raw)
-                );
-
-            } else {
-
-                state = createDummyState();
-
-                saveState();
-
-            }
-
-        } catch (error) {
-
-            console.error(error);
-
-            state = createDummyState();
-
-            saveState();
-
-        }
-
-    }
-
-
-    /* =========================================================
-       NAVIGATION
-    ========================================================= */
-
-    const tabTitles = {
-
-        dashboard: "Storekeeper Dashboard",
-
-        workshop: "Workshop Parts",
-
-        "material-receipt": "Material Receipt",
-
-        inventory: "Inventory",
-
-        counter: "Counter Sale",
-
-        quotation: "Quotation",
-
-        party: "Party Sale",
-
-        transfer: "Branch Transfer",
-
-        cash: "Cash Counter",
-
-        transactions: "Transactions"
-
+    /* =====================================================
+       1. TRADES
+       ===================================================== */
+
+    const TRADES = {
+        ENG: { code: "ENG", label: "Engine & transmission" },
+        ELE: { code: "ELE", label: "Auto electrical" },
+        BOD: { code: "BOD", label: "Body & paint" },
+        AC: { code: "AC", label: "Air-conditioning" },
     };
 
+    const TRADE_ORDER = ["ENG", "ELE", "BOD", "AC"];
 
-    function showTab(
-        tabName,
-        collapseInventory = true,
-        collapseQuotation = true
-    ) {
+    /* =====================================================
+       2. MECHANIC ROSTER
+       -----------------------------------------------------
+       Names carried over from the Mechanic 1 / Mechanic 2
+       lists on the Job Card Entry screen. The trade column
+       is the Supervisor's own classification.
+       ===================================================== */
 
-        document
-            .querySelectorAll(".page-section")
-            .forEach(function (section) {
+    const ROSTER = [
+        { code: "Z011", name: "E. Rai", trade: "ENG" },
+        { code: "Z015", name: "K. Dorji", trade: "ENG" },
+        { code: "Z019", name: "T. Dorji", trade: "ENG" },
+        { code: "Z023", name: "P. Wangchuk", trade: "ELE" },
+        { code: "Z027", name: "N. Gurung", trade: "ELE" },
+        { code: "Z031", name: "S. Tamang", trade: "BOD" },
+        { code: "Z034", name: "D. Wangdi", trade: "BOD" },
+        { code: "Z042", name: "S. Dema", trade: "AC" },
+    ];
 
-                section.classList.remove("active");
+    /* =====================================================
+       3. SERVICE BAYS
+       ===================================================== */
 
-            });
+    const BAYS = ["Bay 01", "Bay 02", "Bay 03", "Bay 04", "Bay 05", "Bay 06"];
 
+    /* =====================================================
+       4. JOB CARDS
+       -----------------------------------------------------
+       Shape follows the Job Card Entry register: job card
+       number, arrival, registration, make/model, customer,
+       service group, visit type, priority, promised date.
+       ===================================================== */
 
-        const target = document.getElementById(
-            `${tabName}Tab`
+    const SEED_JOB_CARDS = [
+        {
+            no: "JC-2026-00421",
+            registration: "BP-2-A1234",
+            vehicle: "Swift VDi",
+            customer: "Tshering Choden",
+            phone: "+975 17112233",
+            serviceType: "GROUP-1 SRV",
+            visitType: "Paid Service",
+            priority: "Normal",
+            odometer: "68,420 KM",
+            arrival: "09 Sep · 08:40",
+            promised: "09 Sep · 16:00",
+            lines: [
+                { task: "Engine oil leak from timing cover", trade: "ENG", hours: 3.5 },
+                { task: "Replace clutch plate assembly", trade: "ENG", hours: 4.0 },
+                { task: "Cabin blower dead on speed 1 and 2", trade: "ELE", hours: 1.5 },
+            ],
+        },
+
+        {
+            no: "JC-2026-00422",
+            registration: "BP-1-A7702",
+            vehicle: "Dzire ZXi",
+            customer: "Yeshey Wangmo",
+            phone: "+975 17445566",
+            serviceType: "GROUP-1 SRV",
+            visitType: "Running Repair",
+            priority: "High",
+            odometer: "31,105 KM",
+            arrival: "09 Sep · 09:05",
+            promised: "09 Sep · 15:00",
+            lines: [
+                { task: "AC not cooling, suspected gas leak", trade: "AC", hours: 2.5 },
+                { task: "Condenser fan cutting in and out", trade: "ELE", hours: 1.0 },
+            ],
+        },
+
+        {
+            no: "JC-2026-00423",
+            registration: "BP-3-C1188",
+            vehicle: "Alto K10",
+            customer: "Dechen Tshomo",
+            phone: "+975 17778899",
+            serviceType: "GROUP-2 BODY",
+            visitType: "Accidental",
+            priority: "Urgent",
+            odometer: "94,860 KM",
+            arrival: "09 Sep · 09:30",
+            promised: "11 Sep · 12:00",
+            lines: [
+                { task: "Rear bumper and tail gate dent repair", trade: "BOD", hours: 6.0 },
+                { task: "Repaint rear quarter panel", trade: "BOD", hours: 5.0 },
+            ],
+        },
+
+        {
+            no: "JC-2026-00424",
+            registration: "BP-2-B5560",
+            vehicle: "Ertiga VXi",
+            customer: "Phuentsholing Transport",
+            phone: "+975 17223344",
+            serviceType: "GROUP-1 SRV",
+            visitType: "Paid Service Nine Point",
+            priority: "Normal",
+            odometer: "142,300 KM",
+            arrival: "09 Sep · 10:10",
+            promised: "10 Sep · 11:00",
+            lines: [
+                { task: "Periodic service, 140,000 KM schedule", trade: "ENG", hours: 3.0 },
+                { task: "Alternator charging low", trade: "ELE", hours: 2.0 },
+                { task: "Cabin filter service, vent smell", trade: "AC", hours: 1.0 },
+            ],
+        },
+
+        {
+            no: "JC-2026-00425",
+            registration: "BP-1-A9034",
+            vehicle: "Baleno Delta",
+            customer: "Karma Lhendup",
+            phone: "+975 17556677",
+            serviceType: "GROUP-3 OTHR",
+            visitType: "Running Repair",
+            priority: "Normal",
+            odometer: "22,470 KM",
+            arrival: "09 Sep · 10:45",
+            promised: "09 Sep · 17:00",
+            lines: [
+                { task: "Front left window regulator stuck", trade: "ELE", hours: 2.0 },
+            ],
+        },
+    ];
+
+    /* =====================================================
+       5. STORAGE
+       ===================================================== */
+
+    const STORAGE = {
+        session: "zimdra_dms_session",
+        jobCards: "zimdra_dms_job_cards",
+        assignments: "zimdra_dms_assignments",
+    };
+
+    const SIGN_IN_URL = "../../auth/sign_in.html";
+
+    /* =====================================================
+       6. LOOKUPS
+       ===================================================== */
+
+    function findMechanic(code) {
+        return (
+            ROSTER.find(function (mechanic) {
+                return mechanic.code === code;
+            }) || null
         );
-
-        if (target) {
-
-            target.classList.add("active");
-
-        }
-
-
-        document
-            .querySelectorAll(".nav-item")
-            .forEach(function (button) {
-
-                button.classList.remove("active");
-
-            });
-
-
-        const navButton = document.querySelector(
-            `.nav-item[data-tab="${tabName}"]`
-        );
-
-        if (navButton) {
-
-            navButton.classList.add("active");
-
-        }
-
-
-        const title = document.getElementById(
-            "pageTitle"
-        );
-
-        if (title) {
-
-            title.textContent =
-                tabTitles[tabName] ||
-                "Storekeeper";
-
-        }
-
-
-        if (
-            collapseInventory &&
-            tabName !== "inventory"
-        ) {
-
-            inventoryExpanded = false;
-
-            document
-                .getElementById("inventoryNavGroup")
-                ?.classList.remove("open");
-
-        }
-
-
-        if (
-            collapseQuotation &&
-            tabName !== "quotation"
-        ) {
-
-            quotationExpanded = false;
-
-            document
-                .getElementById("quotationNavGroup")
-                ?.classList.remove("open");
-
-        }
-
-
-        if (tabName === "dashboard") {
-
-            renderDashboard();
-
-        }
-
-        if (tabName === "workshop") {
-
-            renderWorkshopDefault();
-
-        }
-
-        if (tabName === "inventory") {
-
-            renderInventory();
-
-        }
-
-        if (tabName === "material-receipt") {
-
-            initializeMrn();
-
-            renderMrnHistory();
-
-        }
-
-        if (tabName === "counter") {
-
-            renderCounterSearch();
-
-            renderCounterCart();
-
-        }
-
-        if (tabName === "quotation") {
-
-            renderQuotationSearch();
-
-            renderQuotationCart();
-
-            renderQuotationHistory();
-
-        }
-
-        if (tabName === "party") {
-
-            renderPartySearch();
-
-            renderPartyCart();
-
-        }
-
-        if (tabName === "transfer") {
-
-            renderTransferForm();
-
-            renderTransferHistory();
-
-        }
-
-        if (tabName === "cash") {
-
-            renderPendingSales();
-
-            renderPaymentPanel();
-
-        }
-
-        if (tabName === "transactions") {
-
-            renderTransactions();
-
-        }
-
     }
 
+    /* =====================================================
+       7. RULES
+       -----------------------------------------------------
+       No DOM below this heading until section 9. The Node
+       harness tests these directly.
+       ===================================================== */
 
-    function toggleInventoryNav() {
-
-        inventoryExpanded = !inventoryExpanded;
-
-        document
-            .getElementById("inventoryNavGroup")
-            ?.classList.toggle(
-                "open",
-                inventoryExpanded
-            );
-
-    }
-
-
-    function toggleQuotationNav() {
-
-        quotationExpanded = !quotationExpanded;
-
-        document
-            .getElementById("quotationNavGroup")
-            ?.classList.toggle(
-                "open",
-                quotationExpanded
-            );
-
-    }
-
-
-
-    /* =========================================================
-       FIND JOB
-    ========================================================= */
-
-    function findJobById(id) {
-
-        const search = String(id || "")
-            .trim()
-            .toLowerCase();
-
-        if (!search) {
-
-            return null;
-
+    /**
+     * The distinct trades a job card needs, in roster order.
+     */
+    function requiredTrades(job) {
+        if (!job || !job.lines) {
+            return [];
         }
 
-        return state.jobs.find(function (job) {
+        const seen = {};
 
-            return job.id.toLowerCase() === search;
-
-        }) || null;
-
-    }
-
-
-    function findProduct(partNo) {
-
-        return state.inventory.find(function (product) {
-
-            return product.partNo.toLowerCase() ===
-                String(partNo).toLowerCase();
-
+        job.lines.forEach(function (line) {
+            seen[line.trade] = true;
         });
 
+        return TRADE_ORDER.filter(function (trade) {
+            return seen[trade];
+        });
     }
 
-
-    /* =========================================================
-       WORKSHOP
-    ========================================================= */
-
-    function renderWorkshopDefault() {
-
-        const input = document.getElementById(
-            "jobCardSearch"
-        );
-
-        const result = document.getElementById(
-            "workshopResult"
-        );
-
-        if (!input || !result) {
-            return;
-        }
-
-
-        /*
-         * Automatically show the first dummy Job Card.
-         * This lets the Storekeeper immediately see how
-         * the parts issue workflow works.
-         */
-
-        if (!input.value) {
-
-            input.value = "JC-2026-001";
-
-        }
-
-
-        const job = findJobById(input.value);
-
-        if (job) {
-
-            renderJobResult(
-                job,
-                result
-            );
-
-        }
-
-    }
-
-
-    function renderJobResult(job, container) {
-
-        if (!container) {
-            return;
-        }
-
-
-        const requestedPartsSection = document.getElementById(
-            "requestedPartsSection"
-        );
-
-
-        if (!job) {
-
-            container.innerHTML = `
-
-                <div class="panel">
-
-                    <div class="empty-state large">
-
-                        <div class="empty-icon">
-                            ⚠️
-                        </div>
-
-                        <strong>
-                            Job Card Not Found
-                        </strong>
-
-                        <span>
-                            Please check the Job Card ID.
-                        </span>
-
-                    </div>
-
-                </div>
-
-            `;
-
-            if (requestedPartsSection) {
-
-                requestedPartsSection.style.display = "none";
-
-            }
-
-            return;
-
-        }
-
-
-        const allIssued =
-            job.requestedParts.length > 0 &&
-            job.requestedParts.every(function (line) {
-
-                return Number(line.issuedQty) >=
-                    Number(line.requestedQty);
-
-            });
-
-
-        const someIssued =
-            job.requestedParts.some(function (line) {
-
-                return Number(line.issuedQty) > 0;
-
-            });
-
-
-        let statusClass = "orange";
-
-        if (allIssued) {
-
-            statusClass = "green";
-
-        } else if (someIssued) {
-
-            statusClass = "blue";
-
-        }
-
-
-        container.innerHTML = `
-
-            <div class="job-result">
-
-                <div class="job-result-header">
-
-                    <div class="job-result-title">
-
-                        <div>
-
-                            <div class="kicker">
-                                JOB CARD
-                            </div>
-
-                            <h3>
-                                ${escapeHtml(job.id)}
-                            </h3>
-
-                            <div class="job-result-subtitle">
-                                Job Card fetched successfully
-                            </div>
-
-                        </div>
-
-                        <span class="badge ${statusClass}">
-                            ${escapeHtml(
-                                job.requestedParts.length === 0
-                                    ? job.status
-                                    : allIssued
-                                        ? "Parts Issued"
-                                        : someIssued
-                                            ? "Partially Issued"
-                                            : job.status
-                            )}
-                        </span>
-
-                    </div>
-
-                </div>
-
-
-                <div class="job-result-grid">
-
-                    <div class="job-info">
-
-                        <span>
-                            Customer
-                        </span>
-
-                        <strong>
-                            ${escapeHtml(job.customer)}
-                        </strong>
-
-                    </div>
-
-
-                    <div class="job-info">
-
-                        <span>
-                            Vehicle
-                        </span>
-
-                        <strong>
-                            ${escapeHtml(job.vehicle)}
-                        </strong>
-
-                    </div>
-
-
-                    <div class="job-info">
-
-                        <span>
-                            Registration No.
-                        </span>
-
-                        <strong>
-                            ${escapeHtml(job.registration)}
-                        </strong>
-
-                    </div>
-
-
-                    <div class="job-info">
-
-                        <span>
-                            Mechanic
-                        </span>
-
-                        <strong>
-                            ${escapeHtml(job.mechanic)}
-                        </strong>
-
-                    </div>
-
-
-                    <div class="job-info">
-
-                        <span>
-                            Supervisor
-                        </span>
-
-                        <strong>
-                            ${escapeHtml(job.supervisor)}
-                        </strong>
-
-                    </div>
-
-
-                    <div class="job-info">
-
-                        <span>
-                            Job Type / Model
-                        </span>
-
-                        <strong>
-                            ${escapeHtml(job.jobType)}
-                        </strong>
-
-                    </div>
-
-
-                    <div class="job-info">
-
-                        <span>
-                            Created
-                        </span>
-
-                        <strong>
-                            ${formatDate(job.createdDate)}
-                        </strong>
-
-                    </div>
-
-
-                    <div class="job-info">
-
-                        <span>
-                            Requisition No.
-                        </span>
-
-                        <strong>
-                            ${escapeHtml(job.requisitionNo || "Not raised")}
-                        </strong>
-
-                    </div>
-
-
-                    <div class="job-info">
-
-                        <span>
-                            Requisition Date
-                        </span>
-
-                        <strong>
-                            ${
-                                job.requisitionDate
-                                    ? formatDate(job.requisitionDate)
-                                    : "-"
-                            }
-                        </strong>
-
-                    </div>
-
-
-                    <div class="job-info">
-
-                        <span>
-                            Warranty
-                        </span>
-
-                        <strong>
-                            ${escapeHtml(job.warranty || "No")}
-                        </strong>
-
-                    </div>
-
-
-                    <div class="job-info">
-
-                        <span>
-                            B.Cov.
-                        </span>
-
-                        <strong>
-                            ${escapeHtml(job.bCov || "No")}
-                        </strong>
-
-                    </div>
-
-
-                    <div class="job-info">
-
-                        <span>
-                            Parts
-                        </span>
-
-                        <strong>
-                            ${job.requestedParts.length}
-                            requested
-                        </strong>
-
-                    </div>
-
-                </div>
-
-
-                <div class="job-result-actions">
-
-                    ${
-                        job.requestedParts.length > 0 && !allIssued
-                            ? `
-                                <button
-                                    type="button"
-                                    class="btn success"
-                                    data-issue-all="${escapeHtml(
-                                        job.id
-                                    )}">
-                                    Issue All Available Parts
-                                </button>
-                              `
-                            : job.requestedParts.length > 0
-                                ? `
-                                    <span class="badge green">
-                                        All Requested Parts Issued
-                                    </span>
-                                  `
-                                : ""
-                    }
-
-                </div>
-
-            </div>
-
-        `;
-
-
-        /*
-         * The Requested Parts table lives outside workshopResult
-         * (see requestedPartsSection in the HTML) so the Add Parts
-         * button and its listeners are never destroyed by the
-         * innerHTML replacement above. Show it now that a job
-         * card has been fetched, and render its rows.
-         */
-
-        if (requestedPartsSection) {
-
-            requestedPartsSection.style.display = "";
-
-            requestedPartsSection.dataset.jobId = job.id;
-
-        }
-
-
-        renderRequestedPartsTable(job);
-
-    }
-
-
-    function renderRequestedPartsTable(job) {
-
-        const tbody = document.getElementById(
-            "requestedPartsBody"
-        );
-
-        if (!tbody) {
-            return;
-        }
-
-
-        if (!job || !job.requestedParts.length) {
-
-            tbody.innerHTML = `
-
-                <tr>
-
-                    <td
-                        colspan="7"
-                        class="empty-table">
-
-                        No parts requested yet. Use
-                        "+ Add Parts" to raise a requisition
-                        line for this job card.
-
-                    </td>
-
-                </tr>
-
-            `;
-
-            return;
-
-        }
-
-
-        tbody.innerHTML =
-            job.requestedParts
-                .map(function (line) {
-
-                    const product =
-                        findProduct(line.partNo);
-
-                    const requested =
-                        Number(line.requestedQty) || 0;
-
-                    const issued =
-                        Number(line.issuedQty) || 0;
-
-                    const remaining =
-                        Math.max(
-                            requested - issued,
-                            0
-                        );
-
-                    const available =
-                        product
-                            ? Number(product.stock) || 0
-                            : 0;
-
-                    let stockClass = "stock-good";
-
-                    if (available <= 0) {
-
-                        stockClass = "stock-out";
-
-                    } else if (
-                        product &&
-                        available <= Number(product.reorderLevel)
-                    ) {
-
-                        stockClass = "stock-low";
-
-                    }
-
-
-                    return `
-
-                        <tr>
-
-                            <td>
-                                <strong>
-                                    ${escapeHtml(line.partNo)}
-                                </strong>
-
-                                <div class="table-muted">
-                                    ${
-                                        line.nb === "Yes"
-                                            ? '<span class="badge gray">NB</span>'
-                                            : ""
-                                    }
-                                    ${
-                                        line.ew === "Yes"
-                                            ? '<span class="badge blue">EW</span>'
-                                            : ""
-                                    }
-                                </div>
-                            </td>
-
-                            <td>
-
-                                ${
-                                    escapeHtml(
-                                        product?.name ||
-                                        line.description ||
-                                        "Unknown Product"
-                                    )
-                                }
-
-                                <div class="table-muted">
-                                    ${
-                                        escapeHtml(
-                                            product?.description ||
-                                            line.description ||
-                                            "-"
-                                        )
-                                    }
-                                </div>
-
-                            </td>
-
-                            <td>
-                                ${requested}
-                            </td>
-
-                            <td>
-                                <strong class="${stockClass}">
-                                    ${available}
-                                </strong>
-                            </td>
-
-                            <td>
-
-                                ${
-                                    remaining <= 0
-                                        ? `
-                                            <span class="badge green">
-                                                Issued
-                                            </span>
-                                          `
-                                        : issued > 0
-                                            ? `
-                                                <span class="badge blue">
-                                                    Partially Issued
-                                                </span>
-                                              `
-                                            : `
-                                                <span class="badge orange">
-                                                    Requested
-                                                </span>
-                                              `
-                                }
-
-                            </td>
-
-                            <td>
-
-                                ${
-                                    remaining > 0
-                                        ? `
-                                            <input
-                                                class="issue-qty"
-                                                type="number"
-                                                min="0"
-                                                max="${Math.min(
-                                                    remaining,
-                                                    available
-                                                )}"
-                                                step="1"
-                                                value="${Math.min(
-                                                    remaining,
-                                                    available
-                                                )}"
-                                                data-issue-qty="${escapeHtml(
-                                                    line.partNo
-                                                )}">
-                                          `
-                                        : `
-                                            <span class="badge green">
-                                                Complete
-                                            </span>
-                                          `
-                                }
-
-                            </td>
-
-                            <td>
-
-                                ${
-                                    remaining > 0
-                                        ? `
-                                            <button
-                                                type="button"
-                                                class="btn primary issue-button"
-                                                data-issue-part="${escapeHtml(
-                                                    line.partNo
-                                                )}"
-                                                data-job-id="${escapeHtml(
-                                                    job.id
-                                                )}">
-                                                Issue
-                                            </button>
-                                          `
-                                        : `
-                                            <span class="badge green">
-                                                Issued
-                                            </span>
-                                          `
-                                }
-
-                            </td>
-
-                        </tr>
-
-                    `;
-
-                })
-                .join("");
-
-    }
-
-
-    /* =========================================================
-       ADD PARTS (REQUISITION SLIP ENTRY)
-    ========================================================= */
-
-    function openAddPartsForm(jobId) {
-
-        const job = findJobById(jobId);
-
-        if (!job) {
-
-            showToast(
-                "Fetch a Job Card before adding parts.",
-                "error"
-            );
-
-            return;
-
-        }
-
-
-        populateProductDropdowns();
-
-
-        document.getElementById(
-            "addPartJobId"
-        ).value = job.id;
-
-
-        document.getElementById(
-            "addPartJobLabel"
-        ).textContent =
-            `${job.id} · ${job.customer} · ${job.vehicle}`;
-
-
-        if (!job.requisitionNo) {
-
-            document.getElementById(
-                "addPartRequisitionNo"
-            ).value =
-                `REQ-${String(
-                    state.sequences.requisition
-                ).padStart(4, "0")}`;
-
-        } else {
-
-            document.getElementById(
-                "addPartRequisitionNo"
-            ).value = job.requisitionNo;
-
-        }
-
-
-        document.getElementById(
-            "addPartRequisitionDate"
-        ).value =
-            job.requisitionDate || today();
-
-
-        document.getElementById(
-            "addPartWarranty"
-        ).value = job.warranty || "No";
-
-
-        document.getElementById(
-            "addPartBCov"
-        ).value = job.bCov || "No";
-
-
-        document.getElementById(
-            "addPartPartSelect"
-        ).value = "";
-
-        document.getElementById(
-            "addPartPartSearch"
-        ).value = "";
-
-        closeAddPartSuggestions();
-
-        document.getElementById(
-            "addPartQty"
-        ).value = "1";
-
-        document.getElementById(
-            "addPartRate"
-        ).value = "";
-
-        document.getElementById(
-            "addPartCurrentStock"
-        ).value = "";
-
-        document.getElementById(
-            "addPartNb"
-        ).value = "No";
-
-        document.getElementById(
-            "addPartEw"
-        ).value = "No";
-
-        document.getElementById(
-            "addPartError"
-        ).textContent = "";
-
-
-        openModal("addPartsModal");
-
-    }
-
-
-    /* ---------------------------------------------------------
-       SEARCHABLE PART PICKER (ADD PARTS MODAL)
-
-       The Part No. field is a combobox: the Storekeeper types
-       any part of a part number / product name / model /
-       category and picks from the filtered list. The confirmed
-       part number is stored in the hidden #addPartPartSelect
-       field so saveAddPartLine() reads it exactly as before.
-    --------------------------------------------------------- */
-
-    function renderAddPartSuggestions(query) {
-
-        const box =
-            document.getElementById(
-                "addPartPartResults"
-            );
-
-        if (!box) {
-            return;
-        }
-
-        const search =
-            String(query || "")
-                .trim()
-                .toLowerCase();
-
-        addPartFiltered =
-            state.inventory
-                .filter(function (product) {
-
-                    if (!search) {
-                        return true;
-                    }
-
-                    return [
-
-                        product.partNo,
-                        product.name,
-                        product.model,
-                        product.category
-
-                    ]
-                        .join(" ")
-                        .toLowerCase()
-                        .includes(search);
-
-                })
-                .slice(0, 50);
-
-        addPartActiveIndex =
-            addPartFiltered.length ? 0 : -1;
-
-        if (!addPartFiltered.length) {
-
-            box.innerHTML = `
-
-                <div class="part-search-empty">
-                    No matching part found.
-                </div>
-
-            `;
-
-        } else {
-
-            box.innerHTML =
-                addPartFiltered.map(function (product, index) {
-
-                    return `
-
-                        <div
-                            class="part-search-option ${
-                                index === addPartActiveIndex
-                                    ? "active"
-                                    : ""
-                            }"
-                            data-add-part-option="${escapeHtml(
-                                product.partNo
-                            )}">
-
-                            <strong>
-                                ${escapeHtml(product.partNo)}
-                                -
-                                ${escapeHtml(product.name)}
-                            </strong>
-
-                            <span>
-                                ${escapeHtml(product.category)}
-                                ·
-                                Stock: ${product.stock} ${escapeHtml(product.unit)}
-                                ·
-                                ${escapeHtml(product.location)}
-                            </span>
-
-                        </div>
-
-                    `;
-
-                }).join("");
-
-        }
-
-        box.classList.add("open");
-
-    }
-
-
-    function closeAddPartSuggestions() {
-
-        document
-            .getElementById(
-                "addPartPartResults"
-            )
-            ?.classList.remove("open");
-
-        addPartActiveIndex = -1;
-
-    }
-
-
-    function moveAddPartActive(delta) {
-
-        const box =
-            document.getElementById(
-                "addPartPartResults"
-            );
-
-        if (!box || !addPartFiltered.length) {
-            return;
-        }
-
-        addPartActiveIndex =
-            (
-                addPartActiveIndex +
-                delta +
-                addPartFiltered.length
-            ) % addPartFiltered.length;
-
-        const options =
-            box.querySelectorAll(
-                "[data-add-part-option]"
-            );
-
-        options.forEach(function (option, index) {
-
-            option.classList.toggle(
-                "active",
-                index === addPartActiveIndex
-            );
-
+    /**
+     * The trades a crew covers.
+     */
+    function coveredTrades(crew) {
+        const seen = {};
+
+        (crew || []).forEach(function (member) {
+            seen[member.trade] = true;
         });
 
-        options[addPartActiveIndex]
-            ?.scrollIntoView({
-                block: "nearest"
-            });
-
+        return TRADE_ORDER.filter(function (trade) {
+            return seen[trade];
+        });
     }
 
+    /**
+     * Trades the job needs that nobody on the crew covers.
+     */
+    function openTrades(job, crew) {
+        const covered = coveredTrades(crew);
 
-    function selectAddPart(partNo) {
-
-        const product = findProduct(partNo);
-
-        if (!product) {
-            return;
-        }
-
-        document.getElementById(
-            "addPartPartSelect"
-        ).value = product.partNo;
-
-        document.getElementById(
-            "addPartPartSearch"
-        ).value =
-            `${product.partNo} - ${product.name}`;
-
-        closeAddPartSuggestions();
-
-        fillAddPartFromSelect(product.partNo);
-
+        return requiredTrades(job).filter(function (trade) {
+            return covered.indexOf(trade) === -1;
+        });
     }
 
+    /**
+     * Crew members whose trade is not on this job card.
+     * Allowed, but flagged so the override stays visible.
+     */
+    function offTradeMembers(job, crew) {
+        const required = requiredTrades(job);
 
-    function fillAddPartFromSelect(partNo) {
-
-        const product = findProduct(partNo);
-
-        if (!product) {
-            return;
-        }
-
-        document.getElementById(
-            "addPartRate"
-        ).value = product.salePrice;
-
-        document.getElementById(
-            "addPartCurrentStock"
-        ).value =
-            `${product.stock} ${product.unit} available (Bin: ${product.location})`;
-
+        return (crew || []).filter(function (member) {
+            return required.indexOf(member.trade) === -1;
+        });
     }
 
-
-    function saveAddPartLine(event) {
-
-        event.preventDefault();
-
-
-        const error = document.getElementById(
-            "addPartError"
-        );
-
-        error.textContent = "";
-
-
-        const jobId = document.getElementById(
-            "addPartJobId"
-        ).value;
-
-        const job = findJobById(jobId);
-
-        if (!job) {
-
-            error.textContent =
-                "Job Card could not be found.";
-
-            return;
-
+    /**
+     * Total standard hours on a job card.
+     */
+    function jobHours(job) {
+        if (!job || !job.lines) {
+            return 0;
         }
 
-
-        const partNo = document.getElementById(
-            "addPartPartSelect"
-        ).value;
-
-        const qty =
-            Number(
-                document.getElementById(
-                    "addPartQty"
-                ).value
-            ) || 0;
-
-        const rate =
-            Number(
-                document.getElementById(
-                    "addPartRate"
-                ).value
-            ) || 0;
-
-        const nb = document.getElementById(
-            "addPartNb"
-        ).value;
-
-        const ew = document.getElementById(
-            "addPartEw"
-        ).value;
-
-        const warranty = document.getElementById(
-            "addPartWarranty"
-        ).value;
-
-        const bCov = document.getElementById(
-            "addPartBCov"
-        ).value;
-
-        const requisitionDate = document.getElementById(
-            "addPartRequisitionDate"
-        ).value || today();
-
-
-        if (!partNo) {
-
-            error.textContent =
-                "Search and select a part to add to the requisition.";
-
-            return;
-
-        }
-
-        if (qty <= 0) {
-
-            error.textContent =
-                "Enter a valid requested quantity.";
-
-            return;
-
-        }
-
-
-        const product = findProduct(partNo);
-
-
-        const existingLine = job.requestedParts.find(
-            function (line) {
-
-                return line.partNo === partNo;
-
-            }
-        );
-
-        if (existingLine) {
-
-            existingLine.requestedQty =
-                Number(existingLine.requestedQty) + qty;
-
-        } else {
-
-            job.requestedParts.push({
-
-                partNo,
-
-                description:
-                    product?.description ||
-                    product?.name ||
-                    "",
-
-                requestedQty: qty,
-
-                issuedQty: 0,
-
-                returnedQty: 0,
-
-                rate,
-
-                nb,
-
-                ew,
-
-                status: "Requested"
-
-            });
-
-        }
-
-
-        if (!job.requisitionNo) {
-
-            job.requisitionNo =
-                `REQ-${String(
-                    state.sequences.requisition++
-                ).padStart(4, "0")}`;
-
-        }
-
-        job.requisitionDate = requisitionDate;
-
-        job.warranty = warranty;
-
-        job.bCov = bCov;
-
-        job.status = "Parts Requested";
-
-
-        saveState();
-
-        renderDashboard();
-
-        renderJobResult(
-            job,
-            document.getElementById("workshopResult")
-        );
-
-
-        closeModal("addPartsModal");
-
-
-        showToast(
-            `${partNo} added to ${job.requisitionNo}.`
-        );
-
+        return job.lines.reduce(function (sum, line) {
+            return sum + line.hours;
+        }, 0);
     }
 
-
-    function issueJobPart(
-        jobId,
-        partNo,
-        quantity
-    ) {
-
-        const job = findJobById(jobId);
-
-        if (!job) {
-
-            showToast(
-                "Job Card could not be found.",
-                "error"
-            );
-
-            return;
-
-        }
-
-
-        const line =
-            job.requestedParts.find(function (item) {
-
-                return item.partNo === partNo;
-
-            });
-
-
-        if (!line) {
-
-            showToast(
-                "Requested part was not found.",
-                "error"
-            );
-
-            return;
-
-        }
-
-
-        const product =
-            findProduct(partNo);
-
-
-        if (!product) {
-
-            showToast(
-                `Part ${partNo} is not available in inventory.`,
-                "error"
-            );
-
-            return;
-
-        }
-
-
-        const requested =
-            Number(line.requestedQty) || 0;
-
-        const issued =
-            Number(line.issuedQty) || 0;
-
-        const remaining =
-            Math.max(
-                requested - issued,
-                0
-            );
-
-        const entered =
-            Number(quantity) || 0;
-
-
-        if (remaining <= 0) {
-
-            showToast(
-                "This part has already been fully issued.",
-                "error"
-            );
-
-            return;
-
-        }
-
-
-        if (entered <= 0) {
-
-            showToast(
-                "Enter a valid issue quantity.",
-                "error"
-            );
-
-            return;
-
-        }
-
-
-        if (product.stock < entered) {
-
-            showToast(
-                `Insufficient stock. Available: ${product.stock}.`,
-                "error"
-            );
-
-            return;
-
-        }
-
-
-        if (entered > remaining) {
-
-            showToast(
-                `Only ${remaining} unit(s) remain to be issued.`,
-                "error"
-            );
-
-            return;
-
-        }
-
-
-        product.stock -= entered;
-
-        line.issuedQty += entered;
-
-        if (
-            line.issuedQty >=
-            line.requestedQty
-        ) {
-
-            line.status = "Issued";
-
-        } else {
-
-            line.status = "Partially Issued";
-
-        }
-
-
-        updateJobStatus(job);
-
-        saveState();
-
-        renderDashboard();
-
-        renderInventory();
-
-        renderJobResult(
-            job,
-            document.getElementById("workshopResult")
-        );
-
-
-        showToast(
-            `${entered} ${partNo} issued against ${jobId}.`,
-            "success"
-        );
-
-    }
-
-
-    function issueAllParts(jobId) {
-
-        const job = findJobById(jobId);
-
-        if (!job) {
-            return;
-        }
-
-
-        let issuedCount = 0;
-
-        let skippedCount = 0;
-
-
-        job.requestedParts.forEach(function (line) {
-
-            const product =
-                findProduct(line.partNo);
-
-            if (!product) {
-
-                skippedCount++;
-
-                return;
-
-            }
-
-
-            const remaining =
-                Math.max(
-                    Number(line.requestedQty) -
-                    Number(line.issuedQty),
-                    0
-                );
-
-
-            if (remaining <= 0) {
-                return;
-            }
-
-
-            const issueQty =
-                Math.min(
-                    remaining,
-                    Number(product.stock) || 0
-                );
-
-
-            if (issueQty <= 0) {
-
-                skippedCount++;
-
-                return;
-
-            }
-
-
-            product.stock -= issueQty;
-
-            line.issuedQty += issueQty;
-
-            line.status =
-                line.issuedQty >= line.requestedQty
-                    ? "Issued"
-                    : "Partially Issued";
-
-            issuedCount += issueQty;
-
+    /**
+     * Standard hours per trade across a set of job cards.
+     */
+    function hoursByTrade(jobs) {
+        const totals = {};
+
+        TRADE_ORDER.forEach(function (trade) {
+            totals[trade] = 0;
         });
 
-
-        updateJobStatus(job);
-
-        saveState();
-
-        renderDashboard();
-
-        renderInventory();
-
-        renderJobResult(
-            job,
-            document.getElementById("workshopResult")
-        );
-
-
-        if (issuedCount > 0) {
-
-            showToast(
-                `${issuedCount} part(s) issued successfully.`,
-                "success"
-            );
-
-        }
-
-
-        if (skippedCount > 0) {
-
-            setTimeout(function () {
-
-                showToast(
-                    `${skippedCount} item(s) could not be fully issued because of stock availability.`,
-                    "error"
-                );
-
-            }, 300);
-
-        }
-
-    }
-
-
-    function updateJobStatus(job) {
-
-        const total =
-            job.requestedParts.length;
-
-        const issued =
-            job.requestedParts.filter(function (line) {
-
-                return Number(line.issuedQty) >=
-                    Number(line.requestedQty);
-
-            }).length;
-
-
-        const anyIssued =
-            job.requestedParts.some(function (line) {
-
-                return Number(line.issuedQty) > 0;
-
+        (jobs || []).forEach(function (job) {
+            job.lines.forEach(function (line) {
+                totals[line.trade] += line.hours;
             });
-
-
-        if (total === 0) {
-
-            job.status = "Open";
-
-        } else if (issued === total) {
-
-            job.status = "Parts Issued";
-
-        } else if (anyIssued) {
-
-            job.status = "Partially Issued";
-
-        } else {
-
-            job.status = "Parts Requested";
-
-        }
-
-    }
-
-
-    /* =========================================================
-       DASHBOARD
-    ========================================================= */
-
-    function renderDashboard() {
-
-        const totalProducts =
-            state.inventory.length;
-
-
-        const lowStock =
-            state.inventory.filter(function (product) {
-
-                return Number(product.stock) <=
-                    Number(product.reorderLevel);
-
-            });
-
-
-        const pendingJobs =
-            state.jobs.filter(function (job) {
-
-                return job.status !== "Parts Issued";
-
-            });
-
-
-        const pendingCash =
-            state.pendingSales.reduce(function (sum, sale) {
-
-                return sum + calculateSaleTotals(sale).grandTotal;
-
-            }, 0);
-
-
-        document.getElementById(
-            "statProducts"
-        ).textContent = totalProducts;
-
-
-        document.getElementById(
-            "statLowStock"
-        ).textContent = lowStock.length;
-
-
-        document.getElementById(
-            "statPendingJobs"
-        ).textContent = pendingJobs.length;
-
-
-        document.getElementById(
-            "statPendingCash"
-        ).textContent = money(pendingCash);
-
-
-        renderDashboardWorkshopList();
-
-        renderDashboardLowStockList();
-
-        renderDashboardCharts();
-
-    }
-
-
-    function renderDashboardWorkshopList() {
-
-        const container =
-            document.getElementById(
-                "dashboardWorkshopList"
-            );
-
-
-        if (!container) {
-            return;
-        }
-
-
-        const jobs =
-            state.jobs.filter(function (job) {
-
-                return job.status !== "Parts Issued";
-
-            });
-
-
-        if (!jobs.length) {
-
-            container.innerHTML = `
-
-                <div class="empty-state">
-                    No pending workshop requests.
-                </div>
-
-            `;
-
-            return;
-
-        }
-
-
-        container.innerHTML =
-            jobs.map(function (job) {
-
-                const requested =
-                    job.requestedParts.reduce(
-                        function (sum, line) {
-
-                            return sum +
-                                Number(line.requestedQty);
-
-                        },
-                        0
-                    );
-
-
-                const issued =
-                    job.requestedParts.reduce(
-                        function (sum, line) {
-
-                            return sum +
-                                Number(line.issuedQty);
-
-                        },
-                        0
-                    );
-
-
-                return `
-
-                    <div
-                        class="dashboard-item dashboard-clickable"
-                        data-dashboard-job="${escapeHtml(
-                            job.id
-                        )}">
-
-                        <div class="dashboard-item-main">
-
-                            <strong>
-                                ${escapeHtml(job.id)}
-                            </strong>
-
-                            <span>
-                                ${escapeHtml(job.customer)}
-                                ·
-                                ${escapeHtml(job.vehicle)}
-                            </span>
-
-                        </div>
-
-                        <div>
-
-                            <div class="dashboard-item-value">
-                                ${issued}/${requested}
-                            </div>
-
-                            <span class="badge orange">
-                                ${escapeHtml(job.status)}
-                            </span>
-
-                        </div>
-
-                    </div>
-
-                `;
-
-            }).join("");
-
-    }
-
-
-    function renderDashboardLowStockList() {
-
-        const container =
-            document.getElementById(
-                "dashboardLowStockList"
-            );
-
-
-        if (!container) {
-            return;
-        }
-
-
-        const lowStock =
-            state.inventory
-                .filter(function (product) {
-
-                    return Number(product.stock) <=
-                        Number(product.reorderLevel);
-
-                })
-                .sort(function (a, b) {
-
-                    return a.stock - b.stock;
-
-                });
-
-
-        if (!lowStock.length) {
-
-            container.innerHTML = `
-
-                <div class="empty-state">
-                    All inventory levels are healthy.
-                </div>
-
-            `;
-
-            return;
-
-        }
-
-
-        container.innerHTML =
-            lowStock.map(function (product) {
-
-                const out =
-                    Number(product.stock) <= 0;
-
-
-                return `
-
-                    <div class="dashboard-item">
-
-                        <div class="dashboard-item-main">
-
-                            <strong>
-                                ${escapeHtml(product.name)}
-                            </strong>
-
-                            <span>
-                                ${escapeHtml(product.partNo)}
-                                ·
-                                ${escapeHtml(product.location)}
-                            </span>
-
-                        </div>
-
-                        <div>
-
-                            <div class="dashboard-item-value ${
-                                out
-                                    ? "stock-out"
-                                    : "stock-low"
-                            }">
-
-                                ${product.stock}
-                                ${escapeHtml(product.unit)}
-
-                            </div>
-
-                            <span class="badge ${
-                                out
-                                    ? "red"
-                                    : "orange"
-                            }">
-
-                                ${
-                                    out
-                                        ? "Out of Stock"
-                                        : "Low Stock"
-                                }
-
-                            </span>
-
-                        </div>
-
-                    </div>
-
-                `;
-
-            }).join("");
-
-    }
-
-
-    function renderBarRows(container, rows, colorClass) {
-
-        if (!container) {
-            return;
-        }
-
-        if (!rows.length) {
-
-            container.innerHTML = `
-
-                <div class="empty-state">
-                    No data yet.
-                </div>
-
-            `;
-
-            return;
-
-        }
-
-        const max =
-            Math.max.apply(
-                null,
-                rows.map(function (row) {
-
-                    return Number(row.value) || 0;
-
-                })
-            ) || 1;
-
-        container.innerHTML =
-            rows.map(function (row) {
-
-                const pct =
-                    Math.max(
-                        4,
-                        Math.round(
-                            (Number(row.value) / max) * 100
-                        )
-                    );
-
-                return `
-
-                    <div class="chart-row">
-
-                        <div
-                            class="chart-row-label"
-                            title="${escapeHtml(row.label)}">
-                            ${escapeHtml(row.label)}
-                        </div>
-
-                        <div class="chart-row-track">
-
-                            <div
-                                class="chart-row-fill ${colorClass || ""}"
-                                style="width: ${pct}%;">
-                            </div>
-
-                        </div>
-
-                        <div class="chart-row-value">
-                            ${row.value}
-                        </div>
-
-                    </div>
-
-                `;
-
-            }).join("");
-
-    }
-
-
-    function renderDashboardCharts() {
-
-        const stockContainer =
-            document.getElementById(
-                "chartInventoryStock"
-            );
-
-        if (stockContainer) {
-
-            const stockRows =
-                [...state.inventory]
-                    .sort(function (a, b) {
-
-                        return Number(b.stock) - Number(a.stock);
-
-                    })
-                    .slice(0, 8)
-                    .map(function (product) {
-
-                        return {
-
-                            label:
-                                `${product.name} (${product.partNo})`,
-
-                            value: Number(product.stock) || 0
-
-                        };
-
-                    });
-
-            renderBarRows(
-                stockContainer,
-                stockRows,
-                "blue"
-            );
-
-        }
-
-
-        /*
-         * Aggregate quantity sold per part number across every
-         * completed sale (Counter and Party), regardless of which
-         * inventory row it currently maps to.
-         */
-
-        const soldByPart = {};
-
-        state.sales.forEach(function (sale) {
-
-            (sale.items || []).forEach(function (item) {
-
-                const key = item.partNo;
-
-                soldByPart[key] =
-                    (soldByPart[key] || 0) +
-                    (Number(item.qty) || 0);
-
-            });
-
         });
 
+        return totals;
+    }
 
-        const inventorySoldRanking =
-            state.inventory.map(function (product) {
+    /**
+     * Where a mechanic stands right now.
+     */
+    function mechanicState(assignments, code) {
+        const jobs = Object.keys(assignments || {});
 
+        for (let index = 0; index < jobs.length; index += 1) {
+            const no = jobs[index];
+
+            const record = assignments[no];
+
+            const member = (record.crew || []).find(function (person) {
+                return person.code === code;
+            });
+
+            if (member) {
                 return {
-
-                    label:
-                        `${product.name} (${product.partNo})`,
-
-                    value: soldByPart[product.partNo] || 0
-
+                    engaged: true,
+                    job: no,
+                    bay: record.bay,
+                    lead: !!member.lead,
                 };
-
-            });
-
-
-        const topSoldContainer =
-            document.getElementById(
-                "chartTopSold"
-            );
-
-        if (topSoldContainer) {
-
-            const topSold =
-                [...inventorySoldRanking]
-                    .filter(function (row) {
-
-                        return row.value > 0;
-
-                    })
-                    .sort(function (a, b) {
-
-                        return b.value - a.value;
-
-                    })
-                    .slice(0, 5);
-
-            topSoldContainer.innerHTML = `
-                <div class="kicker" style="margin-bottom: 8px;">
-                    MOST SOLD
-                </div>
-            ` + (
-                topSold.length
-                    ? ""
-                    : '<div class="empty-state">No sales recorded yet.</div>'
-            );
-
-            if (topSold.length) {
-
-                const rowsHost = document.createElement("div");
-
-                topSoldContainer.appendChild(rowsHost);
-
-                renderBarRows(
-                    rowsHost,
-                    topSold,
-                    "green"
-                );
-
             }
-
         }
 
-
-        const leastSoldContainer =
-            document.getElementById(
-                "chartLeastSold"
-            );
-
-        if (leastSoldContainer) {
-
-            const leastSold =
-                [...inventorySoldRanking]
-                    .sort(function (a, b) {
-
-                        return a.value - b.value;
-
-                    })
-                    .slice(0, 5);
-
-            leastSoldContainer.innerHTML = `
-                <div class="kicker" style="margin-bottom: 8px;">
-                    LEAST SOLD
-                </div>
-            `;
-
-            const rowsHost = document.createElement("div");
-
-            leastSoldContainer.appendChild(rowsHost);
-
-            renderBarRows(
-                rowsHost,
-                leastSold,
-                "orange"
-            );
-
-        }
-
+        return { engaged: false, job: null, bay: null, lead: false };
     }
 
-
-    /* =========================================================
-       INVENTORY
-    ========================================================= */
-
-    function renderInventory() {
-
-        const tbody =
-            document.getElementById(
-                "inventoryTableBody"
-            );
-
-
-        if (!tbody) {
-            return;
-        }
-
-
-        const search =
-            (
-                document.getElementById(
-                    "inventorySearch"
-                )?.value || ""
-            )
-                .trim()
-                .toLowerCase();
-
-
-        const location =
-            document.getElementById(
-                "inventoryLocationFilter"
-            )?.value || "";
-
-
-        const stockFilter =
-            document.getElementById(
-                "inventoryStockFilter"
-            )?.value || "";
-
-
-        let products =
-            [...state.inventory];
-
-
-        if (search) {
-
-            products =
-                products.filter(function (product) {
-
-                    return [
-
-                        product.partNo,
-                        product.name,
-                        product.model,
-                        product.category,
-                        product.description
-
-                    ]
-                        .join(" ")
-                        .toLowerCase()
-                        .includes(search);
-
-                });
-
-        }
-
-
-        if (location) {
-
-            products =
-                products.filter(function (product) {
-
-                    return product.location === location;
-
-                });
-
-        }
-
-
-        if (stockFilter === "low") {
-
-            products =
-                products.filter(function (product) {
-
-                    return Number(product.stock) <=
-                        Number(product.reorderLevel);
-
-                });
-
-        }
-
-
-        if (stockFilter === "out") {
-
-            products =
-                products.filter(function (product) {
-
-                    return Number(product.stock) <= 0;
-
-                });
-
-        }
-
-
-        if (stockFilter === "available") {
-
-            products =
-                products.filter(function (product) {
-
-                    return Number(product.stock) > 0;
-
-                });
-
-        }
-
-
-        const count =
-            document.getElementById(
-                "inventoryCount"
-            );
-
-
-        if (count) {
-
-            count.textContent =
-                products.length;
-
-        }
-
-
-        if (!products.length) {
-
-            tbody.innerHTML = `
-
-                <tr>
-
-                    <td
-                        colspan="9"
-                        class="empty-table">
-
-                        No products found.
-
-                    </td>
-
-                </tr>
-
-            `;
-
-            return;
-
-        }
-
-
-        tbody.innerHTML =
-            products.map(function (product) {
-
-                let stockClass =
-                    "stock-good";
-
-                if (Number(product.stock) <= 0) {
-
-                    stockClass = "stock-out";
-
-                } else if (
-                    Number(product.stock) <=
-                    Number(product.reorderLevel)
-                ) {
-
-                    stockClass = "stock-low";
-
-                }
-
-
-                return `
-
-                    <tr>
-
-                        <td>
-
-                            <strong>
-                                ${escapeHtml(product.name)}
-                            </strong>
-
-                            <div class="table-muted">
-                                ${escapeHtml(
-                                    product.model || "-"
-                                )}
-                            </div>
-
-                        </td>
-
-
-                        <td>
-                            ${escapeHtml(product.partNo)}
-                        </td>
-
-
-                        <td>
-                            ${escapeHtml(product.category)}
-                        </td>
-
-
-                        <td>
-                            ${escapeHtml(product.location)}
-                        </td>
-
-
-                        <td>
-
-                            <strong class="stock-number ${stockClass}">
-                                ${product.stock}
-                            </strong>
-
-                            ${escapeHtml(product.unit)}
-
-                        </td>
-
-
-                        <td>
-                            ${product.reorderLevel}
-                        </td>
-
-
-                        <td>
-                            ${money(product.salePrice)}
-                        </td>
-
-
-                        <td>
-                            ${product.tax}%
-                        </td>
-
-
-                        <td>
-
-                            <div class="action-buttons">
-
-                                <button
-                                    type="button"
-                                    class="action-btn edit"
-                                    data-edit-product="${escapeHtml(
-                                        product.id
-                                    )}">
-                                    Edit
-                                </button>
-
-                                <button
-                                    type="button"
-                                    class="action-btn delete"
-                                    data-delete-product="${escapeHtml(
-                                        product.id
-                                    )}">
-                                    Delete
-                                </button>
-
-                            </div>
-
-                        </td>
-
-                    </tr>
-
-                `;
-
-            }).join("");
-
-    }
-
-
-    function populateProductDropdowns() {
-
-        const categorySelect =
-            document.getElementById(
-                "productCategory"
-            );
-
-
-        const mrnCategory =
-            document.getElementById(
-                "mrnCategory"
-            );
-
-
-        const unitSelect =
-            document.getElementById(
-                "productUnit"
-            );
-
-
-        const mrnUnit =
-            document.getElementById(
-                "mrnUnit"
-            );
-
-
-        if (categorySelect) {
-
-            categorySelect.innerHTML =
-                state.categories.map(function (category) {
-
-                    return `
-
-                        <option value="${escapeHtml(category)}">
-                            ${escapeHtml(category)}
-                        </option>
-
-                    `;
-
-                }).join("");
-
-        }
-
-
-        if (mrnCategory) {
-
-            mrnCategory.innerHTML =
-                state.categories.map(function (category) {
-
-                    return `
-
-                        <option value="${escapeHtml(category)}">
-                            ${escapeHtml(category)}
-                        </option>
-
-                    `;
-
-                }).join("");
-
-        }
-
-
-        if (unitSelect) {
-
-            unitSelect.innerHTML =
-                state.units.map(function (unit) {
-
-                    return `
-
-                        <option value="${escapeHtml(unit)}">
-                            ${escapeHtml(unit)}
-                        </option>
-
-                    `;
-
-                }).join("");
-
-        }
-
-
-        if (mrnUnit) {
-
-            mrnUnit.innerHTML =
-                state.units.map(function (unit) {
-
-                    return `
-
-                        <option value="${escapeHtml(unit)}">
-                            ${escapeHtml(unit)}
-                        </option>
-
-                    `;
-
-                }).join("");
-
-        }
-
-
-        const productSelect =
-            document.getElementById(
-                "mrnProductSelect"
-            );
-
-
-        if (productSelect) {
-
-            productSelect.innerHTML = `
-
-                <option value="">
-                    Select product
-                </option>
-
-                ${
-                    state.inventory.map(function (product) {
-
-                        return `
-
-                            <option
-                                value="${escapeHtml(product.partNo)}">
-
-                                ${escapeHtml(product.partNo)}
-                                -
-                                ${escapeHtml(product.name)}
-
-                            </option>
-
-                        `;
-
-                    }).join("")
-                }
-
-            `;
-
-        }
-
-
-        /*
-         * The Add Parts modal now uses a searchable combobox
-         * (#addPartPartSearch) that filters state.inventory
-         * live, so there is no option list to pre-populate.
-         */
-
-    }
-
-
-    /* =========================================================
-       PRODUCT MODAL
-    ========================================================= */
-
-    function openModal(id) {
-
-        document
-            .getElementById(id)
-            ?.classList.add("open");
-
-        /*
-         * The Material Receipt form opens as a modal over the
-         * Material Receipt tab. While it's open, hide the MRN
-         * History panel underneath so it doesn't show alongside
-         * the form (instead of just being dimmed by the backdrop).
-         */
-
-        if (id === "mrnFormModal") {
-
-            const historyPanel =
-                document.getElementById(
-                    "mrnHistoryPanel"
-                );
-
-            if (historyPanel) {
-
-                historyPanel.style.display = "none";
-
-            }
-
-        }
-
-    }
-
-
-    function closeModal(id) {
-
-        document
-            .getElementById(id)
-            ?.classList.remove("open");
-
-        if (id === "mrnFormModal") {
-
-            const historyPanel =
-                document.getElementById(
-                    "mrnHistoryPanel"
-                );
-
-            if (historyPanel) {
-
-                historyPanel.style.display = "";
-
-            }
-
-        }
-
-    }
-
-
-    function resetProductForm() {
-
-        const form =
-            document.getElementById(
-                "addProductForm"
-            );
-
-
-        if (form) {
-
-            form.reset();
-
-        }
-
-
-        document.getElementById(
-            "editingProductId"
-        ).value = "";
-
-
-        document.getElementById(
-            "productModalTitle"
-        ).textContent = "Add Product";
-
-
-        document.getElementById(
-            "addProductError"
-        ).textContent = "";
-
-
-        document.getElementById(
-            "productOpeningStock"
-        ).value = "0";
-
-
-        document.getElementById(
-            "productReorderLevel"
-        ).value = "5";
-
-
-        document.getElementById(
-            "productTax"
-        ).value = "7";
-
-
-        document.getElementById(
-            "locationThimphu"
-        ).checked = true;
-
-
-        const preview =
-            document.getElementById(
-                "productImagePreview"
-            );
-
-
-        preview.src = "";
-
-        preview.classList.remove(
-            "visible"
-        );
-
-    }
-
-
-    function openAddProductModal(productId = null) {
-
-        resetProductForm();
-
-        populateProductDropdowns();
-
-
-        if (productId) {
-
-            const product =
-                state.inventory.find(function (item) {
-
-                    return item.id === productId;
-
-                });
-
-
-            if (!product) {
-                return;
-            }
-
-
-            document.getElementById(
-                "editingProductId"
-            ).value = product.id;
-
-
-            document.getElementById(
-                "productModalTitle"
-            ).textContent =
-                "Edit Product";
-
-
-            document.getElementById(
-                "productPartNo"
-            ).value =
-                product.partNo || "";
-
-
-            document.getElementById(
-                "productName"
-            ).value =
-                product.name || "";
-
-
-            document.getElementById(
-                "productCategory"
-            ).value =
-                product.category || state.categories[0];
-
-
-            document.getElementById(
-                "productSerialNumber"
-            ).value =
-                product.serialNumber || "";
-
-
-            document.getElementById(
-                "productModel"
-            ).value =
-                product.model || "";
-
-
-            document.getElementById(
-                "productUnit"
-            ).value =
-                product.unit || state.units[0];
-
-
-            document.getElementById(
-                "productCostPrice"
-            ).value =
-                product.costPrice || 0;
-
-
-            document.getElementById(
-                "productSalePrice"
-            ).value =
-                product.salePrice || 0;
-
-
-            document.getElementById(
-                "productTax"
-            ).value =
-                product.tax ?? 7;
-
-
-            document.getElementById(
-                "productOpeningStock"
-            ).value =
-                product.stock || 0;
-
-
-            document.getElementById(
-                "productReorderLevel"
-            ).value =
-                product.reorderLevel || 0;
-
-
-            document.getElementById(
-                "productDetails"
-            ).value =
-                product.details || "";
-
-
-            if (
-                product.location ===
-                "Phuntsholing"
-            ) {
-
-                document.getElementById(
-                    "locationPhuntsholing"
-                ).checked = true;
-
-            } else {
-
-                document.getElementById(
-                    "locationThimphu"
-                ).checked = true;
-
-            }
-
-
-            if (product.image) {
-
-                const preview =
-                    document.getElementById(
-                        "productImagePreview"
-                    );
-
-                preview.src =
-                    product.image;
-
-                preview.classList.add(
-                    "visible"
-                );
-
-            }
-
-        }
-
-
-        openModal(
-            "addProductModal"
-        );
-
-    }
-
-
-    function saveProduct(event) {
-
-        event.preventDefault();
-
-
-        const error =
-            document.getElementById(
-                "addProductError"
-            );
-
-
-        error.textContent = "";
-
-
-        const editingId =
-            document.getElementById(
-                "editingProductId"
-            ).value;
-
-
-        const partNo =
-            document.getElementById(
-                "productPartNo"
-            ).value.trim();
-
-
-        const name =
-            document.getElementById(
-                "productName"
-            ).value.trim();
-
-
-        const category =
-            document.getElementById(
-                "productCategory"
-            ).value;
-
-
-        const serialNumber =
-            document.getElementById(
-                "productSerialNumber"
-            ).value.trim();
-
-
-        const model =
-            document.getElementById(
-                "productModel"
-            ).value.trim();
-
-
-        const unit =
-            document.getElementById(
-                "productUnit"
-            ).value;
-
-
-        const costPrice =
-            Number(
-                document.getElementById(
-                    "productCostPrice"
-                ).value
-            ) || 0;
-
-
-        const salePrice =
-            Number(
-                document.getElementById(
-                    "productSalePrice"
-                ).value
-            ) || 0;
-
-
-        const tax =
-            Number(
-                document.getElementById(
-                    "productTax"
-                ).value
-            ) || 0;
-
-
-        const openingStock =
-            Number(
-                document.getElementById(
-                    "productOpeningStock"
-                ).value
-            ) || 0;
-
-
-        const reorderLevel =
-            Number(
-                document.getElementById(
-                    "productReorderLevel"
-                ).value
-            ) || 0;
-
-
-        const location =
-            document.querySelector(
-                'input[name="productLocation"]:checked'
-            )?.value ||
-            "Thimphu";
-
-
-        const details =
-            document.getElementById(
-                "productDetails"
-            ).value.trim();
-
-
-        if (!partNo || !name) {
-
-            error.textContent =
-                "Part number and product name are required.";
-
-            return;
-
-        }
-
-
-        const duplicate =
-            state.inventory.find(function (product) {
-
-                return (
-                    product.partNo.toLowerCase() ===
-                    partNo.toLowerCase() &&
-                    product.id !== editingId
-                );
-
-            });
-
-
-        if (duplicate) {
-
-            error.textContent =
-                "A product with this part number already exists.";
-
-            return;
-
-        }
-
-
-        const imageInput =
-            document.getElementById(
-                "productImage"
-            );
-
-
-        function finishSave(image) {
-
-            if (editingId) {
-
-                const product =
-                    state.inventory.find(function (item) {
-
-                        return item.id === editingId;
-
-                    });
-
-
-                if (!product) {
-                    return;
-                }
-
-
-                product.partNo = partNo;
-                product.name = name;
-                product.description = details || name;
-                product.category = category;
-                product.serialNumber = serialNumber;
-                product.model = model;
-                product.unit = unit;
-                product.costPrice = costPrice;
-                product.salePrice = salePrice;
-                product.tax = tax;
-                product.stock = openingStock;
-                product.reorderLevel = reorderLevel;
-                product.location = location;
-                product.details = details;
-
-                if (image) {
-
-                    product.image = image;
-
-                }
-
-                showToast(
-                    "Product updated successfully."
-                );
-
-            } else {
-
-                state.inventory.push({
-
-                    id: `PRD-${String(
-                        state.sequences.product++
-                    ).padStart(3, "0")}`,
-
-                    partNo,
-
-                    name,
-
-                    description: details || name,
-
-                    category,
-
-                    serialNumber,
-
-                    model,
-
-                    salePrice,
-
-                    costPrice,
-
-                    tax,
-
-                    unit,
-
-                    stock: openingStock,
-
-                    reorderLevel,
-
-                    location,
-
-                    image: image || "",
-
-                    details
-
-                });
-
-
-                showToast(
-                    "Product added successfully."
-                );
-
-            }
-
-
-            saveState();
-
-            populateProductDropdowns();
-
-            renderInventory();
-
-            renderDashboard();
-
-            closeModal(
-                "addProductModal"
-            );
-
-        }
-
-
-        if (
-            imageInput.files &&
-            imageInput.files[0]
-        ) {
-
-            const reader =
-                new FileReader();
-
-
-            reader.onload = function () {
-
-                finishSave(
-                    reader.result
-                );
-
-            };
-
-
-            reader.readAsDataURL(
-                imageInput.files[0]
-            );
-
-        } else {
-
-            finishSave("");
-
-        }
-
-    }
-
-
-    /* =========================================================
-       INVENTORY MANAGEMENT
-    ========================================================= */
-
-    function openInventoryManager(action) {
-
-        const title =
-            document.getElementById(
-                "inventoryManagerTitle"
-            );
-
-
-        const content =
-            document.getElementById(
-                "inventoryManagerContent"
-            );
-
-
-        if (!title || !content) {
-            return;
-        }
-
-
-        if (action === "add-category") {
-
-            title.textContent =
-                "Add Category";
-
-
-            content.innerHTML = `
-
-                <div class="management-section">
-
-                    <h4>
-                        Create Product Category
-                    </h4>
-
-                    <div class="manager-row">
-
-                        <input
-                            id="managerCategoryInput"
-                            placeholder="Example: Engine Parts">
-
-                        <button
-                            type="button"
-                            class="btn primary"
-                            id="managerAddCategoryBtn">
-                            Add
-                        </button>
-
-                    </div>
-
-                </div>
-
-            `;
-
-        }
-
-
-        else if (
-            action === "manage-category"
-        ) {
-
-            title.textContent =
-                "Manage Categories";
-
-
-            content.innerHTML = `
-
-                <div class="management-section">
-
-                    <h4>
-                        Product Categories
-                    </h4>
-
-                    <div class="manager-list">
-
-                        ${
-                            state.categories.map(
-                                function (category) {
-
-                                    return `
-
-                                        <div class="manager-list-item">
-
-                                            <span>
-                                                ${escapeHtml(category)}
-                                            </span>
-
-                                            <button
-                                                type="button"
-                                                class="action-btn delete"
-                                                data-manager-delete-category="${escapeHtml(
-                                                    category
-                                                )}">
-                                                Remove
-                                            </button>
-
-                                        </div>
-
-                                    `;
-
-                                }
-                            ).join("")
-                        }
-
-                    </div>
-
-                </div>
-
-            `;
-
-        }
-
-
-        else if (
-            action === "manage-product"
-        ) {
-
-            title.textContent =
-                "Manage Products";
-
-
-            content.innerHTML = `
-
-                <div class="management-section">
-
-                    <h4>
-                        Product List
-                    </h4>
-
-                    <div class="manager-list">
-
-                        ${
-                            state.inventory.map(
-                                function (product) {
-
-                                    return `
-
-                                        <div class="manager-list-item">
-
-                                            <span>
-                                                ${escapeHtml(
-                                                    product.partNo
-                                                )}
-                                                -
-                                                ${escapeHtml(
-                                                    product.name
-                                                )}
-                                            </span>
-
-                                            <button
-                                                type="button"
-                                                class="action-btn edit"
-                                                data-manager-edit-product="${escapeHtml(
-                                                    product.id
-                                                )}">
-                                                Edit
-                                            </button>
-
-                                        </div>
-
-                                    `;
-
-                                }
-                            ).join("")
-                        }
-
-                    </div>
-
-                </div>
-
-            `;
-
-        }
-
-
-        else if (
-            action === "group-pricing"
-        ) {
-
-            title.textContent =
-                "Group Pricing";
-
-
-            content.innerHTML = `
-
-                <div class="management-section">
-
-                    <h4>
-                        Group Pricing
-                    </h4>
-
-                    <p class="management-note">
-                        Configure customer or workshop
-                        group-specific pricing here.
-                    </p>
-
-                    <div class="manager-row">
-
-                        <input
-                            id="groupPriceName"
-                            placeholder="Group name">
-
-                        <input
-                            id="groupPriceDiscount"
-                            type="number"
-                            min="0"
-                            max="100"
-                            placeholder="Discount %">
-
-                        <button
-                            type="button"
-                            class="btn primary"
-                            id="addGroupPriceBtn">
-                            Add
-                        </button>
-
-                    </div>
-
-                    <div class="manager-list">
-
-                        ${
-                            state.groupPrices.map(
-                                function (item, index) {
-
-                                    return `
-
-                                        <div class="manager-list-item">
-
-                                            <span>
-                                                ${escapeHtml(
-                                                    item.name
-                                                )}
-                                                -
-                                                ${item.discount}%
-                                            </span>
-
-                                            <button
-                                                type="button"
-                                                class="action-btn delete"
-                                                data-delete-group-price="${index}">
-                                                Remove
-                                            </button>
-
-                                        </div>
-
-                                    `;
-
-                                }
-                            ).join("")
-                        }
-
-                    </div>
-
-                </div>
-
-            `;
-
-        }
-
-
-        else if (action === "units") {
-
-            title.textContent =
-                "Units";
-
-
-            content.innerHTML = `
-
-                <div class="management-section">
-
-                    <h4>
-                        Inventory Units
-                    </h4>
-
-                    <div class="manager-row">
-
-                        <input
-                            id="managerUnitInput"
-                            placeholder="Example: carton">
-
-                        <button
-                            type="button"
-                            class="btn primary"
-                            id="managerAddUnitBtn">
-                            Add
-                        </button>
-
-                    </div>
-
-
-                    <div class="manager-list">
-
-                        ${
-                            state.units.map(
-                                function (unit) {
-
-                                    return `
-
-                                        <div class="manager-list-item">
-
-                                            <span>
-                                                ${escapeHtml(unit)}
-                                            </span>
-
-                                            <button
-                                                type="button"
-                                                class="action-btn delete"
-                                                data-manager-delete-unit="${escapeHtml(
-                                                    unit
-                                                )}">
-                                                Remove
-                                            </button>
-
-                                        </div>
-
-                                    `;
-
-                                }
-                            ).join("")
-                        }
-
-                    </div>
-
-                </div>
-
-            `;
-
-        }
-
-
-        else if (
-            action === "group-price-list"
-        ) {
-
-            title.textContent =
-                "Group Price List";
-
-
-            content.innerHTML = `
-
-                <div class="management-section">
-
-                    <h4>
-                        Group Price List
-                    </h4>
-
-                    <div class="manager-list">
-
-                        ${
-                            state.groupPrices.length
-                                ? state.groupPrices.map(
-                                    function (item) {
-
-                                        return `
-
-                                            <div class="manager-list-item">
-
-                                                <span>
-                                                    ${escapeHtml(
-                                                        item.name
-                                                    )}
-                                                </span>
-
-                                                <strong>
-                                                    ${item.discount}%
-                                                </strong>
-
-                                            </div>
-
-                                        `;
-
-                                    }
-                                ).join("")
-                                : `
-                                    <div class="empty-state">
-                                        No group pricing rules configured.
-                                    </div>
-                                  `
-                        }
-
-                    </div>
-
-                </div>
-
-            `;
-
-        }
-
-
-        openModal(
-            "inventoryManagerModal"
-        );
-
-    }
-
-
-    /* =========================================================
-       MATERIAL RECEIPT
-    ========================================================= */
-
-    function initializeMrn() {
-
-        populateProductDropdowns();
-
-        const no =
-            `MRN-${String(
-                state.sequences.mrn
-            ).padStart(4, "0")}`;
-
-
-        const noInput =
-            document.getElementById(
-                "mrnNoDisplay"
-            );
-
-
-        if (noInput && !noInput.value) {
-
-            noInput.value = no;
-
-        }
-
-
-        const dateInput =
-            document.getElementById(
-                "mrnDate"
-            );
-
-
-        if (dateInput && !dateInput.value) {
-
-            dateInput.value = today();
-
-        }
-
-
-        renderMrnLines();
-
-        calculateMrn();
-
-    }
-
-
-    function fillMrnProduct(partNo) {
-
-        const product =
-            findProduct(partNo);
-
-
-        if (!product) {
-            return;
-        }
-
-
-        document.getElementById(
-            "mrnPartNo"
-        ).value = product.partNo;
-
-
-        document.getElementById(
-            "mrnDescription"
-        ).value =
-            product.description ||
-            product.name;
-
-
-        document.getElementById(
-            "mrnCategory"
-        ).value =
-            product.category;
-
-
-        document.getElementById(
-            "mrnUnit"
-        ).value =
-            product.unit;
-
-
-        document.getElementById(
-            "mrnGst"
-        ).value =
-            product.tax;
-
-
-        document.getElementById(
-            "mrnRate"
-        ).value =
-            product.costPrice;
-
-
-        const rlRateField = document.getElementById(
-            "mrnRlRate"
-        );
-
-        if (rlRateField) {
-
-            rlRateField.value =
-                product.salePrice;
-
-        }
-
-
-        const stockField = document.getElementById(
-            "mrnCurrentStock"
-        );
-
-        if (stockField) {
-
-            stockField.value =
-                `${product.stock} ${product.unit}`;
-
-        }
-
-
-        const binField = document.getElementById(
-            "mrnStockBin"
-        );
-
-        if (binField) {
-
-            binField.value =
-                product.location;
-
-        }
-
-    }
-
-
-    function addMrnLine() {
-
-        const partNo =
-            document.getElementById(
-                "mrnPartNo"
-            ).value.trim();
-
-
-        const description =
-            document.getElementById(
-                "mrnDescription"
-            ).value.trim();
-
-
-        const category =
-            document.getElementById(
-                "mrnCategory"
-            ).value;
-
-
-        const unit =
-            document.getElementById(
-                "mrnUnit"
-            ).value;
-
-
-        const gst =
-            Number(
-                document.getElementById(
-                    "mrnGst"
-                ).value
-            ) || 0;
-
-
-        const qty =
-            Number(
-                document.getElementById(
-                    "mrnQtyReceived"
-                ).value
-            ) || 0;
-
-
-        const qtyInvoiced =
-            Number(
-                document.getElementById(
-                    "mrnQtyInvoiced"
-                ).value
-            ) || qty;
-
-
-        const rejected =
-            Number(
-                document.getElementById(
-                    "mrnQtyRejected"
-                ).value
-            ) || 0;
-
-
-        const rate =
-            Number(
-                document.getElementById(
-                    "mrnRate"
-                ).value
-            ) || 0;
-
-
-        const freightRate =
-            Number(
-                document.getElementById(
-                    "mrnFreightRate"
-                ).value
-            ) || 0;
-
-
-        const rlRate =
-            Number(
-                document.getElementById(
-                    "mrnRlRate"
-                )?.value
-            ) || 0;
-
-
-        const discComm =
-            Number(
-                document.getElementById(
-                    "mrnDiscComm"
-                )?.value
-            ) || 0;
-
-
-        const stockBin =
-            document.getElementById(
-                "mrnStockBin"
-            )?.value.trim() || "";
-
-
-        if (!partNo) {
-
-            showToast(
-                "Select or enter a part number.",
-                "error"
-            );
-
-            return;
-
-        }
-
-
-        if (qty <= 0) {
-
-            showToast(
-                "Enter a valid received quantity.",
-                "error"
-            );
-
-            return;
-
-        }
-
-        mrnLines.push({
-
-            id: uid("MRN-LINE"),
-
-            partNo,
-
-            description,
-
-            category,
-
-            unit,
-
-            gst,
-
-            qtyInvoiced,
-
-            qtyReceived: qty,
-
-            qtyRejected: rejected,
-
-            rate,
-
-            freightRate,
-
-            rlRate,
-
-            discComm,
-
-            stockBin
-
+    /**
+     * Counters for the dashboard tiles.
+     */
+    function summarise(jobs, assignments) {
+        const assigned = Object.keys(assignments || {});
+
+        const engaged = ROSTER.filter(function (mechanic) {
+            return mechanicState(assignments, mechanic.code).engaged;
+        }).length;
+
+        const busyBays = assigned.map(function (no) {
+            return assignments[no].bay;
         });
 
-
-        renderMrnLines();
-
-        calculateMrn();
-
-
-        document.getElementById(
-            "mrnPartNo"
-        ).value = "";
-
-
-        document.getElementById(
-            "mrnDescription"
-        ).value = "";
-
-
-        document.getElementById(
-            "mrnQtyInvoiced"
-        ).value = "1";
-
-
-        document.getElementById(
-            "mrnQtyReceived"
-        ).value = "1";
-
-
-        document.getElementById(
-            "mrnQtyRejected"
-        ).value = "0";
-
-
-        document.getElementById(
-            "mrnRate"
-        ).value = "";
-
-
-        document.getElementById(
-            "mrnFreightRate"
-        ).value = "0";
-
-
-        if (document.getElementById("mrnRlRate")) {
-
-            document.getElementById(
-                "mrnRlRate"
-            ).value = "";
-
-        }
-
-
-        if (document.getElementById("mrnDiscComm")) {
-
-            document.getElementById(
-                "mrnDiscComm"
-            ).value = "0";
-
-        }
-
-
-        if (document.getElementById("mrnCurrentStock")) {
-
-            document.getElementById(
-                "mrnCurrentStock"
-            ).value = "";
-
-        }
-
-
-        if (document.getElementById("mrnStockBin")) {
-
-            document.getElementById(
-                "mrnStockBin"
-            ).value = "";
-
-        }
-
-
-        document.getElementById(
-            "mrnProductSelect"
-        ).value = "";
-
-    }
-
-
-    function renderMrnLines() {
-
-        const tbody =
-            document.getElementById(
-                "mrnLinesBody"
-            );
-
-
-        if (!tbody) {
-            return;
-        }
-
-
-        if (!mrnLines.length) {
-
-            tbody.innerHTML = `
-
-                <tr>
-
-                    <td
-                        colspan="8"
-                        class="empty-table">
-
-                        No items added.
-
-                    </td>
-
-                </tr>
-
-            `;
-
-            return;
-
-        }
-
-
-        tbody.innerHTML =
-            mrnLines.map(function (line) {
-
-                const base =
-                    line.qtyReceived *
-                    line.rate;
-
-
-                const freight =
-                    line.qtyReceived *
-                    line.freightRate;
-
-
-                const discComm =
-                    (base + freight) *
-                    ((line.discComm || 0) / 100);
-
-
-                const assessable =
-                    base + freight - discComm;
-
-
-                const gstAmount =
-                    assessable *
-                    (line.gst / 100);
-
-
-                const total =
-                    assessable + gstAmount;
-
-
-                return `
-
-                    <tr>
-
-                        <td>
-                            ${escapeHtml(line.partNo)}
-                        </td>
-
-                        <td>
-                            ${escapeHtml(line.description)}
-                        </td>
-
-                        <td>
-                            ${line.qtyInvoiced} / ${line.qtyReceived} / ${line.qtyRejected}
-                        </td>
-
-                        <td>
-                            ${money(line.rate)}
-                        </td>
-
-                        <td>
-                            ${money(freight)}
-                        </td>
-
-                        <td>
-                            ${money(gstAmount)}
-                        </td>
-
-                        <td>
-                            ${money(total)}
-                        </td>
-
-                        <td>
-
-                            <button
-                                type="button"
-                                class="action-btn delete"
-                                data-remove-mrn-line="${escapeHtml(
-                                    line.id
-                                )}">
-                                Remove
-                            </button>
-
-                        </td>
-
-                    </tr>
-
-                `;
-
-            }).join("");
-
-    }
-
-
-    function calculateMrn() {
-
-        const baseTotal =
-            mrnLines.reduce(
-                function (sum, line) {
-
-                    return sum +
-                        (
-                            line.qtyReceived *
-                            line.rate
-                        );
-
-                },
-                0
-            );
-
-
-        const freightTotal =
-            mrnLines.reduce(
-                function (sum, line) {
-
-                    return sum +
-                        (
-                            line.qtyReceived *
-                            line.freightRate
-                        );
-
-                },
-                0
-            );
-
-
-        const itemDiscComm =
-            mrnLines.reduce(
-                function (sum, line) {
-
-                    const base =
-                        (line.qtyReceived * line.rate) +
-                        (line.qtyReceived * line.freightRate);
-
-                    return sum +
-                        (
-                            base *
-                            ((line.discComm || 0) / 100)
-                        );
-
-                },
-                0
-            );
-
-
-        const assessable =
-            baseTotal +
-            freightTotal -
-            itemDiscComm;
-
-
-        let current =
-            assessable;
-
-
-        let discountTotal =
-            itemDiscComm;
-
-
-        const discounts = [
-
-            "mrnDiscountA",
-            "mrnDiscountB",
-            "mrnDiscountC",
-            "mrnCashDiscount"
-
-        ];
-
-
-        discounts.forEach(function (id) {
-
-            const percent =
-                Number(
-                    document.getElementById(
-                        id
-                    )?.value
-                ) || 0;
-
-
-            const discount =
-                current *
-                Math.min(
-                    Math.max(percent, 0),
-                    100
-                ) /
-                100;
-
-
-            discountTotal += discount;
-
-            current -= discount;
-
+        const waiting = (jobs || []).filter(function (job) {
+            return !(assignments || {})[job.no];
         });
-
-
-        const gst =
-            mrnLines.reduce(
-                function (sum, line) {
-
-                    const base =
-                        line.qtyReceived *
-                        (
-                            line.rate +
-                            line.freightRate
-                        );
-
-
-                    return sum +
-                        (
-                            base *
-                            (line.gst / 100)
-                        );
-
-                },
-                0
-            );
-
-
-        const handling =
-            Number(
-                document.getElementById(
-                    "mrnHandlingCharge"
-                )?.value
-            ) || 0;
-
-
-        const vorSurcharge =
-            Number(
-                document.getElementById(
-                    "mrnVorSurcharge"
-                )?.value
-            ) || 0;
-
-
-        const serviceTaxPercent =
-            Number(
-                document.getElementById(
-                    "mrnServiceTax"
-                )?.value
-            ) || 0;
-
-
-        const eCessPercent =
-            Number(
-                document.getElementById(
-                    "mrnECess"
-                )?.value
-            ) || 0;
-
-
-        const excisePercent =
-            Number(
-                document.getElementById(
-                    "mrnExcise"
-                )?.value
-            ) || 0;
-
-
-        const taxSurchargePercent =
-            Number(
-                document.getElementById(
-                    "mrnTaxSurcharge"
-                )?.value
-            ) || 0;
-
-
-        const serviceTax =
-            current *
-            (serviceTaxPercent / 100);
-
-
-        const eCess =
-            current *
-            (eCessPercent / 100);
-
-
-        const excise =
-            current *
-            (excisePercent / 100);
-
-
-        const taxSurcharge =
-            current *
-            (taxSurchargePercent / 100);
-
-
-        const netTotal =
-            current +
-            gst +
-            handling +
-            vorSurcharge +
-            serviceTax +
-            eCess +
-            excise +
-            taxSurcharge;
-
-
-        document.getElementById(
-            "mrnAssessableValue"
-        ).textContent =
-            money(assessable);
-
-
-        document.getElementById(
-            "mrnDiscountAmount"
-        ).textContent =
-            money(discountTotal);
-
-
-        document.getElementById(
-            "mrnGstAmount"
-        ).textContent =
-            money(gst);
-
-
-        document.getElementById(
-            "mrnHandlingDisplay"
-        ).textContent =
-            money(handling);
-
-
-        document.getElementById(
-            "mrnNetTotal"
-        ).textContent =
-            money(netTotal);
-
-
-        const itemsField = document.getElementById(
-            "mrnTotalItems"
-        );
-
-        if (itemsField) {
-
-            itemsField.textContent =
-                mrnLines.length;
-
-        }
-
-
-        const qtyField = document.getElementById(
-            "mrnTotalQty"
-        );
-
-        if (qtyField) {
-
-            qtyField.textContent =
-                mrnLines.reduce(
-                    function (sum, line) {
-
-                        return sum +
-                            Number(line.qtyReceived);
-
-                    },
-                    0
-                );
-
-        }
-
 
         return {
-
-            assessable,
-
-            discount:
-                discountTotal,
-
-            gst,
-
-            handling,
-
-            vorSurcharge,
-
-            serviceTax,
-
-            eCess,
-
-            excise,
-
-            taxSurcharge,
-
-            netTotal
-
+            waiting: waiting.length,
+            inBay: assigned.length,
+            mechanicsEngaged: engaged,
+            mechanicsFree: ROSTER.length - engaged,
+            mechanicsTotal: ROSTER.length,
+            baysFree: BAYS.filter(function (bayName) {
+                return busyBays.indexOf(bayName) === -1;
+            }).length,
+            urgent: waiting.filter(function (job) {
+                return job.priority === "Urgent" || job.priority === "High";
+            }).length,
         };
-
     }
 
-
-    function saveMrn(event) {
-
-        event.preventDefault();
-
-
-        if (!mrnLines.length) {
-
-            showToast(
-                "Add at least one item to the MRN.",
-                "error"
-            );
-
-            return;
-
+    /**
+     * Can this job card go to a bay?
+     */
+    function validateAssignment(job, crew, bayName) {
+        if (!crew || crew.length === 0) {
+            return {
+                ok: false,
+                message: "Select at least one mechanic for this job card.",
+            };
         }
 
-
-        const totals =
-            calculateMrn();
-
-
-        mrnLines.forEach(function (line) {
-
-            const product =
-                findProduct(line.partNo);
-
-
-            if (product) {
-
-                product.stock =
-                    Number(product.stock) +
-                    Number(line.qtyReceived);
-
-            } else {
-
-                state.inventory.push({
-
-                    id: `PRD-${String(
-                        state.sequences.product++
-                    ).padStart(3, "0")}`,
-
-                    partNo: line.partNo,
-
-                    name: line.description,
-
-                    description: line.description,
-
-                    category: line.category,
-
-                    serialNumber: "",
-
-                    model: "",
-
-                    salePrice: line.rate,
-
-                    costPrice: line.rate,
-
-                    tax: line.gst,
-
-                    unit: line.unit,
-
-                    stock: line.qtyReceived,
-
-                    reorderLevel: 5,
-
-                    location: line.stockBin || "Thimphu",
-
-                    image: "",
-
-                    details: "Created through Material Receipt."
-
-                });
-
-            }
-
-        });
-
-
-        const mrnNumber =
-            `MRN-${String(
-                state.sequences.mrn++
-            ).padStart(4, "0")}`;
-
-
-        const receipt = {
-
-            id: uid("MRN"),
-
-            mrnNo: mrnNumber,
-
-            receiptType:
-                document.getElementById(
-                    "mrnReceiptType"
-                )?.value || "Invoice",
-
-            refNo:
-                document.getElementById(
-                    "mrnRefNo"
-                )?.value.trim() || "",
-
-            downloadMail:
-                document.getElementById(
-                    "mrnDownloadMail"
-                )?.value || "No",
-
-            date:
-                document.getElementById(
-                    "mrnDate"
-                ).value || today(),
-
-            vendorCode:
-                document.getElementById(
-                    "mrnVendorCode"
-                ).value.trim(),
-
-            vendorName:
-                document.getElementById(
-                    "mrnVendorName"
-                ).value.trim(),
-
-            rateType:
-                document.getElementById(
-                    "mrnRateType"
-                ).value,
-
-            invoiceNo:
-                document.getElementById(
-                    "mrnInvoiceNo"
-                ).value.trim(),
-
-            invoiceDate:
-                document.getElementById(
-                    "mrnInvoiceDate"
-                ).value,
-
-            taxOnFp:
-                document.getElementById(
-                    "mrnTaxOnFp"
-                ).value,
-
-            vatSrvTaxOnHand:
-                document.getElementById(
-                    "mrnVatSrvTax"
-                )?.value || "No",
-
-            formNo:
-                document.getElementById(
-                    "mrnFormNo"
-                )?.value.trim() || "",
-
-            lines: JSON.parse(
-                JSON.stringify(mrnLines)
-            ),
-
-            totals
-
-        };
-
-
-        state.materialReceipts.unshift(
-            receipt
-        );
-
-
-        saveState();
-
-        renderInventory();
-
-        renderDashboard();
-
-        renderMrnHistory();
-
-
-        showMrnModal(receipt);
-
-
-        mrnLines = [];
-
-        document.getElementById(
-            "mrnForm"
-        ).reset();
-
-
-        document.getElementById(
-            "mrnDate"
-        ).value = today();
-
-
-        document.getElementById(
-            "mrnNoDisplay"
-        ).value =
-            `MRN-${String(
-                state.sequences.mrn
-            ).padStart(4, "0")}`;
-
-
-        renderMrnLines();
-
-        calculateMrn();
-
-
-        closeModal("mrnFormModal");
-
-
-        showToast(
-            `${mrnNumber} saved successfully.`
-        );
-
-    }
-
-
-    function clearMrn() {
-
-        mrnLines = [];
-
-        document.getElementById(
-            "mrnForm"
-        )?.reset();
-
-
-        document.getElementById(
-            "mrnDate"
-        ).value =
-            today();
-
-
-        document.getElementById(
-            "mrnNoDisplay"
-        ).value =
-            `MRN-${String(
-                state.sequences.mrn
-            ).padStart(4, "0")}`;
-
-
-        renderMrnLines();
-
-        calculateMrn();
-
-    }
-
-
-    function renderMrnHistory() {
-
-        const tbody =
-            document.getElementById(
-                "mrnHistoryBody"
-            );
-
-
-        if (!tbody) {
-            return;
-        }
-
-
-        const search =
-            (
-                document.getElementById(
-                    "mrnHistorySearch"
-                )?.value || ""
-            )
-                .toLowerCase()
-                .trim();
-
-
-        const receipts =
-            state.materialReceipts.filter(
-                function (receipt) {
-
-                    if (!search) {
-                        return true;
-                    }
-
-                    return [
-
-                        receipt.mrnNo,
-                        receipt.vendorName,
-                        receipt.vendorCode,
-                        receipt.invoiceNo
-
-                    ]
-                        .join(" ")
-                        .toLowerCase()
-                        .includes(search);
-
-                }
-            );
-
-
-        if (!receipts.length) {
-
-            tbody.innerHTML = `
-
-                <tr>
-
-                    <td
-                        colspan="7"
-                        class="empty-table">
-
-                        No material receipts found.
-
-                    </td>
-
-                </tr>
-
-            `;
-
-            return;
-
-        }
-
-
-        tbody.innerHTML =
-            receipts.map(function (receipt) {
-
-                return `
-
-                    <tr>
-
-                        <td>
-                            <strong>
-                                ${escapeHtml(receipt.mrnNo)}
-                            </strong>
-                        </td>
-
-                        <td>
-                            ${formatDate(receipt.date)}
-                        </td>
-
-                        <td>
-                            ${escapeHtml(
-                                receipt.vendorName || "-"
-                            )}
-                        </td>
-
-                        <td>
-                            ${escapeHtml(
-                                receipt.invoiceNo || "-"
-                            )}
-                        </td>
-
-                        <td>
-                            ${receipt.lines.length}
-                        </td>
-
-                        <td>
-                            ${money(
-                                receipt.totals.netTotal
-                            )}
-                        </td>
-
-                        <td>
-
-                            <button
-                                type="button"
-                                class="action-btn edit"
-                                data-view-mrn="${escapeHtml(
-                                    receipt.id
-                                )}">
-                                View
-                            </button>
-
-                        </td>
-
-                    </tr>
-
-                `;
-
-            }).join("");
-
-    }
-
-
-    function showMrnModal(receipt) {
-
-        const content =
-            document.getElementById(
-                "mrnContent"
-            );
-
-
-        content.innerHTML = `
-
-            <div class="invoice-sheet">
-
-                <div class="invoice-top">
-
-                    <div class="invoice-company">
-
-                        <strong>
-                            ZIMDRA
-                        </strong>
-
-                        <span>
-                            Dealer Management System
-                        </span>
-
-                        <span>
-                            Material Receipt Note
-                        </span>
-
-                    </div>
-
-
-                    <div class="invoice-meta">
-
-                        <strong>
-                            ${escapeHtml(
-                                receipt.mrnNo
-                            )}
-                        </strong>
-
-                        <span>
-                            ${formatDate(
-                                receipt.date
-                            )}
-                        </span>
-
-                        <span>
-                            R/T: ${escapeHtml(receipt.receiptType || "Invoice")}
-                            ${
-                                receipt.refNo
-                                    ? ` · Ref: ${escapeHtml(receipt.refNo)}`
-                                    : ""
-                            }
-                        </span>
-
-                    </div>
-
-                </div>
-
-
-                <div class="invoice-customer">
-
-                    <div class="invoice-info">
-
-                        <span>
-                            Vendor
-                        </span>
-
-                        <strong>
-                            ${escapeHtml(
-                                receipt.vendorName || "-"
-                            )}
-                            (${escapeHtml(receipt.vendorCode || "-")})
-                        </strong>
-
-                    </div>
-
-
-                    <div class="invoice-info">
-
-                        <span>
-                            Invoice
-                        </span>
-
-                        <strong>
-                            ${escapeHtml(
-                                receipt.invoiceNo || "-"
-                            )}
-                            ${
-                                receipt.invoiceDate
-                                    ? ` (${formatDate(receipt.invoiceDate)})`
-                                    : ""
-                            }
-                        </strong>
-
-                    </div>
-
-
-                    <div class="invoice-info">
-
-                        <span>
-                            Form No.
-                        </span>
-
-                        <strong>
-                            ${escapeHtml(receipt.formNo || "-")}
-                        </strong>
-
-                    </div>
-
-
-                    <div class="invoice-info">
-
-                        <span>
-                            Tax on F.P. / Vat-SrvTax on Hand
-                        </span>
-
-                        <strong>
-                            ${escapeHtml(receipt.taxOnFp || "No")}
-                            /
-                            ${escapeHtml(receipt.vatSrvTaxOnHand || "No")}
-                        </strong>
-
-                    </div>
-
-                </div>
-
-
-                <div class="table-wrapper">
-
-                    <table>
-
-                        <thead>
-
-                            <tr>
-                                <th>Part No.</th>
-                                <th>Description</th>
-                                <th>Qty Inv/Rec/Rej</th>
-                                <th>Rate</th>
-                                <th>Rl. Rate</th>
-                                <th>Total</th>
-                            </tr>
-
-                        </thead>
-
-                        <tbody>
-
-                            ${
-                                receipt.lines.map(
-                                    function (line) {
-
-                                        return `
-
-                                            <tr>
-
-                                                <td>
-                                                    ${escapeHtml(
-                                                        line.partNo
-                                                    )}
-                                                </td>
-
-                                                <td>
-                                                    ${escapeHtml(
-                                                        line.description
-                                                    )}
-                                                </td>
-
-                                                <td>
-                                                    ${line.qtyInvoiced} / ${line.qtyReceived} / ${line.qtyRejected}
-                                                </td>
-
-                                                <td>
-                                                    ${money(
-                                                        line.rate
-                                                    )}
-                                                </td>
-
-                                                <td>
-                                                    ${money(
-                                                        line.rlRate || 0
-                                                    )}
-                                                </td>
-
-                                                <td>
-                                                    ${money(
-                                                        line.qtyReceived *
-                                                        line.rate
-                                                    )}
-                                                </td>
-
-                                            </tr>
-
-                                        `;
-
-                                    }
-                                ).join("")
-                            }
-
-                        </tbody>
-
-                    </table>
-
-                </div>
-
-
-                <div class="invoice-total totals-box">
-
-                    <div>
-
-                        <span>
-                            Assessable Value
-                        </span>
-
-                        <strong>
-                            ${money(
-                                receipt.totals.assessable
-                            )}
-                        </strong>
-
-                    </div>
-
-
-                    <div>
-
-                        <span>
-                            Discount
-                        </span>
-
-                        <strong>
-                            ${money(
-                                receipt.totals.discount
-                            )}
-                        </strong>
-
-                    </div>
-
-
-                    <div>
-
-                        <span>
-                            GST
-                        </span>
-
-                        <strong>
-                            ${money(
-                                receipt.totals.gst
-                            )}
-                        </strong>
-
-                    </div>
-
-
-                    <div>
-
-                        <span>
-                            VOR Surcharge / Svc Tax / E-Cess / Excise / Tax Surcharge
-                        </span>
-
-                        <strong>
-                            ${money(
-                                (receipt.totals.vorSurcharge || 0) +
-                                (receipt.totals.serviceTax || 0) +
-                                (receipt.totals.eCess || 0) +
-                                (receipt.totals.excise || 0) +
-                                (receipt.totals.taxSurcharge || 0)
-                            )}
-                        </strong>
-
-                    </div>
-
-
-                    <div class="grand-total">
-
-                        <span>
-                            Net Total
-                        </span>
-
-                        <strong>
-                            ${money(
-                                receipt.totals.netTotal
-                            )}
-                        </strong>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        `;
-
-
-        openModal(
-            "mrnModal"
-        );
-
-    }
-
-
-    /* =========================================================
-       COUNTER SALE / PARTY SALE
-    ========================================================= */
-
-    function isPartySale() {
-
-        return (
-            document.getElementById(
-                "counterSaleType"
-            )?.value === "Party"
-        );
-
-    }
-
-
-    function amountInWords(value) {
-
-        const ones = [
-            "", "One", "Two", "Three", "Four", "Five",
-            "Six", "Seven", "Eight", "Nine", "Ten",
-            "Eleven", "Twelve", "Thirteen", "Fourteen",
-            "Fifteen", "Sixteen", "Seventeen", "Eighteen",
-            "Nineteen"
-        ];
-
-        const tens = [
-            "", "", "Twenty", "Thirty", "Forty", "Fifty",
-            "Sixty", "Seventy", "Eighty", "Ninety"
-        ];
-
-        function twoDigits(number) {
-
-            if (number < 20) {
-
-                return ones[number];
-
-            }
-
-            return (
-                tens[Math.floor(number / 10)] +
-                (
-                    number % 10
-                        ? " " + ones[number % 10]
-                        : ""
-                )
-            ).trim();
-
-        }
-
-        function threeDigits(number) {
-
-            if (number >= 100) {
-
-                return (
-                    ones[Math.floor(number / 100)] +
-                    " Hundred" +
-                    (
-                        number % 100
-                            ? " " + twoDigits(number % 100)
-                            : ""
-                    )
-                );
-
-            }
-
-            return twoDigits(number);
-
-        }
-
-        let rupees = Math.floor(Number(value) || 0);
-
-        const chetrum = Math.round(
-            ((Number(value) || 0) - rupees) * 100
-        );
-
-        if (rupees === 0) {
-
-            return "Zero Ngultrum Only";
-
-        }
-
-        const crore = Math.floor(rupees / 10000000);
-
-        rupees %= 10000000;
-
-        const lakh = Math.floor(rupees / 100000);
-
-        rupees %= 100000;
-
-        const thousand = Math.floor(rupees / 1000);
-
-        rupees %= 1000;
-
-        const hundred = rupees;
-
-        let words = "";
-
-        if (crore) {
-
-            words += threeDigits(crore) + " Crore ";
-
-        }
-
-        if (lakh) {
-
-            words += threeDigits(lakh) + " Lakh ";
-
-        }
-
-        if (thousand) {
-
-            words += threeDigits(thousand) + " Thousand ";
-
-        }
-
-        if (hundred) {
-
-            words += threeDigits(hundred) + " ";
-
-        }
-
-        words = words.trim() + " Ngultrum";
-
-        if (chetrum) {
-
-            words += " and " + twoDigits(chetrum) + " Chetrum";
-
-        }
-
-        return words + " Only";
-
-    }
-
-
-    function calculateSaleTotals(sale) {
-
-        if (!sale) {
+        const open = openTrades(job, crew);
+
+        if (open.length > 0) {
+            const names = open.map(function (trade) {
+                return TRADES[trade].label.toLowerCase();
+            });
 
             return {
-
-                subtotal: 0,
-                gst: 0,
-                discount: 0,
-                grandTotal: 0
-
+                ok: false,
+                message:
+                    "No mechanic selected for " +
+                    names.join(" and ") +
+                    " work. Add one, or remove that line from the job card.",
             };
-
         }
 
-
-        const subtotal =
-            sale.items.reduce(
-                function (sum, item) {
-
-                    return sum +
-                        (
-                            Number(item.qty) *
-                            Number(item.price)
-                        );
-
-                },
-                0
-            );
-
-
-        const discount =
-            Math.min(
-                Math.max(
-                    Number(sale.discount) || 0,
-                    0
-                ),
-                subtotal
-            );
-
-
-        const taxable =
-            subtotal -
-            discount;
-
-
-        const gst =
-            sale.items.reduce(
-                function (sum, item) {
-
-                    const lineSubtotal =
-                        Number(item.qty) *
-                        Number(item.price);
-
-
-                    const proportion =
-                        subtotal > 0
-                            ? lineSubtotal / subtotal
-                            : 0;
-
-
-                    const allocatedDiscount =
-                        discount *
-                        proportion;
-
-
-                    const taxableLine =
-                        lineSubtotal -
-                        allocatedDiscount;
-
-
-                    return sum +
-                        taxableLine *
-                        (
-                            Number(item.tax) /
-                            100
-                        );
-
-                },
-                0
-            );
-
-
-        const handling =
-            Number(sale.handlingCharge) || 0;
-
-        const surcharge =
-            Number(sale.surcharge) || 0;
-
-        const cashDiscount =
-            Number(sale.cashDiscount) || 0;
-
-
-        return {
-
-            subtotal,
-
-            gst,
-
-            discount,
-
-            handling,
-
-            surcharge,
-
-            cashDiscount,
-
-            grandTotal:
-                taxable +
-                gst +
-                handling +
-                surcharge -
-                cashDiscount
-
-        };
-
-    }
-
-
-    function calculateCurrentCart() {
-
-        const sale = {
-
-            items: counterCart,
-
-            discount:
-                Number(
-                    document.getElementById(
-                        "counterDiscount"
-                    )?.value
-                ) || 0,
-
-            handlingCharge:
-                Number(
-                    document.getElementById(
-                        "counterHandlingCharge"
-                    )?.value
-                ) || 0,
-
-            surcharge:
-                Number(
-                    document.getElementById(
-                        "counterSurcharge"
-                    )?.value
-                ) || 0,
-
-            cashDiscount:
-                isPartySale()
-                    ? Number(
-                        document.getElementById(
-                            "counterCashDiscount"
-                        )?.value
-                    ) || 0
-                    : 0
-
-        };
-
-
-        return calculateSaleTotals(
-            sale
-        );
-
-    }
-
-
-    function renderCounterSearch() {
-
-        const container =
-            document.getElementById(
-                "counterSearchResults"
-            );
-
-
-        if (!container) {
-            return;
-        }
-
-
-        const search =
-            (
-                document.getElementById(
-                    "counterSearch"
-                )?.value || ""
-            )
-                .trim()
-                .toLowerCase();
-
-
-        if (!search) {
-
-            container.innerHTML = `
-
-                <div class="empty-state">
-                    Search for a product to add it to the sale.
-                </div>
-
-            `;
-
-            return;
-
-        }
-
-
-        const products =
-            state.inventory.filter(
-                function (product) {
-
-                    return [
-
-                        product.partNo,
-                        product.name,
-                        product.model
-
-                    ]
-                        .join(" ")
-                        .toLowerCase()
-                        .includes(search);
-
-                }
-            );
-
-
-        if (!products.length) {
-
-            container.innerHTML = `
-
-                <div class="empty-state">
-                    No products found.
-                </div>
-
-            `;
-
-            return;
-
-        }
-
-
-        container.innerHTML =
-            products.map(function (product) {
-
-                return `
-
-                    <div class="search-result-item">
-
-                        <div class="search-result-info">
-
-                            <strong>
-                                ${escapeHtml(product.name)}
-                            </strong>
-
-                            <span>
-                                ${escapeHtml(product.partNo)}
-                                ·
-                                ${escapeHtml(product.category)}
-                                ·
-                                Stock: ${product.stock}
-                                ·
-                                ${money(product.salePrice)}
-                            </span>
-
-                        </div>
-
-
-                        <div class="search-result-action">
-
-                            <button
-                                type="button"
-                                class="btn primary"
-                                data-add-counter="${escapeHtml(
-                                    product.id
-                                )}"
-                                ${
-                                    product.stock <= 0
-                                        ? "disabled"
-                                        : ""
-                                }>
-                                Add
-                            </button>
-
-                        </div>
-
-                    </div>
-
-                `;
-
-            }).join("");
-
-    }
-
-
-    function addToCounter(productId) {
-
-        const product =
-            state.inventory.find(function (item) {
-
-                return item.id === productId;
-
-            });
-
-
-        if (!product) {
-            return;
-        }
-
-
-        if (Number(product.stock) <= 0) {
-
-            showToast(
-                "This product is out of stock.",
-                "error"
-            );
-
-            return;
-
-        }
-
-
-        const existing =
-            counterCart.find(function (item) {
-
-                return item.productId === product.id;
-
-            });
-
-
-        if (existing) {
-
-            if (
-                existing.qty >=
-                product.stock
-            ) {
-
-                showToast(
-                    "Cannot add more than available stock.",
-                    "error"
-                );
-
-                return;
-
-            }
-
-            existing.qty++;
-
-        } else {
-
-            counterCart.push({
-
-                productId: product.id,
-
-                partNo: product.partNo,
-
-                name: product.name,
-
-                category: product.category,
-
-                qty: 1,
-
-                price: product.salePrice,
-
-                tax: product.tax
-
-            });
-
-        }
-
-
-        renderCounterCart();
-
-    }
-
-
-    function renderCounterCart() {
-
-        const tbody =
-            document.getElementById(
-                "counterCartBody"
-            );
-
-
-        if (!tbody) {
-            return;
-        }
-
-
-        const saleNumber =
-            document.getElementById(
-                "counterSaleNumber"
-            );
-
-
-        if (saleNumber) {
-
-            const party = isPartySale();
-
-            const nextNo =
-                party
-                    ? `CSIA-2026-${String(
-                        state.sequences.partySale
-                    ).padStart(4, "0")}`
-                    : `CSCA-2026-${String(
-                        state.sequences.sale
-                    ).padStart(3, "0")}`;
-
-            if (!saleNumber.textContent.includes("CSIA-") &&
-                !saleNumber.textContent.includes("CSCA-")) {
-
-                saleNumber.textContent = nextNo;
-
-            }
-
-        }
-
-
-        const partyFields = document.getElementById(
-            "partySaleFields"
-        );
-
-        if (partyFields) {
-
-            partyFields.style.display =
-                isPartySale() ? "" : "none";
-
-        }
-
-
-        if (!counterCart.length) {
-
-            tbody.innerHTML = `
-
-                <tr>
-
-                    <td
-                        colspan="5"
-                        class="empty-table">
-
-                        Cart is empty.
-
-                    </td>
-
-                </tr>
-
-            `;
-
-        } else {
-
-            tbody.innerHTML =
-                counterCart.map(function (item) {
-
-                    const total =
-                        Number(item.qty) *
-                        Number(item.price);
-
-
-                    return `
-
-                        <tr>
-
-                            <td>
-
-                                <strong>
-                                    ${escapeHtml(item.name)}
-                                </strong>
-
-                                <div class="table-muted">
-                                    ${escapeHtml(item.partNo)}
-                                    ·
-                                    ${escapeHtml(item.category || "-")}
-                                </div>
-
-                            </td>
-
-                            <td>
-
-                                <input
-                                    class="issue-qty"
-                                    type="number"
-                                    min="1"
-                                    value="${item.qty}"
-                                    data-counter-qty="${escapeHtml(
-                                        item.productId
-                                    )}">
-
-                            </td>
-
-                            <td>
-                                ${money(item.price)}
-                            </td>
-
-                            <td>
-                                ${money(total)}
-                            </td>
-
-                            <td>
-
-                                <button
-                                    type="button"
-                                    class="action-btn delete"
-                                    data-remove-counter="${escapeHtml(
-                                        item.productId
-                                    )}">
-                                    Remove
-                                </button>
-
-                            </td>
-
-                        </tr>
-
-                    `;
-
-                }).join("");
-
-        }
-
-
-        const totals =
-            calculateCurrentCart();
-
-
-        document.getElementById(
-            "counterSubtotal"
-        ).textContent =
-            money(totals.subtotal);
-
-
-        document.getElementById(
-            "counterGST"
-        ).textContent =
-            money(totals.gst);
-
-
-        document.getElementById(
-            "counterDiscountTotal"
-        ).textContent =
-            money(totals.discount);
-
-
-        document.getElementById(
-            "counterGrandTotal"
-        ).textContent =
-            money(totals.grandTotal);
-
-
-        const wordsField = document.getElementById(
-            "counterAmountWords"
-        );
-
-        if (wordsField) {
-
-            wordsField.value =
-                amountInWords(totals.grandTotal);
-
-        }
-
-    }
-
-
-    function clearCounterSale() {
-
-        counterCart = [];
-
-        document.getElementById(
-            "counterCustomerName"
-        ).value = "";
-
-
-        document.getElementById(
-            "counterCustomerPhone"
-        ).value = "";
-
-
-        document.getElementById(
-            "counterDiscount"
-        ).value = "0";
-
-
-        [
-            "counterVehicleNo",
-            "counterModel",
-            "counterCstNo",
-            "counterTpnNo",
-            "counterCustomerAddress"
-        ].forEach(function (id) {
-
-            const field = document.getElementById(id);
-
-            if (field) {
-
-                field.value = "";
-
-            }
-
+        const hasLead = crew.some(function (member) {
+            return member.lead;
         });
 
+        if (!hasLead) {
+            return { ok: false, message: "Mark one mechanic as the lead." };
+        }
 
-        document.getElementById(
-            "counterSaleNumber"
-        ).textContent =
-            "Counter Sale";
+        if (!bayName) {
+            return { ok: false, message: "Select a service bay." };
+        }
 
-
-        renderCounterCart();
-
+        return { ok: true, message: "" };
     }
 
-
-    function sendSaleToCash() {
-
-        if (!counterCart.length) {
-
-            showToast(
-                "Add at least one item to the sale.",
-                "error"
-            );
-
-            return;
-
+    /**
+     * Free-text search across the register.
+     */
+    function matchesSearch(job, term) {
+        if (!term) {
+            return true;
         }
 
+        const needle = term.trim().toLowerCase();
 
-        const party = isPartySale();
-
-
-        const sale = {
-
-            id:
-                party
-                    ? `CSIA-2026-${String(
-                        state.sequences.partySale++
-                    ).padStart(4, "0")}`
-                    : `CSCA-2026-${String(
-                        state.sequences.sale++
-                    ).padStart(3, "0")}`,
-
-            saleType:
-                party ? "Party" : "Counter",
-
-            customerName:
-                document.getElementById(
-                    "counterCustomerName"
-                ).value.trim() ||
-                "Walk-in Customer",
-
-            customerPhone:
-                document.getElementById(
-                    "counterCustomerPhone"
-                ).value.trim(),
-
-            vehicleNo:
-                document.getElementById(
-                    "counterVehicleNo"
-                )?.value.trim() || "",
-
-            model:
-                document.getElementById(
-                    "counterModel"
-                )?.value.trim() || "",
-
-            cstNo:
-                document.getElementById(
-                    "counterCstNo"
-                )?.value.trim() || "",
-
-            code:
-                document.getElementById(
-                    "counterCode"
-                )?.value || "Cash",
-
-            billType:
-                document.getElementById(
-                    "counterType"
-                )?.value || "Others",
-
-            tpnNo:
-                party
-                    ? document.getElementById(
-                        "counterTpnNo"
-                    )?.value.trim() || ""
-                    : "",
-
-            customerAddress:
-                party
-                    ? document.getElementById(
-                        "counterCustomerAddress"
-                    )?.value.trim() || ""
-                    : "",
-
-            date: today(),
-
-            discount:
-                Number(
-                    document.getElementById(
-                        "counterDiscount"
-                    ).value
-                ) || 0,
-
-            handlingCharge:
-                Number(
-                    document.getElementById(
-                        "counterHandlingCharge"
-                    )?.value
-                ) || 0,
-
-            surcharge:
-                Number(
-                    document.getElementById(
-                        "counterSurcharge"
-                    )?.value
-                ) || 0,
-
-            cashDiscount:
-                party
-                    ? Number(
-                        document.getElementById(
-                            "counterCashDiscount"
-                        )?.value
-                    ) || 0
-                    : 0,
-
-            status:
-                "Pending Payment",
-
-            items:
-                JSON.parse(
-                    JSON.stringify(counterCart)
-                )
-
-        };
-
-
-        state.pendingSales.push(
-            sale
-        );
-
-
-        saveState();
-
-        clearCounterSale();
-
-        renderPendingSales();
-
-        renderDashboard();
-
-
-        showToast(
-            `${sale.id} sent to Cash Counter.`
-        );
-
-    }
-
-
-    /* =========================================================
-       QUOTATION
-    ========================================================= */
-
-    function calculateCurrentQuotation() {
-
-        const quote = {
-
-            items: quotationCart,
-
-            discount:
-                Number(
-                    document.getElementById(
-                        "quotationDiscount"
-                    )?.value
-                ) || 0,
-
-            handlingCharge:
-                Number(
-                    document.getElementById(
-                        "quotationHandlingCharge"
-                    )?.value
-                ) || 0
-
-        };
-
-
-        return calculateSaleTotals(
-            quote
-        );
-
-    }
-
-
-    function renderQuotationSearch() {
-
-        const container =
-            document.getElementById(
-                "quotationSearchResults"
-            );
-
-
-        if (!container) {
-            return;
+        if (!needle) {
+            return true;
         }
 
-
-        const search =
-            (
-                document.getElementById(
-                    "quotationSearch"
-                )?.value || ""
-            )
-                .trim()
-                .toLowerCase();
-
-
-        if (!search) {
-
-            container.innerHTML = `
-
-                <div class="empty-state">
-                    Search for a product to add it to the quotation.
-                </div>
-
-            `;
-
-            return;
-
-        }
-
-
-        const products =
-            state.inventory.filter(
-                function (product) {
-
-                    return [
-
-                        product.partNo,
-                        product.name,
-                        product.model
-
-                    ]
-                        .join(" ")
-                        .toLowerCase()
-                        .includes(search);
-
-                }
-            );
-
-
-        if (!products.length) {
-
-            container.innerHTML = `
-
-                <div class="empty-state">
-                    No products found.
-                </div>
-
-            `;
-
-            return;
-
-        }
-
-
-        container.innerHTML =
-            products.map(function (product) {
-
-                return `
-
-                    <div class="search-result-item">
-
-                        <div class="search-result-info">
-
-                            <strong>
-                                ${escapeHtml(product.name)}
-                            </strong>
-
-                            <span>
-                                ${escapeHtml(product.partNo)}
-                                ·
-                                ${escapeHtml(product.category)}
-                                ·
-                                Stock: ${product.stock}
-                                ·
-                                ${money(product.salePrice)}
-                            </span>
-
-                        </div>
-
-
-                        <div class="search-result-action">
-
-                            <button
-                                type="button"
-                                class="btn primary"
-                                data-add-quotation="${escapeHtml(
-                                    product.id
-                                )}">
-                                Add
-                            </button>
-
-                        </div>
-
-                    </div>
-
-                `;
-
-            }).join("");
-
-    }
-
-
-    function addToQuotation(productId) {
-
-        /*
-         * Quotations are non-binding estimates and do not
-         * affect stock, so unlike Counter Sale there is no
-         * stock check here - any product can be quoted even
-         * if currently out of stock.
-         */
-
-        const product =
-            state.inventory.find(function (item) {
-
-                return item.id === productId;
-
-            });
-
-
-        if (!product) {
-            return;
-        }
-
-
-        const existing =
-            quotationCart.find(function (item) {
-
-                return item.productId === product.id;
-
-            });
-
-
-        if (existing) {
-
-            existing.qty++;
-
-        } else {
-
-            quotationCart.push({
-
-                productId: product.id,
-
-                partNo: product.partNo,
-
-                name: product.name,
-
-                category: product.category,
-
-                qty: 1,
-
-                price: product.salePrice,
-
-                tax: product.tax
-
-            });
-
-        }
-
-
-        renderQuotationCart();
-
-    }
-
-
-    function renderQuotationCart() {
-
-        const tbody =
-            document.getElementById(
-                "quotationCartBody"
-            );
-
-
-        if (!tbody) {
-            return;
-        }
-
-
-        const numberField =
-            document.getElementById(
-                "quotationNumber"
-            );
-
-
-        if (
-            numberField &&
-            !numberField.textContent.includes("QUO-")
-        ) {
-
-            numberField.textContent =
-                `QUO-2026-${String(
-                    state.sequences.quotation
-                ).padStart(4, "0")}`;
-
-        }
-
-
-        if (!quotationCart.length) {
-
-            tbody.innerHTML = `
-
-                <tr>
-
-                    <td
-                        colspan="5"
-                        class="empty-table">
-
-                        No items added.
-
-                    </td>
-
-                </tr>
-
-            `;
-
-        } else {
-
-            tbody.innerHTML =
-                quotationCart.map(function (item) {
-
-                    const total =
-                        Number(item.qty) *
-                        Number(item.price);
-
-
-                    return `
-
-                        <tr>
-
-                            <td>
-
-                                <strong>
-                                    ${escapeHtml(item.name)}
-                                </strong>
-
-                                <div class="table-muted">
-                                    ${escapeHtml(item.partNo)}
-                                    ·
-                                    ${escapeHtml(item.category || "-")}
-                                </div>
-
-                            </td>
-
-                            <td>
-
-                                <input
-                                    class="issue-qty"
-                                    type="number"
-                                    min="1"
-                                    value="${item.qty}"
-                                    data-quotation-qty="${escapeHtml(
-                                        item.productId
-                                    )}">
-
-                            </td>
-
-                            <td>
-                                ${money(item.price)}
-                            </td>
-
-                            <td>
-                                ${money(total)}
-                            </td>
-
-                            <td>
-
-                                <button
-                                    type="button"
-                                    class="action-btn delete"
-                                    data-remove-quotation="${escapeHtml(
-                                        item.productId
-                                    )}">
-                                    Remove
-                                </button>
-
-                            </td>
-
-                        </tr>
-
-                    `;
-
-                }).join("");
-
-        }
-
-
-        const totals =
-            calculateCurrentQuotation();
-
-
-        document.getElementById(
-            "quotationSubtotal"
-        ).textContent =
-            money(totals.subtotal);
-
-
-        document.getElementById(
-            "quotationGST"
-        ).textContent =
-            money(totals.gst);
-
-
-        document.getElementById(
-            "quotationDiscountTotal"
-        ).textContent =
-            money(totals.discount);
-
-
-        document.getElementById(
-            "quotationGrandTotal"
-        ).textContent =
-            money(totals.grandTotal);
-
-    }
-
-
-    function clearQuotation() {
-
-        quotationCart = [];
-
-        document.getElementById(
-            "quotationCustomerName"
-        ).value = "";
-
-
-        document.getElementById(
-            "quotationCustomerPhone"
-        ).value = "";
-
-
-        document.getElementById(
-            "quotationVehicleNo"
-        ).value = "";
-
-
-        document.getElementById(
-            "quotationValidUntil"
-        ).value = "";
-
-
-        document.getElementById(
-            "quotationDiscount"
-        ).value = "0";
-
-
-        document.getElementById(
-            "quotationHandlingCharge"
-        ).value = "0";
-
-
-        document.getElementById(
-            "quotationNumber"
-        ).textContent =
-            "Quotation";
-
-
-        renderQuotationCart();
-
-    }
-
-
-    function saveQuotation() {
-
-        if (!quotationCart.length) {
-
-            showToast(
-                "Add at least one item to the quotation.",
-                "error"
-            );
-
-            return;
-
-        }
-
-
-        const totals =
-            calculateCurrentQuotation();
-
-
-        const quotationNo =
-            `QUO-2026-${String(
-                state.sequences.quotation++
-            ).padStart(4, "0")}`;
-
-
-        const quotation = {
-
-            id: uid("QUO"),
-
-            quotationNo,
-
-            date: today(),
-
-            customerName:
-                document.getElementById(
-                    "quotationCustomerName"
-                ).value.trim() ||
-                "Walk-in Customer",
-
-            customerPhone:
-                document.getElementById(
-                    "quotationCustomerPhone"
-                ).value.trim(),
-
-            vehicleNo:
-                document.getElementById(
-                    "quotationVehicleNo"
-                ).value.trim(),
-
-            validUntil:
-                document.getElementById(
-                    "quotationValidUntil"
-                ).value,
-
-            discount:
-                Number(
-                    document.getElementById(
-                        "quotationDiscount"
-                    ).value
-                ) || 0,
-
-            handlingCharge:
-                Number(
-                    document.getElementById(
-                        "quotationHandlingCharge"
-                    ).value
-                ) || 0,
-
-            items:
-                JSON.parse(
-                    JSON.stringify(quotationCart)
-                ),
-
-            totals,
-
-            status: "Open"
-
-        };
-
-
-        state.quotations.unshift(
-            quotation
-        );
-
-
-        saveState();
-
-        clearQuotation();
-
-        renderQuotationHistory();
-
-        renderDashboard();
-
-
-        showToast(
-            `${quotationNo} saved successfully.`
-        );
-
-    }
-
-
-    function renderQuotationHistory() {
-
-        const tbody =
-            document.getElementById(
-                "quotationHistoryBody"
-            );
-
-
-        if (!tbody) {
-            return;
-        }
-
-
-        const search =
-            (
-                document.getElementById(
-                    "quotationHistorySearch"
-                )?.value || ""
-            )
-                .toLowerCase()
-                .trim();
-
-
-        const quotations =
-            state.quotations.filter(
-                function (quotation) {
-
-                    if (!search) {
-                        return true;
-                    }
-
-                    return [
-
-                        quotation.quotationNo,
-                        quotation.customerName,
-                        quotation.customerPhone,
-                        quotation.vehicleNo
-
-                    ]
-                        .join(" ")
-                        .toLowerCase()
-                        .includes(search);
-
-                }
-            );
-
-
-        if (!quotations.length) {
-
-            tbody.innerHTML = `
-
-                <tr>
-
-                    <td
-                        colspan="8"
-                        class="empty-table">
-
-                        No quotations found.
-
-                    </td>
-
-                </tr>
-
-            `;
-
-            return;
-
-        }
-
-
-        tbody.innerHTML =
-            quotations.map(function (quotation) {
-
-                return `
-
-                    <tr>
-
-                        <td>
-                            <strong>
-                                ${escapeHtml(quotation.quotationNo)}
-                            </strong>
-                        </td>
-
-                        <td>
-                            ${formatDate(quotation.date)}
-                        </td>
-
-                        <td>
-                            ${escapeHtml(
-                                quotation.customerName || "-"
-                            )}
-                        </td>
-
-                        <td>
-                            ${
-                                quotation.validUntil
-                                    ? formatDate(quotation.validUntil)
-                                    : "-"
-                            }
-                        </td>
-
-                        <td>
-                            ${quotation.items.length}
-                        </td>
-
-                        <td>
-                            ${money(
-                                quotation.totals.grandTotal
-                            )}
-                        </td>
-
-                        <td>
-
-                            <span class="badge ${
-                                quotation.status === "Converted"
-                                    ? "green"
-                                    : "gray"
-                            }">
-                                ${escapeHtml(quotation.status)}
-                            </span>
-
-                        </td>
-
-                        <td>
-
-                            <div class="action-buttons">
-
-                                <button
-                                    type="button"
-                                    class="action-btn edit"
-                                    data-view-quotation="${escapeHtml(
-                                        quotation.id
-                                    )}">
-                                    View
-                                </button>
-
-                                <button
-                                    type="button"
-                                    class="action-btn delete"
-                                    data-delete-quotation="${escapeHtml(
-                                        quotation.id
-                                    )}">
-                                    Delete
-                                </button>
-
-                            </div>
-
-                        </td>
-
-                    </tr>
-
-                `;
-
-            }).join("");
-
-    }
-
-
-    function viewQuotation(id) {
-
-        const quotation =
-            state.quotations.find(function (item) {
-
-                return item.id === id;
-
-            });
-
-
-        if (!quotation) {
-            return;
-        }
-
-
-        currentQuotationViewId = id;
-
-
-        const content =
-            document.getElementById(
-                "quotationContent"
-            );
-
-
-        content.innerHTML = `
-
-            <div class="invoice-sheet">
-
-                <div class="invoice-top">
-
-                    <div class="invoice-company">
-
-                        <strong>
-                            ZIMDRA
-                        </strong>
-
-                        <span>
-                            Dealer Management System
-                        </span>
-
-                        <span>
-                            Quotation (Non-Binding Estimate)
-                        </span>
-
-                    </div>
-
-
-                    <div class="invoice-meta">
-
-                        <strong>
-                            ${escapeHtml(quotation.quotationNo)}
-                        </strong>
-
-                        <span>
-                            ${formatDate(quotation.date)}
-                        </span>
-
-                        <span>
-                            Valid Until:
-                            ${
-                                quotation.validUntil
-                                    ? formatDate(quotation.validUntil)
-                                    : "-"
-                            }
-                        </span>
-
-                    </div>
-
-                </div>
-
-
-                <div class="invoice-customer">
-
-                    <div class="invoice-info">
-
-                        <span>
-                            Customer
-                        </span>
-
-                        <strong>
-                            ${escapeHtml(quotation.customerName)}
-                        </strong>
-
-                    </div>
-
-
-                    <div class="invoice-info">
-
-                        <span>
-                            Phone / Vehicle No.
-                        </span>
-
-                        <strong>
-                            ${escapeHtml(quotation.customerPhone || "-")}
-                            /
-                            ${escapeHtml(quotation.vehicleNo || "-")}
-                        </strong>
-
-                    </div>
-
-                </div>
-
-
-                <div class="table-wrapper">
-
-                    <table>
-
-                        <thead>
-
-                            <tr>
-                                <th>Part No.</th>
-                                <th>Category</th>
-                                <th>Product</th>
-                                <th>Qty</th>
-                                <th>Rate</th>
-                                <th>Total</th>
-                            </tr>
-
-                        </thead>
-
-                        <tbody>
-
-                            ${
-                                quotation.items.map(
-                                    function (item) {
-
-                                        return `
-
-                                            <tr>
-
-                                                <td>
-                                                    ${escapeHtml(item.partNo)}
-                                                </td>
-
-                                                <td>
-                                                    ${escapeHtml(item.category || "-")}
-                                                </td>
-
-                                                <td>
-                                                    ${escapeHtml(item.name)}
-                                                </td>
-
-                                                <td>
-                                                    ${item.qty}
-                                                </td>
-
-                                                <td>
-                                                    ${money(item.price)}
-                                                </td>
-
-                                                <td>
-                                                    ${money(item.qty * item.price)}
-                                                </td>
-
-                                            </tr>
-
-                                        `;
-
-                                    }
-                                ).join("")
-                            }
-
-                        </tbody>
-
-                    </table>
-
-                </div>
-
-
-                <div class="invoice-total totals-box">
-
-                    <div>
-
-                        <span>
-                            Subtotal
-                        </span>
-
-                        <strong>
-                            ${money(quotation.totals.subtotal)}
-                        </strong>
-
-                    </div>
-
-
-                    <div>
-
-                        <span>
-                            Discount
-                        </span>
-
-                        <strong>
-                            ${money(quotation.totals.discount)}
-                        </strong>
-
-                    </div>
-
-
-                    <div>
-
-                        <span>
-                            Handling Charge
-                        </span>
-
-                        <strong>
-                            ${money(quotation.totals.handling || 0)}
-                        </strong>
-
-                    </div>
-
-
-                    <div>
-
-                        <span>
-                            GST
-                        </span>
-
-                        <strong>
-                            ${money(quotation.totals.gst)}
-                        </strong>
-
-                    </div>
-
-
-                    <div class="grand-total">
-
-                        <span>
-                            Estimated Total
-                        </span>
-
-                        <strong>
-                            ${money(quotation.totals.grandTotal)}
-                        </strong>
-
-                    </div>
-
-                </div>
-
-
-                <p class="field-help">
-                    This is a non-binding price quotation and does
-                    not reserve stock. Prices may change at the time
-                    of sale.
-                </p>
-
-            </div>
-
-        `;
-
-
-        openModal(
-            "quotationModal"
-        );
-
-    }
-
-
-    function deleteQuotation(id) {
-
-        const quotation =
-            state.quotations.find(function (item) {
-
-                return item.id === id;
-
-            });
-
-
-        if (!quotation) {
-            return;
-        }
-
-
-        if (
-            !confirm(
-                `Delete quotation ${quotation.quotationNo}?`
-            )
-        ) {
-
-            return;
-
-        }
-
-
-        state.quotations =
-            state.quotations.filter(
-                function (item) {
-
-                    return item.id !== id;
-
-                }
-            );
-
-
-        saveState();
-
-        renderQuotationHistory();
-
-
-        showToast(
-            "Quotation deleted."
-        );
-
-    }
-
-
-    function convertQuotationToCounterSale() {
-
-        const quotation =
-            state.quotations.find(function (item) {
-
-                return item.id ===
-                    currentQuotationViewId;
-
-            });
-
-
-        if (!quotation) {
-            return;
-        }
-
-
-        /*
-         * Converting copies the quoted lines into the Counter
-         * Sale cart so the Storekeeper can check current stock,
-         * adjust quantities and complete the sale. It does not
-         * touch inventory by itself - Counter Sale / Cash Counter
-         * still perform the real stock deduction on payment.
-         */
-
-        counterCart =
-            quotation.items.map(function (item) {
-
-                const product =
-                    state.inventory.find(function (p) {
-
-                        return p.id === item.productId;
-
-                    });
-
-
-                return {
-
-                    productId: item.productId,
-
-                    partNo: item.partNo,
-
-                    name: item.name,
-
-                    category: item.category,
-
-                    qty:
-                        product
-                            ? Math.min(
-                                item.qty,
-                                Math.max(Number(product.stock), 0) || item.qty
-                            )
-                            : item.qty,
-
-                    price: item.price,
-
-                    tax: item.tax
-
-                };
-
-            });
-
-
-        quotation.status = "Converted";
-
-        saveState();
-
-
-        closeModal("quotationModal");
-
-
-        showTab("counter");
-
-
-        document.getElementById(
-            "counterCustomerName"
-        ).value =
-            quotation.customerName || "";
-
-
-        document.getElementById(
-            "counterCustomerPhone"
-        ).value =
-            quotation.customerPhone || "";
-
-
-        const vehicleField =
-            document.getElementById(
-                "counterVehicleNo"
-            );
-
-        if (vehicleField) {
-
-            vehicleField.value =
-                quotation.vehicleNo || "";
-
-        }
-
-
-        document.getElementById(
-            "counterDiscount"
-        ).value =
-            quotation.discount || 0;
-
-
-        renderCounterCart();
-
-        renderQuotationHistory();
-
-
-        showToast(
-            `${quotation.quotationNo} sent to Counter Sale.`
-        );
-
-    }
-
-
-    /* =========================================================
-       PARTY SALE (CREDIT / TRADER ACCOUNT)
-    ========================================================= */
-
-    function calculateCurrentParty() {
-
-        const sale = {
-
-            items: partyCart,
-
-            discount:
-                Number(
-                    document.getElementById(
-                        "partyDiscount"
-                    )?.value
-                ) || 0,
-
-            handlingCharge:
-                Number(
-                    document.getElementById(
-                        "partyHandlingCharge"
-                    )?.value
-                ) || 0,
-
-            surcharge:
-                Number(
-                    document.getElementById(
-                        "partySurcharge"
-                    )?.value
-                ) || 0,
-
-            cashDiscount:
-                Number(
-                    document.getElementById(
-                        "partyCashDiscount"
-                    )?.value
-                ) || 0
-
-        };
-
-        return calculateSaleTotals(sale);
-
-    }
-
-
-    function renderPartySearch() {
-
-        const container =
-            document.getElementById(
-                "partySearchResults"
-            );
-
-        if (!container) {
-            return;
-        }
-
-        const search =
-            (
-                document.getElementById(
-                    "partySearch"
-                )?.value || ""
-            )
-                .trim()
-                .toLowerCase();
-
-        if (!search) {
-
-            container.innerHTML = `
-
-                <div class="empty-state">
-                    Search for a product to add it to the party sale.
-                </div>
-
-            `;
-
-            return;
-
-        }
-
-        const products =
-            state.inventory.filter(function (product) {
-
-                return [
-
-                    product.partNo,
-                    product.name,
-                    product.model
-
-                ]
-                    .join(" ")
-                    .toLowerCase()
-                    .includes(search);
-
-            });
-
-        if (!products.length) {
-
-            container.innerHTML = `
-
-                <div class="empty-state">
-                    No products found.
-                </div>
-
-            `;
-
-            return;
-
-        }
-
-        container.innerHTML =
-            products.map(function (product) {
-
-                return `
-
-                    <div class="search-result-item">
-
-                        <div class="search-result-info">
-
-                            <strong>
-                                ${escapeHtml(product.name)}
-                            </strong>
-
-                            <span>
-                                ${escapeHtml(product.partNo)}
-                                ·
-                                ${escapeHtml(product.category)}
-                                ·
-                                Stock: ${product.stock}
-                                ·
-                                ${money(product.salePrice)}
-                            </span>
-
-                        </div>
-
-                        <div class="search-result-action">
-
-                            <button
-                                type="button"
-                                class="btn primary"
-                                data-add-party="${escapeHtml(product.id)}"
-                                ${
-                                    product.stock <= 0
-                                        ? "disabled"
-                                        : ""
-                                }>
-                                Add
-                            </button>
-
-                        </div>
-
-                    </div>
-
-                `;
-
-            }).join("");
-
-    }
-
-
-    function addToParty(productId) {
-
-        const product =
-            state.inventory.find(function (item) {
-
-                return item.id === productId;
-
-            });
-
-        if (!product) {
-            return;
-        }
-
-        if (Number(product.stock) <= 0) {
-
-            showToast(
-                "This product is out of stock.",
-                "error"
-            );
-
-            return;
-
-        }
-
-        const existing =
-            partyCart.find(function (item) {
-
-                return item.productId === product.id;
-
-            });
-
-        if (existing) {
-
-            if (existing.qty >= product.stock) {
-
-                showToast(
-                    "Cannot add more than available stock.",
-                    "error"
-                );
-
-                return;
-
-            }
-
-            existing.qty++;
-
-        } else {
-
-            partyCart.push({
-
-                productId: product.id,
-
-                partNo: product.partNo,
-
-                name: product.name,
-
-                category: product.category,
-
-                qty: 1,
-
-                price: product.salePrice,
-
-                tax: product.tax
-
-            });
-
-        }
-
-        renderPartyCart();
-
-    }
-
-
-    function renderPartyCart() {
-
-        const tbody =
-            document.getElementById(
-                "partyCartBody"
-            );
-
-        if (!tbody) {
-            return;
-        }
-
-        const saleNumber =
-            document.getElementById(
-                "partySaleNumber"
-            );
-
-        if (
-            saleNumber &&
-            !saleNumber.textContent.includes("CSIA-")
-        ) {
-
-            saleNumber.textContent =
-                `CSIA-2026-${String(
-                    state.sequences.partySale
-                ).padStart(4, "0")}`;
-
-        }
-
-        if (!partyCart.length) {
-
-            tbody.innerHTML = `
-
-                <tr>
-                    <td colspan="5" class="empty-table">
-                        Cart is empty.
-                    </td>
-                </tr>
-
-            `;
-
-        } else {
-
-            tbody.innerHTML =
-                partyCart.map(function (item) {
-
-                    const total =
-                        Number(item.qty) *
-                        Number(item.price);
-
-                    return `
-
-                        <tr>
-
-                            <td>
-
-                                <strong>
-                                    ${escapeHtml(item.name)}
-                                </strong>
-
-                                <div class="table-muted">
-                                    ${escapeHtml(item.partNo)}
-                                    ·
-                                    ${escapeHtml(item.category || "-")}
-                                </div>
-
-                            </td>
-
-                            <td>
-
-                                <input
-                                    class="issue-qty"
-                                    type="number"
-                                    min="1"
-                                    value="${item.qty}"
-                                    data-party-qty="${escapeHtml(
-                                        item.productId
-                                    )}">
-
-                            </td>
-
-                            <td>
-                                ${money(item.price)}
-                            </td>
-
-                            <td>
-                                ${money(total)}
-                            </td>
-
-                            <td>
-
-                                <button
-                                    type="button"
-                                    class="action-btn delete"
-                                    data-remove-party="${escapeHtml(
-                                        item.productId
-                                    )}">
-                                    Remove
-                                </button>
-
-                            </td>
-
-                        </tr>
-
-                    `;
-
-                }).join("");
-
-        }
-
-        const totals = calculateCurrentParty();
-
-        document.getElementById(
-            "partySubtotal"
-        ).textContent = money(totals.subtotal);
-
-        document.getElementById(
-            "partyGST"
-        ).textContent = money(totals.gst);
-
-        document.getElementById(
-            "partyDiscountTotal"
-        ).textContent = money(totals.discount);
-
-        document.getElementById(
-            "partyGrandTotal"
-        ).textContent = money(totals.grandTotal);
-
-    }
-
-
-    function clearPartySale() {
-
-        partyCart = [];
-
-        [
-            "partyCustomerName",
-            "partyCustomerPhone",
-            "partyTpnNo",
-            "partyCstNo",
-            "partyCustomerAddress"
-        ].forEach(function (id) {
-
-            const field = document.getElementById(id);
-
-            if (field) {
-
-                field.value = "";
-
-            }
-
-        });
-
-        [
-            "partyDiscount",
-            "partyCashDiscount",
-            "partyHandlingCharge",
-            "partySurcharge"
-        ].forEach(function (id) {
-
-            const field = document.getElementById(id);
-
-            if (field) {
-
-                field.value = "0";
-
-            }
-
-        });
-
-        document.getElementById(
-            "partySaleNumber"
-        ).textContent = "Party Sale";
-
-        renderPartyCart();
-
-    }
-
-
-    function sendPartySaleToCash() {
-
-        if (!partyCart.length) {
-
-            showToast(
-                "Add at least one item to the party sale.",
-                "error"
-            );
-
-            return;
-
-        }
-
-        const sale = {
-
-            id:
-                `CSIA-2026-${String(
-                    state.sequences.partySale++
-                ).padStart(4, "0")}`,
-
-            saleType: "Party",
-
-            customerName:
-                document.getElementById(
-                    "partyCustomerName"
-                ).value.trim() ||
-                "Trader Account",
-
-            customerPhone:
-                document.getElementById(
-                    "partyCustomerPhone"
-                ).value.trim(),
-
-            vehicleNo: "",
-
-            model: "",
-
-            cstNo:
-                document.getElementById(
-                    "partyCstNo"
-                ).value.trim(),
-
-            code: "Credit",
-
-            billType: "Trader",
-
-            tpnNo:
-                document.getElementById(
-                    "partyTpnNo"
-                ).value.trim(),
-
-            customerAddress:
-                document.getElementById(
-                    "partyCustomerAddress"
-                ).value.trim(),
-
-            date: today(),
-
-            discount:
-                Number(
-                    document.getElementById(
-                        "partyDiscount"
-                    ).value
-                ) || 0,
-
-            handlingCharge:
-                Number(
-                    document.getElementById(
-                        "partyHandlingCharge"
-                    ).value
-                ) || 0,
-
-            surcharge:
-                Number(
-                    document.getElementById(
-                        "partySurcharge"
-                    ).value
-                ) || 0,
-
-            cashDiscount:
-                Number(
-                    document.getElementById(
-                        "partyCashDiscount"
-                    ).value
-                ) || 0,
-
-            status: "Pending Payment",
-
-            items:
-                JSON.parse(
-                    JSON.stringify(partyCart)
-                )
-
-        };
-
-        state.pendingSales.push(sale);
-
-        saveState();
-
-        clearPartySale();
-
-        renderPendingSales();
-
-        renderDashboard();
-
-        showToast(
-            `${sale.id} sent to Cash Counter.`
-        );
-
-    }
-
-
-    /* =========================================================
-       CASH COUNTER
-    ========================================================= */
-
-    function renderPendingSales() {
-
-        const container =
-            document.getElementById(
-                "pendingSalesList"
-            );
-
-
-        if (!container) {
-            return;
-        }
-
-
-        if (!state.pendingSales.length) {
-
-            container.innerHTML = `
-
-                <div class="empty-state large">
-                    No pending sales.
-                </div>
-
-            `;
-
-            return;
-
-        }
-
-
-        container.innerHTML =
-            state.pendingSales.map(function (sale) {
-
-                const totals =
-                    calculateSaleTotals(
-                        sale
-                    );
-
-
-                return `
-
-                    <div
-                        class="pending-sale ${
-                            selectedCashSaleId === sale.id
-                                ? "selected"
-                                : ""
-                        }"
-                        data-select-sale="${escapeHtml(
-                            sale.id
-                        )}">
-
-                        <div class="pending-sale-title">
-
-                            <strong>
-                                ${escapeHtml(sale.id)}
-                            </strong>
-
-                            <span class="badge blue">
-                                ${
-                                    sale.saleType === "Party"
-                                        ? "Party (Credit)"
-                                        : "Pending"
-                                }
-                            </span>
-
-                        </div>
-
-
-                        <div class="pending-sale-meta">
-
-                            <span>
-                                ${escapeHtml(
-                                    sale.customerName
-                                )}
-                            </span>
-
-                            <strong>
-                                ${money(
-                                    totals.grandTotal
-                                )}
-                            </strong>
-
-                        </div>
-
-                    </div>
-
-                `;
-
-            }).join("");
-
-    }
-
-
-    function renderPaymentPanel() {
-
-        const container =
-            document.getElementById(
-                "paymentPanel"
-            );
-
-
-        const title =
-            document.getElementById(
-                "cashSaleTitle"
-            );
-
-
-        if (!container || !title) {
-            return;
-        }
-
-
-        const sale =
-            state.pendingSales.find(function (item) {
-
-                return item.id ===
-                    selectedCashSaleId;
-
-            });
-
-
-        if (!sale) {
-
-            title.textContent =
-                "Select a Sale";
-
-
-            container.innerHTML = `
-
-                <div class="empty-state large">
-
-                    <div class="empty-icon">
-                        ৳
-                    </div>
-
-                    <strong>
-                        Select a pending sale
-                    </strong>
-
-                    <span>
-                        Choose a sale from the queue to complete payment.
-                    </span>
-
-                </div>
-
-            `;
-
-            return;
-
-        }
-
-
-        title.textContent =
-            sale.id;
-
-
-        const totals =
-            calculateSaleTotals(
-                sale
-            );
-
-
-        container.innerHTML = `
-
-            <div class="payment-content">
-
-                <div class="payment-summary">
-
-                    <div class="payment-stat">
-
-                        <span>
-                            Customer
-                        </span>
-
-                        <strong>
-                            ${escapeHtml(
-                                sale.customerName
-                            )}
-                        </strong>
-
-                    </div>
-
-
-                    <div class="payment-stat">
-
-                        <span>
-                            Grand Total
-                        </span>
-
-                        <strong>
-                            ${money(
-                                totals.grandTotal
-                            )}
-                        </strong>
-
-                    </div>
-
-
-                    <div class="payment-stat">
-
-                        <span>
-                            Items
-                        </span>
-
-                        <strong>
-                            ${sale.items.length}
-                        </strong>
-
-                    </div>
-
-                </div>
-
-
-                <div class="kicker">
-                    PAYMENT METHOD
-                </div>
-
-
-                <div class="payment-methods">
-
-                    ${[
-                        "Cash",
-                        "Bank",
-                        "Cheque"
-                    ].map(function (method) {
-
-                        return `
-
-                            <button
-                                type="button"
-                                class="payment-method ${
-                                    selectedPaymentMethod === method
-                                        ? "active"
-                                        : ""
-                                }"
-                                data-payment-method="${method}">
-                                ${method}
-                            </button>
-
-                        `;
-
-                    }).join("")}
-
-                </div>
-
-
-                ${
-                    selectedPaymentMethod === "Bank"
-                        ? `
-                            <div class="form-grid form-grid-4">
-
-                                <div>
-                                    <label>Bank</label>
-                                    <select id="paymentBankName">${bankOptionsHtml(paymentBankName)}</select>
-                                </div>
-
-                                <div>
-                                    <label>Journal No.</label>
-                                    <input
-                                        id="paymentJournalNo"
-                                        type="text"
-                                        placeholder="Bank journal / txn no."
-                                        value="${escapeHtml(paymentJournalNo)}">
-                                </div>
-
-                                <div>
-                                    <label>Remarks</label>
-                                    <input
-                                        id="paymentRemarks"
-                                        type="text"
-                                        placeholder="Optional"
-                                        value="${escapeHtml(paymentRemarks)}">
-                                </div>
-
-                            </div>
-                          `
-                        : ""
-                }
-
-                ${
-                    selectedPaymentMethod === "Cheque"
-                        ? `
-                            <div class="form-grid form-grid-4">
-
-                                <div>
-                                    <label>Cheque No.</label>
-                                    <input
-                                        id="paymentChequeNo"
-                                        type="text"
-                                        placeholder="Example: 0456789"
-                                        value="${escapeHtml(paymentChequeNo)}">
-                                </div>
-
-                                <div>
-                                    <label>Cheque Date</label>
-                                    <input
-                                        id="paymentChequeDate"
-                                        type="date"
-                                        value="${escapeHtml(paymentChequeDate)}">
-                                </div>
-
-                                <div>
-                                    <label>Bank</label>
-                                    <select id="paymentChequeBank">${bankOptionsHtml(paymentChequeBank)}</select>
-                                </div>
-
-                                <div>
-                                    <label>Remarks</label>
-                                    <input
-                                        id="paymentChequeRemarks"
-                                        type="text"
-                                        placeholder="Optional"
-                                        value="${escapeHtml(paymentChequeRemarks)}">
-                                </div>
-
-                            </div>
-                          `
-                        : ""
-                }
-
-
-                <div class="form-grid">
-
-                    <div>
-
-                        <label>
-                            Amount Received
-                        </label>
-
-                        <input
-                            id="cashAmountReceived"
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            value="${totals.grandTotal}">
-
-                    </div>
-
-
-                    <div>
-
-                        <label>
-                            Change
-                        </label>
-
-                        <input
-                            id="cashChange"
-                            type="text"
-                            readonly
-                            value="${money(0)}">
-
-                    </div>
-
-                </div>
-
-
-                <div class="change-box">
-
-                    <span>
-                        Amount Due
-                    </span>
-
-                    <strong>
-                        ${money(
-                            totals.grandTotal
-                        )}
-                    </strong>
-
-                </div>
-
-
-                <div class="panel-footer">
-
-                    <button
-                        type="button"
-                        class="btn success"
-                        id="completePaymentBtn">
-                        Complete Payment
-                    </button>
-
-                </div>
-
-            </div>
-
-        `;
-
-
-        updateCashChange();
-
-    }
-
-
-    function updateCashChange() {
-
-        const sale =
-            state.pendingSales.find(function (item) {
-
-                return item.id ===
-                    selectedCashSaleId;
-
-            });
-
-
-        if (!sale) {
-            return;
-        }
-
-
-        const totals =
-            calculateSaleTotals(
-                sale
-            );
-
-
-        const received =
-            Number(
-                document.getElementById(
-                    "cashAmountReceived"
-                )?.value
-            ) || 0;
-
-
-        const change =
-            Math.max(
-                received -
-                totals.grandTotal,
-                0
-            );
-
-
-        const field =
-            document.getElementById(
-                "cashChange"
-            );
-
-
-        if (field) {
-
-            field.value =
-                money(change);
-
-        }
-
-    }
-
-
-    function completePayment() {
-
-        const sale =
-            state.pendingSales.find(function (item) {
-
-                return item.id ===
-                    selectedCashSaleId;
-
-            });
-
-
-        if (!sale) {
-
-            showToast(
-                "Please select a sale.",
-                "error"
-            );
-
-            return;
-
-        }
-
-
-        const totals =
-            calculateSaleTotals(
-                sale
-            );
-
-
-        const received =
-            Number(
-                document.getElementById(
-                    "cashAmountReceived"
-                ).value
-            ) || 0;
-
-
-        if (
-            received <
-            totals.grandTotal
-        ) {
-
-            showToast(
-                "Amount received is less than the invoice total.",
-                "error"
-            );
-
-            return;
-
-        }
-
-
-        if (
-            selectedPaymentMethod === "Bank" &&
-            !paymentJournalNo.trim()
-        ) {
-
-            showToast(
-                "Enter the bank journal number.",
-                "error"
-            );
-
-            return;
-
-        }
-
-
-        if (
-            selectedPaymentMethod === "Cheque" &&
-            !paymentChequeNo.trim()
-        ) {
-
-            showToast(
-                "Enter the cheque number.",
-                "error"
-            );
-
-            return;
-
-        }
-
-
-        const paymentDetails =
-            selectedPaymentMethod === "Bank"
-                ? {
-                    bankName: paymentBankName,
-                    journalNo: paymentJournalNo.trim(),
-                    remarks: paymentRemarks.trim()
-                }
-                : selectedPaymentMethod === "Cheque"
-                    ? {
-                        chequeNo: paymentChequeNo.trim(),
-                        chequeDate: paymentChequeDate,
-                        chequeBank: paymentChequeBank,
-                        remarks: paymentChequeRemarks.trim()
-                    }
-                    : {};
-
-
-        for (const item of sale.items) {
-
-            const product =
-                state.inventory.find(
-                    function (product) {
-
-                        return product.id ===
-                            item.productId;
-
-                    }
-                );
-
-
-            if (!product) {
-
-                showToast(
-                    `${item.partNo} is missing from inventory.`,
-                    "error"
-                );
-
-                return;
-
-            }
-
-
-            if (
-                Number(product.stock) <
-                Number(item.qty)
-            ) {
-
-                showToast(
-                    `Insufficient stock for ${item.partNo}.`,
-                    "error"
-                );
-
-                return;
-
-            }
-
-        }
-
-
-        sale.items.forEach(function (item) {
-
-            const product =
-                state.inventory.find(
-                    function (product) {
-
-                        return product.id ===
-                            item.productId;
-
-                    }
-                );
-
-
-            product.stock -=
-                Number(item.qty);
-
-        });
-
-
-        const invoiceNo =
-            sale.saleType === "Party"
-                ? sale.id
-                : `INV-2026-${String(
-                    state.sequences.invoice++
-                ).padStart(4, "0")}`;
-
-
-        const transactionNo =
-            `TRX-2026-${String(
-                state.sequences.transaction++
-            ).padStart(4, "0")}`;
-
-
-        const gatePassNo =
-            `GP-2026-${String(
-                state.sequences.gatePass++
-            ).padStart(4, "0")}`;
-
-
-        const transaction = {
-
-            id: transactionNo,
-
-            reference: invoiceNo,
-
-            date: today(),
-
-            customer:
-                sale.customerName,
-
-            type:
-                sale.saleType === "Party"
-                    ? "Party Sale"
-                    : "Counter Sale",
-
-            amount:
-                totals.grandTotal,
-
-            status: "Completed"
-
-        };
-
-
-        state.transactions.unshift(
-            transaction
-        );
-
-
-        state.pendingSales =
-            state.pendingSales.filter(
-                function (item) {
-
-                    return item.id !==
-                        sale.id;
-
-                }
-            );
-
-
-        state.sales.push({
-
-            ...sale,
-
-            invoiceNo,
-
-            transactionNo,
-
-            gatePassNo,
-
-            paymentMethod:
-                selectedPaymentMethod,
-
-            paymentDetails,
-
-            amountReceived:
-                received,
-
-            change:
-                received -
-                totals.grandTotal,
-
-            status:
-                "Paid"
-
-        });
-
-
-        const invoice = {
-
-            invoiceNo,
-
-            transactionNo,
-
-            gatePassNo,
-
-            saleType: sale.saleType || "Counter",
-
-            date: today(),
-
-            customer:
-                sale.customerName,
-
-            phone:
-                sale.customerPhone,
-
-            vehicleNo: sale.vehicleNo || "",
-
-            model: sale.model || "",
-
-            cstNo: sale.cstNo || "",
-
-            tpnNo: sale.tpnNo || "",
-
-            customerAddress: sale.customerAddress || "",
-
-            items:
-                JSON.parse(
-                    JSON.stringify(
-                        sale.items
-                    )
-                ),
-
-            totals,
-
-            paymentMethod:
-                selectedPaymentMethod,
-
-            paymentDetails,
-
-            amountReceived:
-                received,
-
-            change:
-                received -
-                totals.grandTotal
-
-        };
-
-
-        state.lastInvoice =
-            invoice;
-
-
-        saveState();
-
-
-        selectedCashSaleId =
-            null;
-
-        selectedPaymentMethod = "Cash";
-
-        paymentJournalNo = "";
-
-        paymentRemarks = "";
-
-        paymentChequeNo = "";
-
-        paymentChequeDate = "";
-
-        paymentChequeRemarks = "";
-
-
-        renderPendingSales();
-
-        renderPaymentPanel();
-
-        renderInventory();
-
-        renderDashboard();
-
-        renderTransactions();
-
-
-        showInvoice(
-            invoice
-        );
-
-
-        showToast(
-            `${invoiceNo} generated successfully.`
-        );
-
-    }
-
-
-    /* =========================================================
-       INVOICE
-    ========================================================= */
-
-    function showInvoice(invoice) {
-
-        const content =
-            document.getElementById(
-                "invoiceContent"
-            );
-
-
-        content.innerHTML = `
-
-            <div class="invoice-sheet">
-
-                <div class="invoice-top">
-
-                    <div class="invoice-company">
-
-                        <strong>
-                            ZIMDRA
-                        </strong>
-
-                        <span>
-                            Dealer Management System
-                        </span>
-
-                        <span>
-                            ${
-                                invoice.saleType === "Party"
-                                    ? "Party Sale Tax Invoice"
-                                    : "Counter Sale Tax Invoice"
-                            }
-                        </span>
-
-                    </div>
-
-
-                    <div class="invoice-meta">
-
-                        <strong>
-                            ${escapeHtml(
-                                invoice.invoiceNo
-                            )}
-                        </strong>
-
-                        <span>
-                            ${formatDate(
-                                invoice.date
-                            )}
-                        </span>
-
-                        <span>
-                            ${escapeHtml(invoice.paymentMethod)}
-                        </span>
-
-                    </div>
-
-                </div>
-
-
-                <div class="invoice-customer">
-
-                    <div class="invoice-info">
-
-                        <span>
-                            Customer
-                            ${
-                                invoice.saleType === "Party"
-                                    ? "(Trader)"
-                                    : "(Others)"
-                            }
-                        </span>
-
-                        <strong>
-                            ${escapeHtml(
-                                invoice.customer
-                            )}
-                        </strong>
-
-                    </div>
-
-
-                    <div class="invoice-info">
-
-                        <span>
-                            Phone
-                        </span>
-
-                        <strong>
-                            ${escapeHtml(
-                                invoice.phone || "-"
-                            )}
-                        </strong>
-
-                    </div>
-
-
-                    <div class="invoice-info">
-
-                        <span>
-                            Vehicle No. / Model
-                        </span>
-
-                        <strong>
-                            ${escapeHtml(invoice.vehicleNo || "-")}
-                            /
-                            ${escapeHtml(invoice.model || "-")}
-                        </strong>
-
-                    </div>
-
-
-                    <div class="invoice-info">
-
-                        <span>
-                            C.S.T. No.
-                        </span>
-
-                        <strong>
-                            ${escapeHtml(invoice.cstNo || "-")}
-                        </strong>
-
-                    </div>
-
-                    ${
-                        invoice.paymentMethod === "Bank" && invoice.paymentDetails
-                            ? `
-                                <div class="invoice-info">
-                                    <span>Bank / Journal No.</span>
-                                    <strong>
-                                        ${escapeHtml(invoice.paymentDetails.bankName || "-")}
-                                        /
-                                        ${escapeHtml(invoice.paymentDetails.journalNo || "-")}
-                                    </strong>
-                                </div>
-                              `
-                            : ""
-                    }
-
-                    ${
-                        invoice.paymentMethod === "Cheque" && invoice.paymentDetails
-                            ? `
-                                <div class="invoice-info">
-                                    <span>Cheque No. / Bank</span>
-                                    <strong>
-                                        ${escapeHtml(invoice.paymentDetails.chequeNo || "-")}
-                                        /
-                                        ${escapeHtml(invoice.paymentDetails.chequeBank || "-")}
-                                    </strong>
-                                </div>
-                                <div class="invoice-info">
-                                    <span>Cheque Date</span>
-                                    <strong>
-                                        ${
-                                            invoice.paymentDetails.chequeDate
-                                                ? formatDate(invoice.paymentDetails.chequeDate)
-                                                : "-"
-                                        }
-                                    </strong>
-                                </div>
-                              `
-                            : ""
-                    }
-
-                    ${
-                        invoice.saleType === "Party"
-                            ? `
-
-                                <div class="invoice-info">
-
-                                    <span>
-                                        TPN No.
-                                    </span>
-
-                                    <strong>
-                                        ${escapeHtml(invoice.tpnNo || "-")}
-                                    </strong>
-
-                                </div>
-
-
-                                <div class="invoice-info">
-
-                                    <span>
-                                        Address
-                                    </span>
-
-                                    <strong>
-                                        ${escapeHtml(invoice.customerAddress || "-")}
-                                    </strong>
-
-                                </div>
-
-                              `
-                            : ""
-                    }
-
-                </div>
-
-
-                <div class="table-wrapper">
-
-                    <table>
-
-                        <thead>
-
-                            <tr>
-
-                                <th>
-                                    Part No.
-                                </th>
-
-                                <th>
-                                    Category
-                                </th>
-
-                                <th>
-                                    Product
-                                </th>
-
-                                <th>
-                                    Qty
-                                </th>
-
-                                <th>
-                                    Rate
-                                </th>
-
-                                <th>
-                                    Tax %
-                                </th>
-
-                                <th>
-                                    Total
-                                </th>
-
-                            </tr>
-
-                        </thead>
-
-
-                        <tbody>
-
-                            ${
-                                invoice.items.map(
-                                    function (item) {
-
-                                        return `
-
-                                            <tr>
-
-                                                <td>
-                                                    ${escapeHtml(
-                                                        item.partNo
-                                                    )}
-                                                </td>
-
-                                                <td>
-                                                    ${escapeHtml(
-                                                        item.category || "-"
-                                                    )}
-                                                </td>
-
-                                                <td>
-                                                    ${escapeHtml(
-                                                        item.name
-                                                    )}
-                                                </td>
-
-                                                <td>
-                                                    ${item.qty}
-                                                </td>
-
-                                                <td>
-                                                    ${money(
-                                                        item.price
-                                                    )}
-                                                </td>
-
-                                                <td>
-                                                    ${item.tax}%
-                                                </td>
-
-                                                <td>
-                                                    ${money(
-                                                        item.qty *
-                                                        item.price
-                                                    )}
-                                                </td>
-
-                                            </tr>
-
-                                        `;
-
-                                    }
-                                ).join("")
-                            }
-
-                        </tbody>
-
-                    </table>
-
-                </div>
-
-
-                <div class="invoice-total totals-box">
-
-                    <div>
-
-                        <span>
-                            Subtotal
-                        </span>
-
-                        <strong>
-                            ${money(
-                                invoice.totals.subtotal
-                            )}
-                        </strong>
-
-                    </div>
-
-
-                    <div>
-
-                        <span>
-                            Discount
-                        </span>
-
-                        <strong>
-                            ${money(
-                                invoice.totals.discount
-                            )}
-                        </strong>
-
-                    </div>
-
-
-                    <div>
-
-                        <span>
-                            Handling Charge
-                        </span>
-
-                        <strong>
-                            ${money(
-                                invoice.totals.handling || 0
-                            )}
-                        </strong>
-
-                    </div>
-
-
-                    <div>
-
-                        <span>
-                            Surcharge
-                        </span>
-
-                        <strong>
-                            ${money(
-                                invoice.totals.surcharge || 0
-                            )}
-                        </strong>
-
-                    </div>
-
-
-                    <div>
-
-                        <span>
-                            GST 5%
-                        </span>
-
-                        <strong>
-                            ${money(
-                                invoice.totals.gst
-                            )}
-                        </strong>
-
-                    </div>
-
-                    ${
-                        invoice.saleType === "Party"
-                            ? `
-                                <div>
-
-                                    <span>
-                                        Cash Discount
-                                    </span>
-
-                                    <strong>
-                                        ${money(invoice.totals.cashDiscount || 0)}
-                                    </strong>
-
-                                </div>
-                              `
-                            : ""
-                    }
-
-
-                    <div class="grand-total">
-
-                        <span>
-                            Please Pay This Amount
-                        </span>
-
-                        <strong>
-                            ${money(
-                                invoice.totals.grandTotal
-                            )}
-                        </strong>
-
-                    </div>
-
-                </div>
-
-
-                <p class="field-help">
-                    Amount in Words:
-                    <strong>
-                        ${escapeHtml(amountInWords(invoice.totals.grandTotal))}
-                    </strong>
-                </p>
-
-
-                <p class="field-help">
-                    Disclaimer: Spare parts can't be taken back.
-                </p>
-
-
-                <div class="job-parts-heading">
-
-                    <div>
-
-                        <div class="kicker">
-                            GATE PASS
-                        </div>
-
-                        <h4>
-                            ${escapeHtml(invoice.gatePassNo || "-")}
-                        </h4>
-
-                        <span>
-                            Parts received in good condition.
-                        </span>
-
-                    </div>
-
-                </div>
-
-
-                <div class="invoice-customer">
-
-                    <div class="invoice-info">
-
-                        <span>
-                            Customer Name / Vehicle No.
-                        </span>
-
-                        <strong>
-                            ${escapeHtml(invoice.customer)}
-                            /
-                            ${escapeHtml(invoice.vehicleNo || "-")}
-                        </strong>
-
-                    </div>
-
-
-                    <div class="invoice-info">
-
-                        <span>
-                            Total No. of Items / Qty
-                        </span>
-
-                        <strong>
-                            ${invoice.items.length}
-                            /
-                            ${
-                                invoice.items.reduce(
-                                    function (sum, item) {
-
-                                        return sum + Number(item.qty);
-
-                                    },
-                                    0
-                                )
-                            }
-                        </strong>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        `;
-
-
-        openModal(
-            "invoiceModal"
-        );
-
-    }
-
-
-    /* =========================================================
-       TRANSACTIONS
-    ========================================================= */
-
-    function renderTransactions() {
-
-        const tbody =
-            document.getElementById(
-                "transactionsTableBody"
-            );
-
-
-        if (!tbody) {
-            return;
-        }
-
-
-        const search =
-            (
-                document.getElementById(
-                    "transactionSearch"
-                )?.value || ""
-            )
-                .trim()
-                .toLowerCase();
-
-
-        const transactions =
-            state.transactions.filter(
-                function (transaction) {
-
-                    if (!search) {
-                        return true;
-                    }
-
-                    return [
-
-                        transaction.id,
-                        transaction.reference,
-                        transaction.customer,
-                        transaction.type
-
-                    ]
-                        .join(" ")
-                        .toLowerCase()
-                        .includes(search);
-
-                }
-            );
-
-
-        if (!transactions.length) {
-
-            tbody.innerHTML = `
-
-                <tr>
-
-                    <td
-                        colspan="7"
-                        class="empty-table">
-
-                        No transactions found.
-
-                    </td>
-
-                </tr>
-
-            `;
-
-            return;
-
-        }
-
-
-        tbody.innerHTML =
-            transactions.map(function (transaction) {
-
-                return `
-
-                    <tr>
-
-                        <td>
-                            <strong>
-                                ${escapeHtml(
-                                    transaction.id
-                                )}
-                            </strong>
-                        </td>
-
-                        <td>
-                            ${escapeHtml(
-                                transaction.reference
-                            )}
-                        </td>
-
-                        <td>
-                            ${formatDate(
-                                transaction.date
-                            )}
-                        </td>
-
-                        <td>
-                            ${escapeHtml(
-                                transaction.customer
-                            )}
-                        </td>
-
-                        <td>
-                            ${escapeHtml(
-                                transaction.type
-                            )}
-                        </td>
-
-                        <td>
-                            ${money(
-                                transaction.amount
-                            )}
-                        </td>
-
-                        <td>
-
-                            <span class="badge green">
-                                ${escapeHtml(
-                                    transaction.status
-                                )}
-                            </span>
-
-                        </td>
-
-                    </tr>
-
-                `;
-
-            }).join("");
-
-    }
-
-
-    /* =========================================================
-       BRANCH TRANSFER (INTER-BRANCH REQUISITION / MTN)
-    ========================================================= */
-
-    function otherBranch(branch) {
-
-        return branch === "Thimphu"
-            ? "Phuntsholing"
-            : "Thimphu";
-
-    }
-
-
-    function renderTransferForm() {
-
-        const branchSelect =
-            document.getElementById(
-                "transferMyBranch"
-            );
-
-        if (branchSelect && !branchSelect.value) {
-
-            branchSelect.value = transferMyBranch;
-
-        } else if (branchSelect) {
-
-            transferMyBranch = branchSelect.value;
-
-        }
-
-        const supplyField =
-            document.getElementById(
-                "transferSupplyingBranch"
-            );
-
-        if (supplyField) {
-
-            supplyField.value =
-                otherBranch(transferMyBranch);
-
-        }
-
-        const noField =
-            document.getElementById(
-                "transferNoDisplay"
-            );
-
-        if (noField && !noField.value) {
-
-            noField.value =
-                `TRF-${String(
-                    state.sequences.transfer
-                ).padStart(4, "0")}`;
-
-        }
-
-        const dateField =
-            document.getElementById(
-                "transferDate"
-            );
-
-        if (dateField && !dateField.value) {
-
-            dateField.value = today();
-
-        }
-
-        resetTransferPartPicker();
-
-        renderTransferLinesTable();
-
-    }
-
-
-    /* ---------------------------------------------------------
-       SEARCHABLE PART PICKER (BRANCH TRANSFER - REQUEST PART)
-
-       Mirrors the Add Parts modal combobox: the Storekeeper types
-       any part of a part number / product name / model / category
-       and picks from parts currently at the supplying branch. The
-       confirmed part number is stored in the hidden
-       #transferPartSelect field so addTransferLine() reads it
-       exactly as before.
-    --------------------------------------------------------- */
-
-    function transferAvailableParts() {
-
-        const supplying =
-            otherBranch(transferMyBranch);
-
-        return state.inventory.filter(function (product) {
-
-            return product.location === supplying;
-
-        });
-
-    }
-
-
-    function resetTransferPartPicker() {
-
-        const searchInput =
-            document.getElementById(
-                "transferPartSearch"
-            );
-
-        const selectField =
-            document.getElementById(
-                "transferPartSelect"
-            );
-
-        if (searchInput) {
-
-            searchInput.value = "";
-
-        }
-
-        if (selectField) {
-
-            selectField.value = "";
-
-        }
-
-        closeTransferPartSuggestions();
-
-    }
-
-
-    function renderTransferPartSuggestions(query) {
-
-        const box =
-            document.getElementById(
-                "transferPartResults"
-            );
-
-        if (!box) {
-            return;
-        }
-
-        const search =
-            String(query || "")
-                .trim()
-                .toLowerCase();
-
-        const supplying =
-            otherBranch(transferMyBranch);
-
-        transferPartFiltered =
-            transferAvailableParts()
-                .filter(function (product) {
-
-                    if (!search) {
-                        return true;
-                    }
-
-                    return [
-
-                        product.partNo,
-                        product.name,
-                        product.model,
-                        product.category
-
-                    ]
-                        .join(" ")
-                        .toLowerCase()
-                        .includes(search);
-
-                })
-                .slice(0, 50);
-
-        transferPartActiveIndex =
-            transferPartFiltered.length ? 0 : -1;
-
-        if (!transferPartFiltered.length) {
-
-            box.innerHTML = `
-
-                <div class="part-search-empty">
-                    No matching part at ${escapeHtml(supplying)}.
-                </div>
-
-            `;
-
-        } else {
-
-            box.innerHTML =
-                transferPartFiltered.map(function (product, index) {
-
-                    return `
-
-                        <div
-                            class="part-search-option ${
-                                index === transferPartActiveIndex
-                                    ? "active"
-                                    : ""
-                            }"
-                            data-transfer-part-option="${escapeHtml(
-                                product.partNo
-                            )}">
-
-                            <strong>
-                                ${escapeHtml(product.partNo)}
-                                -
-                                ${escapeHtml(product.name)}
-                            </strong>
-
-                            <span>
-                                ${escapeHtml(product.category)}
-                                ·
-                                Stock: ${product.stock} ${escapeHtml(product.unit)}
-                                ·
-                                ${escapeHtml(product.location)}
-                            </span>
-
-                        </div>
-
-                    `;
-
-                }).join("");
-
-        }
-
-        box.classList.add("open");
-
-    }
-
-
-    function closeTransferPartSuggestions() {
-
-        document
-            .getElementById(
-                "transferPartResults"
-            )
-            ?.classList.remove("open");
-
-        transferPartActiveIndex = -1;
-
-    }
-
-
-    function moveTransferPartActive(delta) {
-
-        const box =
-            document.getElementById(
-                "transferPartResults"
-            );
-
-        if (!box || !transferPartFiltered.length) {
-            return;
-        }
-
-        transferPartActiveIndex =
-            (
-                transferPartActiveIndex +
-                delta +
-                transferPartFiltered.length
-            ) % transferPartFiltered.length;
-
-        const options =
-            box.querySelectorAll(
-                "[data-transfer-part-option]"
-            );
-
-        options.forEach(function (option, index) {
-
-            option.classList.toggle(
-                "active",
-                index === transferPartActiveIndex
-            );
-
-        });
-
-        options[transferPartActiveIndex]
-            ?.scrollIntoView({
-                block: "nearest"
-            });
-
-    }
-
-
-    function selectTransferPart(partNo) {
-
-        const product = findProduct(partNo);
-
-        if (!product) {
-            return;
-        }
-
-        document.getElementById(
-            "transferPartSelect"
-        ).value = product.partNo;
-
-        document.getElementById(
-            "transferPartSearch"
-        ).value =
-            `${product.partNo} - ${product.name}`;
-
-        closeTransferPartSuggestions();
-
-        fillTransferAvailableStock(product.partNo);
-
-    }
-
-
-    function fillTransferAvailableStock(partNo) {
-
-        const field =
-            document.getElementById(
-                "transferAvailableStock"
-            );
-
-        if (!field) {
-            return;
-        }
-
-        const product = findProduct(partNo);
-
-        field.value =
-            product
-                ? `${product.stock} ${product.unit} at ${product.location}`
-                : "";
-
-    }
-
-
-    function addTransferLine() {
-
-        const partNo =
-            document.getElementById(
-                "transferPartSelect"
-            ).value;
-
-        const qty =
-            Number(
-                document.getElementById(
-                    "transferQty"
-                ).value
-            ) || 0;
-
-        const description =
-            document.getElementById(
-                "transferDescription"
-            ).value.trim();
-
-        if (!partNo) {
-
-            showToast(
-                "Select a part available at the supplying branch.",
-                "error"
-            );
-
-            return;
-
-        }
-
-        if (qty <= 0) {
-
-            showToast(
-                "Enter a valid quantity.",
-                "error"
-            );
-
-            return;
-
-        }
-
-        const product = findProduct(partNo);
-
-        if (product && qty > Number(product.stock)) {
-
-            showToast(
-                `Only ${product.stock} unit(s) available at ${product.location}.`,
-                "error"
-            );
-
-            return;
-
-        }
-
-        transferLines.push({
-
-            id: uid("TRF-LINE"),
-
-            partNo,
-
-            description:
-                description ||
-                product?.description ||
-                product?.name ||
-                "",
-
-            qty
-
-        });
-
-        renderTransferLinesTable();
-
-        document.getElementById(
-            "transferQty"
-        ).value = "1";
-
-        document.getElementById(
-            "transferDescription"
-        ).value = "";
-
-        resetTransferPartPicker();
-
-        document.getElementById(
-            "transferAvailableStock"
-        ).value = "";
-
-    }
-
-
-    function renderTransferLinesTable() {
-
-        const tbody =
-            document.getElementById(
-                "transferLinesBody"
-            );
-
-        if (!tbody) {
-            return;
-        }
-
-        if (!transferLines.length) {
-
-            tbody.innerHTML = `
-
-                <tr>
-                    <td colspan="4" class="empty-table">
-                        No items added.
-                    </td>
-                </tr>
-
-            `;
-
-            return;
-
-        }
-
-        tbody.innerHTML =
-            transferLines.map(function (line) {
-
-                return `
-
-                    <tr>
-
-                        <td>
-                            ${escapeHtml(line.partNo)}
-                        </td>
-
-                        <td>
-                            ${escapeHtml(line.description || "-")}
-                        </td>
-
-                        <td>
-                            ${line.qty}
-                        </td>
-
-                        <td>
-
-                            <button
-                                type="button"
-                                class="action-btn delete"
-                                data-remove-transfer-line="${escapeHtml(
-                                    line.id
-                                )}">
-                                Remove
-                            </button>
-
-                        </td>
-
-                    </tr>
-
-                `;
-
-            }).join("");
-
-    }
-
-
-    function saveTransferRequisition(event) {
-
-        event.preventDefault();
-
-        if (!transferLines.length) {
-
-            showToast(
-                "Add at least one part to the requisition.",
-                "error"
-            );
-
-            return;
-
-        }
-
-        const transferNo =
-            `TRF-${String(
-                state.sequences.transfer++
-            ).padStart(4, "0")}`;
-
-        const requisition = {
-
-            id: uid("TRF"),
-
-            transferNo,
-
-            date:
-                document.getElementById(
-                    "transferDate"
-                ).value || today(),
-
-            fromBranch:
-                otherBranch(transferMyBranch),
-
-            toBranch: transferMyBranch,
-
-            lines: JSON.parse(
-                JSON.stringify(transferLines)
-            ),
-
-            status: "Requested"
-
-        };
-
-        state.branchTransfers.unshift(requisition);
-
-        saveState();
-
-        transferLines = [];
-
-        document.getElementById(
-            "transferNoDisplay"
-        ).value =
-            `TRF-${String(
-                state.sequences.transfer
-            ).padStart(4, "0")}`;
-
-        document.getElementById(
-            "transferDate"
-        ).value = today();
-
-        renderTransferLinesTable();
-
-        renderTransferHistory();
-
-        showToast(
-            `${transferNo} raised — awaiting fulfilment from ${requisition.fromBranch}.`
-        );
-
-    }
-
-
-    function clearTransferDraft() {
-
-        transferLines = [];
-
-        renderTransferLinesTable();
-
-    }
-
-
-    function markTransferReceived(id) {
-
-        const requisition =
-            state.branchTransfers.find(function (item) {
-
-                return item.id === id;
-
-            });
-
-        if (!requisition || requisition.status === "Received") {
-            return;
-        }
-
-        /*
-         * This app tracks a single stock pool per part with one
-         * "location" tag (there is no per-branch split). Marking a
-         * transfer as received re-tags each requested part as now
-         * being at the requesting branch. It does not duplicate
-         * inventory rows, so a partial transfer still moves the
-         * whole recorded stock figure — the same simplification the
-         * rest of the app already makes for a product's location.
-         */
-
-        requisition.lines.forEach(function (line) {
-
-            const product = findProduct(line.partNo);
-
-            if (product) {
-
-                product.location = requisition.toBranch;
-
-            }
-
-        });
-
-        requisition.status = "Received";
-
-        saveState();
-
-        renderInventory();
-
-        renderDashboard();
-
-        renderTransferHistory();
-
-        resetTransferPartPicker();
-
-        showToast(
-            `${requisition.transferNo} marked received at ${requisition.toBranch}.`
-        );
-
-    }
-
-
-    function renderTransferHistory() {
-
-        const tbody =
-            document.getElementById(
-                "transferHistoryBody"
-            );
-
-        if (!tbody) {
-            return;
-        }
-
-        if (!state.branchTransfers.length) {
-
-            tbody.innerHTML = `
-
-                <tr>
-                    <td colspan="7" class="empty-table">
-                        No branch transfer requisitions yet.
-                    </td>
-                </tr>
-
-            `;
-
-            return;
-
-        }
-
-        tbody.innerHTML =
-            state.branchTransfers.map(function (requisition) {
-
-                return `
-
-                    <tr>
-
-                        <td>
-                            <strong>
-                                ${escapeHtml(requisition.transferNo)}
-                            </strong>
-                        </td>
-
-                        <td>
-                            ${formatDate(requisition.date)}
-                        </td>
-
-                        <td>
-                            ${escapeHtml(requisition.fromBranch)}
-                        </td>
-
-                        <td>
-                            ${escapeHtml(requisition.toBranch)}
-                        </td>
-
-                        <td>
-                            ${requisition.lines.length}
-                        </td>
-
-                        <td>
-
-                            <span class="badge ${
-                                requisition.status === "Received"
-                                    ? "green"
-                                    : "orange"
-                            }">
-                                ${escapeHtml(requisition.status)}
-                            </span>
-
-                        </td>
-
-                        <td>
-
-                            ${
-                                requisition.status !== "Received"
-                                    ? `
-                                        <button
-                                            type="button"
-                                            class="action-btn edit"
-                                            data-receive-transfer="${escapeHtml(
-                                                requisition.id
-                                            )}">
-                                            Mark Received
-                                        </button>
-                                      `
-                                    : ""
-                            }
-
-                        </td>
-
-                    </tr>
-
-                `;
-
-            }).join("");
-
-    }
-
-
-    /* =========================================================
-       EXCEL IMPORT
-    ========================================================= */
-
-    function normalizeHeader(value) {
-
-        return String(value || "")
+        return [
+            job.no,
+            job.registration,
+            job.vehicle,
+            job.customer,
+            job.serviceType,
+            job.visitType,
+            job.priority,
+        ]
+            .join(" ")
             .toLowerCase()
-            .replace(/[^a-z0-9]/g, "");
-
+            .indexOf(needle) !== -1;
     }
 
+    /* =====================================================
+       8. NODE HARNESS EXPORT
+       ===================================================== */
 
-    function getExcelValue(row, aliases) {
+    const api = {
+        TRADES: TRADES,
+        TRADE_ORDER: TRADE_ORDER,
+        ROSTER: ROSTER,
+        BAYS: BAYS,
+        SEED_JOB_CARDS: SEED_JOB_CARDS,
+        findMechanic: findMechanic,
+        requiredTrades: requiredTrades,
+        coveredTrades: coveredTrades,
+        openTrades: openTrades,
+        offTradeMembers: offTradeMembers,
+        jobHours: jobHours,
+        hoursByTrade: hoursByTrade,
+        mechanicState: mechanicState,
+        summarise: summarise,
+        validateAssignment: validateAssignment,
+        matchesSearch: matchesSearch,
+    };
 
-        const keys =
-            Object.keys(row);
+    global.ZimdraSupervisor = api;
 
+    if (typeof document === "undefined") {
+        return;
+    }
 
-        for (const alias of aliases) {
+    /* =====================================================
+       9. DOM REFERENCES
+       ===================================================== */
 
-            const target =
-                normalizeHeader(alias);
+    const $ = function (id) {
+        return document.getElementById(id);
+    };
 
+    const navItems = Array.from(document.querySelectorAll(".nav-item"));
 
-            const key =
-                keys.find(function (item) {
+    const sectionLinks = Array.from(document.querySelectorAll("[data-section]"));
 
-                    return normalizeHeader(item) ===
-                        target;
+    const sections = {
+        dashboard: $("section-dashboard"),
+        assign: $("section-assign"),
+        roster: $("section-roster"),
+        reports: $("section-reports"),
+        settings: $("section-settings"),
+    };
 
-                });
+    const PAGE_TITLES = {
+        dashboard: "Supervisor Dashboard",
+        assign: "Assign Mechanic",
+        roster: "Mechanic Roster",
+        reports: "Reports",
+        settings: "Settings",
+    };
 
+    const pageTitle = $("pageTitle");
 
-            if (key !== undefined) {
+    const currentDate = $("currentDate");
 
-                return row[key];
+    const logoutBtn = $("logoutBtn");
 
-            }
+    const navAssignCount = $("navAssignCount");
 
+    const statWaiting = $("statWaiting");
+
+    const statInBay = $("statInBay");
+
+    const statFree = $("statFree");
+
+    const statUrgent = $("statUrgent");
+
+    const waitingList = $("waitingList");
+
+    const tradeChart = $("tradeChart");
+
+    const dashMechBody = $("dashMechBody");
+
+    const mechSummary = $("mechSummary");
+
+    const jobSearch = $("jobSearch");
+
+    const clearSearch = $("clearSearch");
+
+    const filterTabs = Array.from(document.querySelectorAll(".filter-tab"));
+
+    const jobTableBody = $("jobTableBody");
+
+    const jobResultCount = $("jobResultCount");
+
+    const rosterGrid = $("rosterGrid");
+
+    const assignModal = $("assignModal");
+
+    const modalJobNo = $("modalJobNo");
+
+    const modalStatus = $("modalStatus");
+
+    const modalVehicle = $("modalVehicle");
+
+    const modalCustomer = $("modalCustomer");
+
+    const modalService = $("modalService");
+
+    const modalPromised = $("modalPromised");
+
+    const modalLines = $("modalLines");
+
+    const coverageNote = $("coverageNote");
+
+    const mechPicker = $("mechPicker");
+
+    const showAllTrades = $("showAllTrades");
+
+    const crewListEl = $("crewList");
+
+    const crewNote = $("crewNote");
+
+    const crewEmpty = $("crewEmpty");
+
+    const bay = $("bay");
+
+    const crewNotes = $("crewNotes");
+
+    const assignError = $("assignError");
+
+    const saveAssign = $("saveAssign");
+
+    const cancelAssign = $("cancelAssign");
+
+    const recallBtn = $("recallBtn");
+
+    const modalClose = $("modalClose");
+
+    const toast = $("toast");
+
+    /* =====================================================
+       10. STATE
+       ===================================================== */
+
+    const state = {
+        section: "dashboard",
+        filter: "waiting",
+        search: "",
+        jobs: [],
+        assignments: {},
+        openJob: null,
+        crew: [],
+        bay: "",
+    };
+
+    /* =====================================================
+       11. SESSION
+       ===================================================== */
+
+    function readSession() {
+        const stored =
+            localStorage.getItem(STORAGE.session) ||
+            sessionStorage.getItem(STORAGE.session);
+
+        if (!stored) {
+            return null;
         }
 
+        try {
+            return JSON.parse(stored);
+        } catch (error) {
+            console.warn("Unable to read session.", error);
 
-        return "";
-
+            return null;
+        }
     }
 
+    function guardSession() {
+        const session = readSession();
 
-    function importExcel(file) {
+        if (!session || !session.authenticated || session.roleKey !== "supervisor") {
+            window.location.replace(SIGN_IN_URL);
 
-        if (!window.XLSX) {
+            return null;
+        }
 
-            showToast(
-                "Excel library could not be loaded.",
-                "error"
+        const initials = (session.userName || "SV")
+            .split(" ")
+            .map(function (word) {
+                return word.charAt(0);
+            })
+            .join("")
+            .slice(0, 2)
+            .toUpperCase();
+
+        $("userName").textContent = session.userName;
+
+        $("userId").textContent = session.userId;
+
+        $("userInitials").textContent = initials;
+
+        $("topName").textContent = session.userName;
+
+        $("topInitials").textContent = initials;
+
+        return session;
+    }
+
+    function handleLogout() {
+        localStorage.removeItem(STORAGE.session);
+
+        sessionStorage.removeItem(STORAGE.session);
+
+        window.location.href = SIGN_IN_URL;
+    }
+
+    /* =====================================================
+       12. DATA
+       ===================================================== */
+
+    /*
+     * Job cards come from the Job Card Entry desk when that
+     * screen has written them. Until then the seed set above
+     * keeps this desk usable on its own.
+     */
+
+    function loadJobCards() {
+        const stored = localStorage.getItem(STORAGE.jobCards);
+
+        if (!stored) {
+            return SEED_JOB_CARDS.slice();
+        }
+
+        try {
+            const parsed = JSON.parse(stored);
+
+            if (Array.isArray(parsed) && parsed.length > 0) {
+                return parsed.filter(function (job) {
+                    return job && job.no && Array.isArray(job.lines);
+                });
+            }
+        } catch (error) {
+            console.warn("Unable to read job cards.", error);
+        }
+
+        return SEED_JOB_CARDS.slice();
+    }
+
+    function loadAssignments() {
+        const stored = localStorage.getItem(STORAGE.assignments);
+
+        if (!stored) {
+            return {};
+        }
+
+        try {
+            const parsed = JSON.parse(stored);
+
+            return parsed && typeof parsed === "object" ? parsed : {};
+        } catch (error) {
+            console.warn("Unable to read assignments.", error);
+
+            return {};
+        }
+    }
+
+    function saveAssignments() {
+        localStorage.setItem(
+            STORAGE.assignments,
+            JSON.stringify(state.assignments)
+        );
+    }
+
+    function assignmentFor(no) {
+        return state.assignments[no] || null;
+    }
+
+    function findJob(no) {
+        return (
+            state.jobs.find(function (job) {
+                return job.no === no;
+            }) || null
+        );
+    }
+
+    function waitingJobs() {
+        return state.jobs.filter(function (job) {
+            return !assignmentFor(job.no);
+        });
+    }
+
+    /**
+     * A mechanic engaged on another job card is unavailable.
+     */
+    function busyElsewhere(code) {
+        const jobs = Object.keys(state.assignments);
+
+        for (let index = 0; index < jobs.length; index += 1) {
+            const no = jobs[index];
+
+            if (state.openJob && no === state.openJob.no) {
+                continue;
+            }
+
+            const onCrew = (state.assignments[no].crew || []).some(function (m) {
+                return m.code === code;
+            });
+
+            if (onCrew) {
+                return { job: no, bay: state.assignments[no].bay };
+            }
+        }
+
+        return null;
+    }
+
+    /* =====================================================
+       13. SMALL BUILDERS
+       ===================================================== */
+
+    function el(tag, className, text) {
+        const node = document.createElement(tag);
+
+        if (className) {
+            node.className = className;
+        }
+
+        if (text !== undefined) {
+            node.textContent = text;
+        }
+
+        return node;
+    }
+
+    function badge(text, tone) {
+        return el("span", "badge " + (tone || "gray"), text);
+    }
+
+    function priorityBadge(priority) {
+        const tone =
+            priority === "Urgent" ? "red" : priority === "High" ? "orange" : "gray";
+
+        return badge(priority, tone);
+    }
+
+    function statusBadge(job) {
+        const record = assignmentFor(job.no);
+
+        return record
+            ? badge("IN " + record.bay.toUpperCase(), "green")
+            : badge("WAITING", "orange");
+    }
+
+    function tradeBadges(codes, tone) {
+        const wrap = el("span");
+
+        codes.forEach(function (code) {
+            wrap.appendChild(badge(code, tone || "outline"));
+        });
+
+        return wrap;
+    }
+
+    function showToast(message, tone) {
+        toast.textContent = message;
+
+        toast.className = "toast show " + (tone || "");
+
+        window.clearTimeout(showToast.timer);
+
+        showToast.timer = window.setTimeout(function () {
+            toast.className = "toast";
+        }, 2800);
+    }
+
+    /* =====================================================
+       14. NAVIGATION
+       ===================================================== */
+
+    function showSection(name) {
+        if (!sections[name]) {
+            return;
+        }
+
+        state.section = name;
+
+        Object.keys(sections).forEach(function (key) {
+            sections[key].classList.toggle("active", key === name);
+        });
+
+        navItems.forEach(function (item) {
+            item.classList.toggle("active", item.dataset.section === name);
+        });
+
+        pageTitle.textContent = PAGE_TITLES[name];
+
+        pageTitle.focus();
+
+        if (name === "dashboard") {
+            renderDashboard();
+        }
+
+        if (name === "assign") {
+            renderJobTable();
+        }
+
+        if (name === "roster") {
+            renderRoster();
+        }
+    }
+
+    /* =====================================================
+       15. DASHBOARD
+       ===================================================== */
+
+    function renderDashboard() {
+        const totals = summarise(state.jobs, state.assignments);
+
+        statWaiting.textContent = String(totals.waiting);
+
+        statInBay.textContent = String(totals.inBay);
+
+        statFree.textContent =
+            totals.mechanicsFree + " / " + totals.mechanicsTotal;
+
+        statUrgent.textContent = String(totals.urgent);
+
+        navAssignCount.textContent = String(totals.waiting);
+
+        renderWaitingList();
+
+        renderTradeChart();
+
+        renderMechanicTable(totals);
+    }
+
+    function renderWaitingList() {
+        const waiting = waitingJobs();
+
+        waitingList.innerHTML = "";
+
+        if (waiting.length === 0) {
+            const empty = el("div", "empty-state");
+
+            empty.appendChild(el("strong", null, "Every job card has a crew"));
+
+            empty.appendChild(
+                el("span", null, "New arrivals will appear here as they are opened.")
             );
 
-            return;
+            waitingList.appendChild(empty);
 
+            return;
         }
 
+        waiting.slice(0, 6).forEach(function (job) {
+            const row = el("button", "dashboard-item");
 
-        const reader =
-            new FileReader();
+            row.type = "button";
 
+            row.dataset.openJob = job.no;
 
-        reader.onload = function (event) {
+            const main = el("div", "dashboard-item-main");
 
-            try {
+            main.appendChild(el("strong", null, job.no + " · " + job.vehicle));
 
-                const workbook =
-                    XLSX.read(
-                        event.target.result,
-                        {
-                            type: "array"
-                        }
-                    );
+            main.appendChild(
+                el(
+                    "span",
+                    null,
+                    job.registration +
+                        " · " +
+                        job.customer +
+                        " · " +
+                        jobHours(job).toFixed(1) +
+                        " hrs"
+                )
+            );
 
+            const value = el("div", "dashboard-item-value");
 
-                const sheet =
-                    workbook.Sheets[
-                        workbook.SheetNames[0]
-                    ];
+            value.appendChild(priorityBadge(job.priority));
 
+            value.appendChild(tradeBadges(requiredTrades(job)));
 
-                const rows =
-                    XLSX.utils.sheet_to_json(
-                        sheet,
-                        {
-                            defval: ""
-                        }
-                    );
+            row.appendChild(main);
 
+            row.appendChild(value);
 
-                if (!rows.length) {
-
-                    showToast(
-                        "The Excel file contains no data.",
-                        "error"
-                    );
-
-                    return;
-
-                }
-
-
-                let imported = 0;
-
-
-                rows.forEach(function (row) {
-
-                    const partNo =
-                        String(
-                            getExcelValue(
-                                row,
-                                [
-                                    "Part No",
-                                    "Part Number",
-                                    "Product Code",
-                                    "PartNo"
-                                ]
-                            )
-                        ).trim();
-
-
-                    const name =
-                        String(
-                            getExcelValue(
-                                row,
-                                [
-                                    "Product",
-                                    "Product Name",
-                                    "Name",
-                                    "Description"
-                                ]
-                            )
-                        ).trim();
-
-
-                    if (!partNo || !name) {
-                        return;
-                    }
-
-
-                    const category =
-                        String(
-                            getExcelValue(
-                                row,
-                                ["Category"]
-                            ) ||
-                            "Service Parts"
-                        );
-
-
-                    const unit =
-                        String(
-                            getExcelValue(
-                                row,
-                                ["Unit", "UOM"]
-                            ) ||
-                            "pcs"
-                        );
-
-
-                    const stock =
-                        Number(
-                            getExcelValue(
-                                row,
-                                [
-                                    "Stock",
-                                    "Qty",
-                                    "Quantity"
-                                ]
-                            )
-                        ) || 0;
-
-
-                    const salePrice =
-                        Number(
-                            getExcelValue(
-                                row,
-                                [
-                                    "Sale Price",
-                                    "Price",
-                                    "Selling Price"
-                                ]
-                            )
-                        ) || 0;
-
-
-                    const costPrice =
-                        Number(
-                            getExcelValue(
-                                row,
-                                [
-                                    "Cost Price",
-                                    "Cost"
-                                ]
-                            )
-                        ) || 0;
-
-
-                    const tax =
-                        Number(
-                            getExcelValue(
-                                row,
-                                [
-                                    "GST",
-                                    "Tax"
-                                ]
-                            )
-                        ) || 7;
-
-
-                    const reorderLevel =
-                        Number(
-                            getExcelValue(
-                                row,
-                                [
-                                    "Reorder",
-                                    "Reorder Level",
-                                    "Min Stock"
-                                ]
-                            )
-                        ) || 5;
-
-
-                    const location =
-                        String(
-                            getExcelValue(
-                                row,
-                                ["Location"]
-                            ) ||
-                            "Thimphu"
-                        );
-
-
-                    const model =
-                        String(
-                            getExcelValue(
-                                row,
-                                ["Model"]
-                            )
-                        );
-
-
-                    const existing =
-                        findProduct(
-                            partNo
-                        );
-
-
-                    if (existing) {
-
-                        existing.name =
-                            name;
-
-                        existing.description =
-                            String(
-                                getExcelValue(
-                                    row,
-                                    ["Description"]
-                                ) ||
-                                existing.description ||
-                                name
-                            );
-
-                        existing.category =
-                            category;
-
-                        existing.unit =
-                            unit;
-
-                        existing.stock =
-                            stock;
-
-                        existing.salePrice =
-                            salePrice;
-
-                        existing.costPrice =
-                            costPrice;
-
-                        existing.tax =
-                            tax;
-
-                        existing.reorderLevel =
-                            reorderLevel;
-
-                        existing.location =
-                            location;
-
-                        existing.model =
-                            model;
-
-                    } else {
-
-                        state.inventory.push({
-
-                            id: `PRD-${String(
-                                state.sequences.product++
-                            ).padStart(3, "0")}`,
-
-                            partNo,
-
-                            name,
-
-                            description:
-                                String(
-                                    getExcelValue(
-                                        row,
-                                        ["Description"]
-                                    ) ||
-                                    name
-                                ),
-
-                            category,
-
-                            serialNumber:
-                                String(
-                                    getExcelValue(
-                                        row,
-                                        ["Serial Number"]
-                                    )
-                                ),
-
-                            model,
-
-                            salePrice,
-
-                            costPrice,
-
-                            tax,
-
-                            unit,
-
-                            stock,
-
-                            reorderLevel,
-
-                            location,
-
-                            image: "",
-
-                            details: ""
-
-                        });
-
-                    }
-
-
-                    imported++;
-
-                });
-
-
-                saveState();
-
-                populateProductDropdowns();
-
-                renderInventory();
-
-                renderDashboard();
-
-
-                showToast(
-                    `${imported} product row(s) imported successfully.`
-                );
-
-            } catch (error) {
-
-                console.error(error);
-
-                showToast(
-                    "Could not read the Excel file.",
-                    "error"
-                );
-
-            }
-
-        };
-
-
-        reader.readAsArrayBuffer(
-            file
-        );
-
+            waitingList.appendChild(row);
+        });
     }
 
+    function renderTradeChart() {
+        const waiting = waitingJobs();
 
-    /* =========================================================
-       EVENT BINDING
-    ========================================================= */
+        const hours = hoursByTrade(waiting);
+
+        const peak = Math.max(
+            1,
+            ...TRADE_ORDER.map(function (trade) {
+                return hours[trade];
+            })
+        );
+
+        tradeChart.innerHTML = "";
+
+        TRADE_ORDER.forEach(function (trade) {
+            const inTrade = ROSTER.filter(function (mechanic) {
+                return mechanic.trade === trade;
+            });
+
+            const free = inTrade.filter(function (mechanic) {
+                return !mechanicState(state.assignments, mechanic.code).engaged;
+            });
+
+            const row = el("div", "chart-row");
+
+            row.appendChild(el("div", "chart-row-label", TRADES[trade].label));
+
+            const track = el("div", "chart-row-track");
+
+            const tone = free.length === 0 && hours[trade] > 0 ? " red" : free.length === 0 ? " orange" : "";
+
+            const fill = el("div", "chart-row-fill" + tone);
+
+            fill.style.width = Math.round((hours[trade] / peak) * 100) + "%";
+
+            track.appendChild(fill);
+
+            row.appendChild(track);
+
+            row.appendChild(
+                el(
+                    "div",
+                    "chart-row-value",
+                    hours[trade].toFixed(1) + " h · " + free.length + "/" + inTrade.length
+                )
+            );
+
+            tradeChart.appendChild(row);
+        });
+    }
+
+    function renderMechanicTable(totals) {
+        mechSummary.textContent =
+            totals.mechanicsFree +
+            " free · " +
+            totals.mechanicsEngaged +
+            " on a job · " +
+            totals.baysFree +
+            " bays free";
+
+        dashMechBody.innerHTML = "";
+
+        ROSTER.forEach(function (mechanic) {
+            const where = mechanicState(state.assignments, mechanic.code);
+
+            const row = el("tr");
+
+            row.appendChild(el("td", "cell-strong", mechanic.code));
+
+            row.appendChild(el("td", null, mechanic.name));
+
+            const trade = el("td");
+
+            trade.appendChild(badge(mechanic.trade, "blue"));
+
+            trade.appendChild(el("div", "cell-muted", TRADES[mechanic.trade].label));
+
+            row.appendChild(trade);
+
+            const status = el("td");
+
+            status.appendChild(
+                where.engaged ? badge("ON A JOB", "orange") : badge("FREE", "green")
+            );
+
+            row.appendChild(status);
+
+            row.appendChild(el("td", null, where.job || "—"));
+
+            row.appendChild(el("td", null, where.bay || "—"));
+
+            row.appendChild(
+                el("td", null, where.engaged ? (where.lead ? "Lead" : "Crew") : "—")
+            );
+
+            dashMechBody.appendChild(row);
+        });
+    }
+
+    /* =====================================================
+       16. JOB CARD REGISTER
+       ===================================================== */
+
+    function visibleJobs() {
+        return state.jobs.filter(function (job) {
+            const assigned = !!assignmentFor(job.no);
+
+            if (state.filter === "waiting" && assigned) {
+                return false;
+            }
+
+            if (state.filter === "assigned" && !assigned) {
+                return false;
+            }
+
+            return matchesSearch(job, state.search);
+        });
+    }
+
+    function renderJobTable() {
+        const jobs = visibleJobs();
+
+        jobTableBody.innerHTML = "";
+
+        jobResultCount.textContent = String(jobs.length);
+
+        if (jobs.length === 0) {
+            const row = el("tr");
+
+            const cell = el("td", "empty-table", "No job cards match this view.");
+
+            cell.colSpan = 9;
+
+            row.appendChild(cell);
+
+            jobTableBody.appendChild(row);
+
+            return;
+        }
+
+        jobs.forEach(function (job) {
+            const record = assignmentFor(job.no);
+
+            const row = el("tr");
+
+            const no = el("td");
+
+            no.appendChild(el("div", "cell-strong", job.no));
+
+            no.appendChild(el("div", "cell-muted", job.arrival));
+
+            row.appendChild(no);
+
+            const vehicle = el("td");
+
+            vehicle.appendChild(el("div", "cell-strong", job.vehicle));
+
+            vehicle.appendChild(el("div", "cell-muted", job.registration));
+
+            row.appendChild(vehicle);
+
+            const customer = el("td");
+
+            customer.appendChild(el("div", null, job.customer));
+
+            customer.appendChild(el("div", "cell-muted", job.phone));
+
+            row.appendChild(customer);
+
+            const service = el("td");
+
+            service.appendChild(el("div", null, job.serviceType));
+
+            service.appendChild(el("div", "cell-muted", job.visitType));
+
+            row.appendChild(service);
+
+            const priority = el("td");
+
+            priority.appendChild(priorityBadge(job.priority));
+
+            row.appendChild(priority);
+
+            const trades = el("td");
+
+            trades.appendChild(tradeBadges(requiredTrades(job)));
+
+            trades.appendChild(
+                el("div", "cell-muted", jobHours(job).toFixed(1) + " std hrs")
+            );
+
+            row.appendChild(trades);
+
+            const crew = el("td");
+
+            if (record) {
+                record.crew.forEach(function (member) {
+                    crew.appendChild(
+                        el(
+                            "div",
+                            member.lead ? "cell-strong" : null,
+                            member.name + (member.lead ? " (lead)" : "")
+                        )
+                    );
+                });
+            } else {
+                crew.appendChild(el("span", "cell-muted", "Not assigned"));
+            }
+
+            row.appendChild(crew);
+
+            const status = el("td");
+
+            status.appendChild(statusBadge(job));
+
+            row.appendChild(status);
+
+            const action = el("td");
+
+            const button = el(
+                "button",
+                "action-btn",
+                record ? "Edit crew" : "Assign"
+            );
+
+            button.type = "button";
+
+            button.dataset.openJob = job.no;
+
+            action.appendChild(button);
+
+            row.appendChild(action);
+
+            jobTableBody.appendChild(row);
+        });
+    }
+
+    /* =====================================================
+       17. ROSTER PAGE
+       ===================================================== */
+
+    function renderRoster() {
+        rosterGrid.innerHTML = "";
+
+        TRADE_ORDER.forEach(function (trade) {
+            const inTrade = ROSTER.filter(function (mechanic) {
+                return mechanic.trade === trade;
+            });
+
+            const free = inTrade.filter(function (mechanic) {
+                return !mechanicState(state.assignments, mechanic.code).engaged;
+            });
+
+            const card = el("div", "trade-card");
+
+            const head = el("div", "trade-card__head");
+
+            const headText = el("div");
+
+            headText.appendChild(el("strong", null, TRADES[trade].label));
+
+            headText.appendChild(
+                el(
+                    "span",
+                    null,
+                    inTrade.length + " mechanics · " + free.length + " free now"
+                )
+            );
+
+            head.appendChild(headText);
+
+            head.appendChild(badge(trade, "blue"));
+
+            card.appendChild(head);
+
+            inTrade.forEach(function (mechanic) {
+                const where = mechanicState(state.assignments, mechanic.code);
+
+                const row = el("div", "mech-row");
+
+                row.appendChild(el("div", "avatar small", mechanic.code.slice(1)));
+
+                const main = el("div", "mech-row__main");
+
+                main.appendChild(el("strong", null, mechanic.name));
+
+                main.appendChild(
+                    el(
+                        "span",
+                        null,
+                        where.engaged
+                            ? where.job +
+                                  " · " +
+                                  where.bay +
+                                  " · " +
+                                  (where.lead ? "lead" : "crew")
+                            : mechanic.code + " · available"
+                    )
+                );
+
+                row.appendChild(main);
+
+                row.appendChild(
+                    where.engaged ? badge("ON A JOB", "orange") : badge("FREE", "green")
+                );
+
+                card.appendChild(row);
+            });
+
+            rosterGrid.appendChild(card);
+        });
+    }
+
+    /* =====================================================
+       18. ASSIGNMENT MODAL
+       ===================================================== */
+
+    function openAssignModal(no) {
+        const job = findJob(no);
+
+        if (!job) {
+            return;
+        }
+
+        const record = assignmentFor(no);
+
+        state.openJob = job;
+
+        state.crew = record
+            ? record.crew.map(function (member) {
+                  return Object.assign({}, member);
+              })
+            : [];
+
+        state.bay = record ? record.bay : "";
+
+        showAllTrades.checked = false;
+
+        crewNotes.value = record && record.notes ? record.notes : "";
+
+        assignError.hidden = true;
+
+        modalJobNo.textContent = job.no;
+
+        modalStatus.textContent = record ? "IN " + record.bay.toUpperCase() : "WAITING";
+
+        modalStatus.className = "badge " + (record ? "green" : "orange");
+
+        modalVehicle.textContent = job.vehicle + " · " + job.registration;
+
+        modalCustomer.textContent = job.customer;
+
+        modalService.textContent = job.serviceType + " · " + job.visitType;
+
+        modalPromised.textContent = job.promised;
+
+        recallBtn.hidden = !record;
+
+        saveAssign.textContent = record
+            ? "Update crew →"
+            : "Assign mechanics →";
+
+        renderBaySelect(record);
+
+        renderModal();
+
+        assignModal.classList.add("open");
+
+        document.body.style.overflow = "hidden";
+    }
+
+    function closeAssignModal() {
+        assignModal.classList.remove("open");
+
+        document.body.style.overflow = "";
+
+        state.openJob = null;
+
+        state.crew = [];
+
+        state.bay = "";
+    }
+
+    function renderModal() {
+        renderModalLines();
+
+        renderPicker();
+
+        renderCrew();
+    }
+
+    function renderModalLines() {
+        const job = state.openJob;
+
+        const covered = coveredTrades(state.crew);
+
+        modalLines.innerHTML = "";
+
+        job.lines.forEach(function (line) {
+            const isCovered = covered.indexOf(line.trade) !== -1;
+
+            const row = el("tr");
+
+            row.appendChild(el("td", null, line.task));
+
+            const trade = el("td");
+
+            trade.appendChild(badge(line.trade, "blue"));
+
+            trade.appendChild(el("div", "cell-muted", TRADES[line.trade].label));
+
+            row.appendChild(trade);
+
+            row.appendChild(el("td", null, line.hours.toFixed(1) + " h"));
+
+            const status = el("td");
+
+            status.appendChild(
+                isCovered ? badge("COVERED", "green") : badge("NO MECHANIC", "red")
+            );
+
+            row.appendChild(status);
+
+            modalLines.appendChild(row);
+        });
+
+        const open = openTrades(job, state.crew);
+
+        if (open.length === 0) {
+            coverageNote.className = "ok";
+
+            coverageNote.textContent = "Every trade on this job card is covered";
+        } else {
+            coverageNote.className = "warn";
+
+            coverageNote.textContent =
+                "Still uncovered: " +
+                open
+                    .map(function (trade) {
+                        return TRADES[trade].label.toLowerCase();
+                    })
+                    .join(", ");
+        }
+    }
+
+    function renderPicker() {
+        const job = state.openJob;
+
+        const required = requiredTrades(job);
+
+        const trades = showAllTrades.checked ? TRADE_ORDER : required;
+
+        mechPicker.innerHTML = "";
+
+        trades.forEach(function (trade) {
+            const group = el("div", "picker-group");
+
+            const head = el("div", "picker-group__head");
+
+            head.appendChild(el("strong", null, TRADES[trade].label));
+
+            head.appendChild(
+                badge(
+                    required.indexOf(trade) === -1 ? "NOT NEEDED" : "NEEDED",
+                    required.indexOf(trade) === -1 ? "gray" : "blue"
+                )
+            );
+
+            group.appendChild(head);
+
+            ROSTER.filter(function (mechanic) {
+                return mechanic.trade === trade;
+            }).forEach(function (mechanic) {
+                const selected = state.crew.some(function (member) {
+                    return member.code === mechanic.code;
+                });
+
+                const busy = busyElsewhere(mechanic.code);
+
+                const option = el("button", "picker-option");
+
+                option.type = "button";
+
+                option.dataset.toggle = mechanic.code;
+
+                if (selected) {
+                    option.classList.add("selected");
+                }
+
+                if (busy && !selected) {
+                    option.disabled = true;
+                }
+
+                option.appendChild(el("span", "picker-box", selected ? "✓" : ""));
+
+                const main = el("div", "picker-option__main");
+
+                main.appendChild(el("strong", null, mechanic.name));
+
+                main.appendChild(
+                    el(
+                        "span",
+                        null,
+                        busy && !selected
+                            ? mechanic.code + " · on " + busy.job + " in " + busy.bay
+                            : mechanic.code + " · available"
+                    )
+                );
+
+                option.appendChild(main);
+
+                group.appendChild(option);
+            });
+
+            mechPicker.appendChild(group);
+        });
+    }
+
+    function renderCrew() {
+        const job = state.openJob;
+
+        const required = requiredTrades(job);
+
+        crewListEl.innerHTML = "";
+
+        crewEmpty.hidden = state.crew.length > 0;
+
+        crewNote.textContent =
+            state.crew.length === 0
+                ? "No mechanics selected"
+                : state.crew.length === 1
+                ? "1 mechanic"
+                : state.crew.length + " mechanics";
+
+        state.crew.forEach(function (member) {
+            const row = el("div", "crew-row");
+
+            row.appendChild(el("div", "avatar small", member.code.slice(1)));
+
+            const main = el("div", "crew-row__main");
+
+            main.appendChild(el("strong", null, member.name));
+
+            const offTrade = required.indexOf(member.trade) === -1;
+
+            main.appendChild(
+                el(
+                    "span",
+                    offTrade ? "warn" : null,
+                    offTrade
+                        ? member.code +
+                              " · " +
+                              TRADES[member.trade].label +
+                              " — not a trade on this job card"
+                        : member.code + " · " + TRADES[member.trade].label
+                )
+            );
+
+            row.appendChild(main);
+
+            const lead = el("label", "lead-toggle");
+
+            const leadInput = document.createElement("input");
+
+            leadInput.type = "radio";
+
+            leadInput.name = "crewLead";
+
+            leadInput.value = member.code;
+
+            leadInput.checked = !!member.lead;
+
+            lead.appendChild(leadInput);
+
+            lead.appendChild(el("span", null, "Lead"));
+
+            row.appendChild(lead);
+
+            const remove = el("button", "remove-btn", "Remove");
+
+            remove.type = "button";
+
+            remove.dataset.remove = member.code;
+
+            row.appendChild(remove);
+
+            crewListEl.appendChild(row);
+        });
+    }
+
+    function renderBaySelect(record) {
+        const taken = Object.keys(state.assignments)
+            .filter(function (no) {
+                return !state.openJob || no !== state.openJob.no;
+            })
+            .map(function (no) {
+                return state.assignments[no].bay;
+            });
+
+        bay.innerHTML = "";
+
+        const blank = document.createElement("option");
+
+        blank.value = "";
+
+        blank.textContent = "Select a bay";
+
+        bay.appendChild(blank);
+
+        BAYS.forEach(function (bayName) {
+            const option = document.createElement("option");
+
+            option.value = bayName;
+
+            option.textContent =
+                taken.indexOf(bayName) === -1 ? bayName : bayName + " — occupied";
+
+            option.disabled = taken.indexOf(bayName) !== -1;
+
+            bay.appendChild(option);
+        });
+
+        state.bay = record ? record.bay : state.bay;
+
+        bay.value = state.bay || "";
+    }
+
+    /* =====================================================
+       19. CREW EDITS
+       ===================================================== */
+
+    function toggleMechanic(code) {
+        const already = state.crew.some(function (member) {
+            return member.code === code;
+        });
+
+        if (already) {
+            removeMechanic(code);
+
+            return;
+        }
+
+        const mechanic = findMechanic(code);
+
+        if (!mechanic || busyElsewhere(code)) {
+            return;
+        }
+
+        state.crew.push({
+            code: mechanic.code,
+            name: mechanic.name,
+            trade: mechanic.trade,
+            lead: state.crew.length === 0,
+        });
+
+        assignError.hidden = true;
+
+        renderModal();
+    }
+
+    function removeMechanic(code) {
+        const wasLead = state.crew.some(function (member) {
+            return member.code === code && member.lead;
+        });
+
+        state.crew = state.crew.filter(function (member) {
+            return member.code !== code;
+        });
+
+        if (wasLead && state.crew.length > 0) {
+            state.crew[0].lead = true;
+        }
+
+        assignError.hidden = true;
+
+        renderModal();
+    }
+
+    function setLead(code) {
+        state.crew.forEach(function (member) {
+            member.lead = member.code === code;
+        });
+
+        renderCrew();
+    }
+
+    /* =====================================================
+       20. SAVE / RECALL
+       ===================================================== */
+
+    function handleSave() {
+        const job = state.openJob;
+
+        if (!job) {
+            return;
+        }
+
+        const check = validateAssignment(job, state.crew, state.bay);
+
+        if (!check.ok) {
+            assignError.textContent = check.message;
+
+            assignError.hidden = false;
+
+            showToast(check.message, "error");
+
+            return;
+        }
+
+        const lead = state.crew.find(function (member) {
+            return member.lead;
+        });
+
+        state.assignments[job.no] = {
+            bay: state.bay,
+            crew: state.crew.map(function (member) {
+                return Object.assign({}, member);
+            }),
+            notes: crewNotes.value.trim(),
+            assignedAt: new Date().toISOString(),
+        };
+
+        saveAssignments();
+
+        closeAssignModal();
+
+        renderDashboard();
+
+        renderJobTable();
+
+        renderRoster();
+
+        showToast(
+            job.no +
+                " assigned to " +
+                state.assignments[job.no].crew.length +
+                " mechanic(s) in " +
+                state.assignments[job.no].bay +
+                " · lead " +
+                lead.name,
+            "success"
+        );
+    }
+
+    function handleRecall() {
+        const job = state.openJob;
+
+        if (!job || !assignmentFor(job.no)) {
+            return;
+        }
+
+        delete state.assignments[job.no];
+
+        saveAssignments();
+
+        closeAssignModal();
+
+        renderDashboard();
+
+        renderJobTable();
+
+        renderRoster();
+
+        showToast(job.no + " is back in the waiting list.");
+    }
+
+    /* =====================================================
+       21. EVENTS
+       ===================================================== */
 
     function bindEvents() {
+        logoutBtn.addEventListener("click", handleLogout);
 
-
-        /* -----------------------------------------------------
-           MAIN NAV
-        ----------------------------------------------------- */
-
-        document
-            .querySelectorAll(
-                ".nav-item[data-tab]"
-            )
-            .forEach(function (button) {
-
-                button.addEventListener(
-                    "click",
-                    function () {
-
-                        const tab =
-                            button.dataset.tab;
-
-
-                        if (
-                            tab ===
-                            "inventory"
-                        ) {
-
-                            showTab(
-                                "inventory",
-                                false
-                            );
-
-                            toggleInventoryNav();
-
-                            return;
-
-                        }
-
-
-                        if (
-                            tab ===
-                            "quotation"
-                        ) {
-
-                            showTab(
-                                "quotation",
-                                true,
-                                false
-                            );
-
-                            toggleQuotationNav();
-
-                            return;
-
-                        }
-
-
-                        showTab(tab);
-
-                    }
-                );
-
+        sectionLinks.forEach(function (link) {
+            link.addEventListener("click", function () {
+                showSection(link.dataset.section);
             });
-
-
-        /* -----------------------------------------------------
-           DASHBOARD BUTTONS
-        ----------------------------------------------------- */
-
-        document
-            .querySelectorAll(
-                "[data-tab-button]"
-            )
-            .forEach(function (button) {
-
-                button.addEventListener(
-                    "click",
-                    function () {
-
-                        showTab(
-                            button.dataset.tabButton
-                        );
-
-                    }
-                );
-
-            });
-
-
-        /* -----------------------------------------------------
-           DASHBOARD JOB CLICK
-        ----------------------------------------------------- */
-
-        document.addEventListener(
-            "click",
-            function (event) {
-
-                const item =
-                    event.target.closest(
-                        "[data-dashboard-job]"
-                    );
-
-
-                if (!item) {
-                    return;
-                }
-
-
-                const jobId =
-                    item.dataset.dashboardJob;
-
-
-                showTab(
-                    "workshop"
-                );
-
-
-                const input =
-                    document.getElementById(
-                        "jobCardSearch"
-                    );
-
-
-                if (input) {
-
-                    input.value =
-                        jobId;
-
-                }
-
-
-                const job =
-                    findJobById(jobId);
-
-
-                renderJobResult(
-                    job,
-                    document.getElementById(
-                        "workshopResult"
-                    )
-                );
-
-            }
-        );
-
-
-        /* -----------------------------------------------------
-           WORKSHOP SEARCH
-        ----------------------------------------------------- */
-
-        document
-            .getElementById(
-                "searchJobBtn"
-            )
-            ?.addEventListener(
-                "click",
-                function () {
-
-                    const input =
-                        document.getElementById(
-                            "jobCardSearch"
-                        );
-
-
-                    const job =
-                        findJobById(
-                            input.value
-                        );
-
-
-                    renderJobResult(
-                        job,
-                        document.getElementById(
-                            "workshopResult"
-                        )
-                    );
-
-
-                    if (job) {
-
-                        showToast(
-                            `${job.id} fetched successfully.`
-                        );
-
-                    }
-
-                }
-            );
-
-
-        document
-            .getElementById(
-                "jobCardSearch"
-            )
-            ?.addEventListener(
-                "keydown",
-                function (event) {
-
-                    if (
-                        event.key ===
-                        "Enter"
-                    ) {
-
-                        event.preventDefault();
-
-                        document
-                            .getElementById(
-                                "searchJobBtn"
-                            )
-                            .click();
-
-                    }
-
-                }
-            );
-
-
-        /* -----------------------------------------------------
-           ADD PARTS (REQUISITION)
-        ----------------------------------------------------- */
-
-        document
-            .getElementById(
-                "addPartsBtn"
-            )
-            ?.addEventListener(
-                "click",
-                function () {
-
-                    const section =
-                        document.getElementById(
-                            "requestedPartsSection"
-                        );
-
-                    const jobId =
-                        section?.dataset.jobId ||
-                        document.getElementById(
-                            "jobCardSearch"
-                        )?.value;
-
-                    openAddPartsForm(jobId);
-
-                }
-            );
-
-
-        /* -----------------------------------------------------
-           ADD PARTS - SEARCHABLE PART PICKER
-        ----------------------------------------------------- */
-
-        document
-            .getElementById(
-                "addPartPartSearch"
-            )
-            ?.addEventListener(
-                "input",
-                function () {
-
-                    /* typing invalidates the previous pick */
-
-                    document.getElementById(
-                        "addPartPartSelect"
-                    ).value = "";
-
-                    document.getElementById(
-                        "addPartCurrentStock"
-                    ).value = "";
-
-                    renderAddPartSuggestions(
-                        this.value
-                    );
-
-                }
-            );
-
-
-        document
-            .getElementById(
-                "addPartPartSearch"
-            )
-            ?.addEventListener(
-                "focus",
-                function () {
-
-                    renderAddPartSuggestions(
-                        document.getElementById(
-                            "addPartPartSelect"
-                        ).value
-                            ? ""
-                            : this.value
-                    );
-
-                }
-            );
-
-
-        document
-            .getElementById(
-                "addPartPartSearch"
-            )
-            ?.addEventListener(
-                "keydown",
-                function (event) {
-
-                    if (event.key === "ArrowDown") {
-
-                        event.preventDefault();
-
-                        moveAddPartActive(1);
-
-                    } else if (event.key === "ArrowUp") {
-
-                        event.preventDefault();
-
-                        moveAddPartActive(-1);
-
-                    } else if (event.key === "Enter") {
-
-                        if (
-                            addPartActiveIndex >= 0 &&
-                            addPartFiltered[addPartActiveIndex]
-                        ) {
-
-                            event.preventDefault();
-
-                            selectAddPart(
-                                addPartFiltered[
-                                    addPartActiveIndex
-                                ].partNo
-                            );
-
-                        }
-
-                    } else if (event.key === "Escape") {
-
-                        closeAddPartSuggestions();
-
-                    }
-
-                }
-            );
-
-
-        document.addEventListener(
-            "click",
-            function (event) {
-
-                const option =
-                    event.target.closest(
-                        "[data-add-part-option]"
-                    );
-
-                if (option) {
-
-                    selectAddPart(
-                        option.dataset.addPartOption
-                    );
-
-                    return;
-
-                }
-
-                if (
-                    !event.target.closest(
-                        "#addPartPartSearchWrap"
-                    )
-                ) {
-
-                    closeAddPartSuggestions();
-
-                }
-
-            }
-        );
-
-
-        document
-            .getElementById(
-                "addPartForm"
-            )
-            ?.addEventListener(
-                "submit",
-                saveAddPartLine
-            );
-
-
-        document
-            .getElementById(
-                "cancelAddPartBtn"
-            )
-            ?.addEventListener(
-                "click",
-                function () {
-
-                    closeModal("addPartsModal");
-
-                }
-            );
-
-
-        document
-            .getElementById(
-                "closeAddPartsBtn"
-            )
-            ?.addEventListener(
-                "click",
-                function () {
-
-                    closeModal("addPartsModal");
-
-                }
-            );
-
-
-        /* -----------------------------------------------------
-           WORKSHOP ISSUE
-        ----------------------------------------------------- */
-
-        document.addEventListener(
-            "click",
-            function (event) {
-
-                const button =
-                    event.target.closest(
-                        "[data-issue-part]"
-                    );
-
-
-                if (!button) {
-                    return;
-                }
-
-
-                const jobId =
-                    button.dataset.jobId;
-
-
-                const partNo =
-                    button.dataset.issuePart;
-
-
-                const input =
-                    document.querySelector(
-                        `[data-issue-qty="${CSS.escape(
-                            partNo
-                        )}"]`
-                    );
-
-
-                const qty =
-                    Number(
-                        input?.value
-                    ) || 0;
-
-
-                issueJobPart(
-                    jobId,
-                    partNo,
-                    qty
-                );
-
-            }
-        );
-
-
-        document.addEventListener(
-            "click",
-            function (event) {
-
-                const button =
-                    event.target.closest(
-                        "[data-issue-all]"
-                    );
-
-
-                if (!button) {
-                    return;
-                }
-
-
-                issueAllParts(
-                    button.dataset.issueAll
-                );
-
-            }
-        );
-
-
-        /* -----------------------------------------------------
-           INVENTORY
-        ----------------------------------------------------- */
-
-        document
-            .getElementById(
-                "inventorySearch"
-            )
-            ?.addEventListener(
-                "input",
-                renderInventory
-            );
-
-
-        document
-            .getElementById(
-                "inventoryLocationFilter"
-            )
-            ?.addEventListener(
-                "change",
-                renderInventory
-            );
-
-
-        document
-            .getElementById(
-                "inventoryStockFilter"
-            )
-            ?.addEventListener(
-                "change",
-                renderInventory
-            );
-
-
-        document
-            .getElementById(
-                "addProductTopBtn"
-            )
-            ?.addEventListener(
-                "click",
-                function () {
-
-                    openAddProductModal();
-
-                }
-            );
-
-
-        document
-            .getElementById(
-                "addProductForm"
-            )
-            ?.addEventListener(
-                "submit",
-                saveProduct
-            );
-
-
-        document.addEventListener(
-            "click",
-            function (event) {
-
-                const editButton =
-                    event.target.closest(
-                        "[data-edit-product]"
-                    );
-
-
-                if (
-                    editButton
-                ) {
-
-                    openAddProductModal(
-                        editButton.dataset.editProduct
-                    );
-
-                }
-
-            }
-        );
-
-
-        document.addEventListener(
-            "click",
-            function (event) {
-
-                const deleteButton =
-                    event.target.closest(
-                        "[data-delete-product]"
-                    );
-
-
-                if (!deleteButton) {
-                    return;
-                }
-
-
-                const product =
-                    state.inventory.find(
-                        function (item) {
-
-                            return item.id ===
-                                deleteButton.dataset.deleteProduct;
-
-                        }
-                    );
-
-
-                if (!product) {
-                    return;
-                }
-
-
-                if (
-                    !confirm(
-                        `Delete ${product.name}?`
-                    )
-                ) {
-
-                    return;
-
-                }
-
-
-                state.inventory =
-                    state.inventory.filter(
-                        function (item) {
-
-                            return item.id !==
-                                product.id;
-
-                        }
-                    );
-
-
-                saveState();
-
-                populateProductDropdowns();
-
-                renderInventory();
-
-                renderDashboard();
-
-
-                showToast(
-                    "Product deleted."
-                );
-
-            }
-        );
-
-
-        /* -----------------------------------------------------
-           INVENTORY SUBMENU
-        ----------------------------------------------------- */
-
-        document.addEventListener(
-            "click",
-            function (event) {
-
-                const button =
-                    event.target.closest(
-                        "[data-inventory-action]"
-                    );
-
-
-                if (!button) {
-                    return;
-                }
-
-
-                showTab(
-                    "inventory",
-                    false
-                );
-
-
-                const action =
-                    button.dataset.inventoryAction;
-
-
-                if (
-                    action ===
-                    "add-product"
-                ) {
-
-                    openAddProductModal();
-
-                    return;
-
-                }
-
-
-                openInventoryManager(
-                    action
-                );
-
-            }
-        );
-
-
-        /* -----------------------------------------------------
-           QUOTATION SUBMENU
-        ----------------------------------------------------- */
-
-        document.addEventListener(
-            "click",
-            function (event) {
-
-                const button =
-                    event.target.closest(
-                        "[data-quotation-nav-action]"
-                    );
-
-
-                if (!button) {
-                    return;
-                }
-
-
-                showTab(
-                    "quotation",
-                    true,
-                    false
-                );
-
-
-                const action =
-                    button.dataset.quotationNavAction;
-
-
-                if (
-                    action ===
-                    "add-quotation"
-                ) {
-
-                    clearQuotation();
-
-                    document
-                        .getElementById(
-                            "quotationSearch"
-                        )
-                        ?.focus();
-
-                    return;
-
-                }
-
-
-                /*
-                 * "manage-quotation" - the tab is already
-                 * showing, so just draw attention to the
-                 * Quotations history table below the builder.
-                 */
-
-                document
-                    .getElementById(
-                        "quotationHistorySearch"
-                    )
-                    ?.scrollIntoView({
-                        behavior: "smooth",
-                        block: "center"
-                    });
-
-            }
-        );
-
-
-        /* -----------------------------------------------------
-           QUOTATION
-        ----------------------------------------------------- */
-
-        document
-            .getElementById(
-                "quotationSearch"
-            )
-            ?.addEventListener(
-                "input",
-                renderQuotationSearch
-            );
-
-
-        [
-            "quotationDiscount",
-            "quotationHandlingCharge"
-        ].forEach(function (id) {
-
-            document
-                .getElementById(id)
-                ?.addEventListener(
-                    "input",
-                    renderQuotationCart
-                );
-
         });
 
-
-        document
-            .getElementById(
-                "clearQuotationBtn"
-            )
-            ?.addEventListener(
-                "click",
-                clearQuotation
-            );
-
-
-        document
-            .getElementById(
-                "saveQuotationBtn"
-            )
-            ?.addEventListener(
-                "click",
-                saveQuotation
-            );
-
-
-        document
-            .getElementById(
-                "quotationHistorySearch"
-            )
-            ?.addEventListener(
-                "input",
-                renderQuotationHistory
-            );
-
-
-        document.addEventListener(
-            "click",
-            function (event) {
-
-                const button =
-                    event.target.closest(
-                        "[data-add-quotation]"
-                    );
-
-
-                if (!button) {
-                    return;
-                }
-
-
-                addToQuotation(
-                    button.dataset.addQuotation
-                );
-
-            }
-        );
-
-
-        document.addEventListener(
-            "click",
-            function (event) {
-
-                const button =
-                    event.target.closest(
-                        "[data-remove-quotation]"
-                    );
-
-
-                if (!button) {
-                    return;
-                }
-
-
-                quotationCart =
-                    quotationCart.filter(
-                        function (item) {
-
-                            return item.productId !==
-                                button.dataset.removeQuotation;
-
-                        }
-                    );
-
-
-                renderQuotationCart();
-
-            }
-        );
-
-
-        document.addEventListener(
-            "change",
-            function (event) {
-
-                const input =
-                    event.target.closest(
-                        "[data-quotation-qty]"
-                    );
-
-
-                if (!input) {
-                    return;
-                }
-
-
-                const item =
-                    quotationCart.find(
-                        function (cartItem) {
-
-                            return cartItem.productId ===
-                                input.dataset.quotationQty;
-
-                        }
-                    );
-
-
-                if (!item) {
-                    return;
-                }
-
-
-                const qty =
-                    Math.max(
-                        1,
-                        Number(input.value) || 1
-                    );
-
-
-                item.qty = qty;
-
-                input.value = qty;
-
-                renderQuotationCart();
-
-            }
-        );
-
-
-        document.addEventListener(
-            "click",
-            function (event) {
-
-                const button =
-                    event.target.closest(
-                        "[data-view-quotation]"
-                    );
-
-
-                if (!button) {
-                    return;
-                }
-
-
-                viewQuotation(
-                    button.dataset.viewQuotation
-                );
-
-            }
-        );
-
-
-        document.addEventListener(
-            "click",
-            function (event) {
-
-                const button =
-                    event.target.closest(
-                        "[data-delete-quotation]"
-                    );
-
-
-                if (!button) {
-                    return;
-                }
-
-
-                deleteQuotation(
-                    button.dataset.deleteQuotation
-                );
-
-            }
-        );
-
-
-        document
-            .getElementById(
-                "closeQuotationBtn"
-            )
-            ?.addEventListener(
-                "click",
-                function () {
-
-                    closeModal("quotationModal");
-
-                }
-            );
-
-
-        document
-            .getElementById(
-                "closeQuotationFooterBtn"
-            )
-            ?.addEventListener(
-                "click",
-                function () {
-
-                    closeModal("quotationModal");
-
-                }
-            );
-
-
-        document
-            .getElementById(
-                "convertQuotationBtn"
-            )
-            ?.addEventListener(
-                "click",
-                convertQuotationToCounterSale
-            );
-
-
-        document
-            .getElementById(
-                "printQuotationBtn"
-            )
-            ?.addEventListener(
-                "click",
-                function () {
-
-                    window.print();
-
-                }
-            );
-
-
-        /* -----------------------------------------------------
-           PARTY SALE
-        ----------------------------------------------------- */
-
-        document
-            .getElementById("partySearch")
-            ?.addEventListener(
-                "input",
-                renderPartySearch
-            );
-
-        [
-            "partyDiscount",
-            "partyCashDiscount",
-            "partyHandlingCharge",
-            "partySurcharge"
-        ].forEach(function (id) {
-
-            document
-                .getElementById(id)
-                ?.addEventListener(
-                    "input",
-                    renderPartyCart
-                );
-
-        });
-
-        document
-            .getElementById("clearPartySaleBtn")
-            ?.addEventListener(
-                "click",
-                clearPartySale
-            );
-
-        document
-            .getElementById("sendPartySaleToCashBtn")
-            ?.addEventListener(
-                "click",
-                sendPartySaleToCash
-            );
-
-        document.addEventListener(
-            "click",
-            function (event) {
-
-                const button =
-                    event.target.closest(
-                        "[data-add-party]"
-                    );
-
-                if (!button) {
-                    return;
-                }
-
-                addToParty(
-                    button.dataset.addParty
-                );
-
-                renderPartySearch();
-
-            }
-        );
-
-        document.addEventListener(
-            "click",
-            function (event) {
-
-                const button =
-                    event.target.closest(
-                        "[data-remove-party]"
-                    );
-
-                if (!button) {
-                    return;
-                }
-
-                partyCart =
-                    partyCart.filter(function (item) {
-
-                        return item.productId !==
-                            button.dataset.removeParty;
-
-                    });
-
-                renderPartyCart();
-
-            }
-        );
-
-        document.addEventListener(
-            "change",
-            function (event) {
-
-                const input =
-                    event.target.closest(
-                        "[data-party-qty]"
-                    );
-
-                if (!input) {
-                    return;
-                }
-
-                const item =
-                    partyCart.find(function (cartItem) {
-
-                        return cartItem.productId ===
-                            input.dataset.partyQty;
-
-                    });
-
-                if (!item) {
-                    return;
-                }
-
-                const product =
-                    state.inventory.find(function (product) {
-
-                        return product.id === item.productId;
-
-                    });
-
-                let qty = Number(input.value) || 1;
-
-                qty =
-                    Math.max(
-                        1,
-                        Math.min(qty, Number(product.stock))
-                    );
-
-                item.qty = qty;
-
-                input.value = qty;
-
-                renderPartyCart();
-
-            }
-        );
-
-
-        /* -----------------------------------------------------
-           BRANCH TRANSFER
-        ----------------------------------------------------- */
-
-        document
-            .getElementById("transferMyBranch")
-            ?.addEventListener(
-                "change",
-                function () {
-
-                    transferMyBranch = this.value;
-
-                    renderTransferForm();
-
-                }
-            );
-
-        document
-            .getElementById("transferPartSearch")
-            ?.addEventListener(
-                "input",
-                function () {
-
-                    document.getElementById(
-                        "transferPartSelect"
-                    ).value = "";
-
-                    document.getElementById(
-                        "transferAvailableStock"
-                    ).value = "";
-
-                    renderTransferPartSuggestions(
-                        this.value
-                    );
-
-                }
-            );
-
-        document
-            .getElementById("transferPartSearch")
-            ?.addEventListener(
-                "focus",
-                function () {
-
-                    renderTransferPartSuggestions(
-                        document.getElementById(
-                            "transferPartSelect"
-                        ).value
-                            ? ""
-                            : this.value
-                    );
-
-                }
-            );
-
-        document
-            .getElementById("transferPartSearch")
-            ?.addEventListener(
-                "keydown",
-                function (event) {
-
-                    if (event.key === "ArrowDown") {
-
-                        event.preventDefault();
-
-                        moveTransferPartActive(1);
-
-                    } else if (event.key === "ArrowUp") {
-
-                        event.preventDefault();
-
-                        moveTransferPartActive(-1);
-
-                    } else if (event.key === "Enter") {
-
-                        if (
-                            transferPartActiveIndex >= 0 &&
-                            transferPartFiltered[transferPartActiveIndex]
-                        ) {
-
-                            event.preventDefault();
-
-                            selectTransferPart(
-                                transferPartFiltered[
-                                    transferPartActiveIndex
-                                ].partNo
-                            );
-
-                        }
-
-                    } else if (event.key === "Escape") {
-
-                        closeTransferPartSuggestions();
-
-                    }
-
-                }
-            );
-
-        document.addEventListener(
-            "click",
-            function (event) {
-
-                const option =
-                    event.target.closest(
-                        "[data-transfer-part-option]"
-                    );
-
-                if (option) {
-
-                    selectTransferPart(
-                        option.dataset.transferPartOption
-                    );
-
-                    return;
-
-                }
-
-                if (
-                    !event.target.closest(
-                        "#transferPartSearchWrap"
-                    )
-                ) {
-
-                    closeTransferPartSuggestions();
-
-                }
-
-            }
-        );
-
-        document
-            .getElementById("addTransferLineBtn")
-            ?.addEventListener(
-                "click",
-                addTransferLine
-            );
-
-        document
-            .getElementById("transferForm")
-            ?.addEventListener(
-                "submit",
-                saveTransferRequisition
-            );
-
-        document
-            .getElementById("clearTransferBtn")
-            ?.addEventListener(
-                "click",
-                clearTransferDraft
-            );
-
-        document.addEventListener(
-            "click",
-            function (event) {
-
-                const button =
-                    event.target.closest(
-                        "[data-remove-transfer-line]"
-                    );
-
-                if (!button) {
-                    return;
-                }
-
-                transferLines =
-                    transferLines.filter(function (line) {
-
-                        return line.id !==
-                            button.dataset.removeTransferLine;
-
-                    });
-
-                renderTransferLinesTable();
-
-            }
-        );
-
-        document.addEventListener(
-            "click",
-            function (event) {
-
-                const button =
-                    event.target.closest(
-                        "[data-receive-transfer]"
-                    );
-
-                if (!button) {
-                    return;
-                }
-
-                markTransferReceived(
-                    button.dataset.receiveTransfer
-                );
-
-            }
-        );
-
-
-        /* -----------------------------------------------------
-           MANAGEMENT ACTIONS
-        ----------------------------------------------------- */
-
-        document.addEventListener(
-            "click",
-            function (event) {
-
-                const button =
-                    event.target.closest(
-                        "[data-manager-delete-category]"
-                    );
-
-
-                if (!button) {
-                    return;
-                }
-
-
-                const category =
-                    button.dataset.managerDeleteCategory;
-
-
-                state.categories =
-                    state.categories.filter(
-                        function (item) {
-
-                            return item !==
-                                category;
-
-                        }
-                    );
-
-
-                saveState();
-
-                populateProductDropdowns();
-
-                openInventoryManager(
-                    "manage-category"
-                );
-
-
-                showToast(
-                    "Category removed."
-                );
-
-            }
-        );
-
-
-        document.addEventListener(
-            "click",
-            function (event) {
-
-                const button =
-                    event.target.closest(
-                        "[data-manager-delete-unit]"
-                    );
-
-
-                if (!button) {
-                    return;
-                }
-
-
-                const unit =
-                    button.dataset.managerDeleteUnit;
-
-
-                state.units =
-                    state.units.filter(
-                        function (item) {
-
-                            return item !==
-                                unit;
-
-                        }
-                    );
-
-
-                saveState();
-
-                populateProductDropdowns();
-
-                openInventoryManager(
-                    "units"
-                );
-
-
-                showToast(
-                    "Unit removed."
-                );
-
-            }
-        );
-
-
-        document.addEventListener(
-            "click",
-            function (event) {
-
-                const button =
-                    event.target.closest(
-                        "[data-manager-edit-product]"
-                    );
-
-
-                if (!button) {
-                    return;
-                }
-
-
-                closeModal(
-                    "inventoryManagerModal"
-                );
-
-
-                openAddProductModal(
-                    button.dataset.managerEditProduct
-                );
-
-            }
-        );
-
-
-        document.addEventListener(
-            "click",
-            function (event) {
-
-                const button =
-                    event.target.closest(
-                        "[data-delete-group-price]"
-                    );
-
-
-                if (!button) {
-                    return;
-                }
-
-
-                const index =
-                    Number(
-                        button.dataset.deleteGroupPrice
-                    );
-
-
-                state.groupPrices.splice(
-                    index,
-                    1
-                );
-
-
-                saveState();
-
-                openInventoryManager(
-                    "group-pricing"
-                );
-
-            }
-        );
-
-
-        /* -----------------------------------------------------
-           EXCEL
-        ----------------------------------------------------- */
-
-        document
-            .getElementById(
-                "importExcelBtn"
-            )
-            ?.addEventListener(
-                "click",
-                function () {
-
-                    document
-                        .getElementById(
-                            "excelFileInput"
-                        )
-                        .click();
-
-                }
-            );
-
-
-        document
-            .getElementById(
-                "excelFileInput"
-            )
-            ?.addEventListener(
-                "change",
-                function (event) {
-
-                    const file =
-                        event.target.files[0];
-
-
-                    if (file) {
-
-                        importExcel(
-                            file
-                        );
-
-                    }
-
-
-                    event.target.value = "";
-
-                }
-            );
-
-
-        /* -----------------------------------------------------
-           PRODUCT IMAGE
-        ----------------------------------------------------- */
-
-        document
-            .getElementById(
-                "productImage"
-            )
-            ?.addEventListener(
-                "change",
-                function (event) {
-
-                    const file =
-                        event.target.files[0];
-
-
-                    if (!file) {
-                        return;
-                    }
-
-
-                    const reader =
-                        new FileReader();
-
-
-                    reader.onload =
-                        function () {
-
-                            const preview =
-                                document.getElementById(
-                                    "productImagePreview"
-                                );
-
-
-                            preview.src =
-                                reader.result;
-
-
-                            preview.classList.add(
-                                "visible"
-                            );
-
-                        };
-
-
-                    reader.readAsDataURL(
-                        file
-                    );
-
-                }
-            );
-
-
-        /* -----------------------------------------------------
-           MRN
-        ----------------------------------------------------- */
-
-        document
-            .getElementById(
-                "mrnProductSelect"
-            )
-            ?.addEventListener(
-                "change",
-                function () {
-
-                    fillMrnProduct(
-                        this.value
-                    );
-
-                }
-            );
-
-
-        document
-            .getElementById(
-                "addMrnLineBtn"
-            )
-            ?.addEventListener(
-                "click",
-                addMrnLine
-            );
-
-
-        document
-            .getElementById(
-                "mrnForm"
-            )
-            ?.addEventListener(
-                "submit",
-                saveMrn
-            );
-
-
-        document
-            .getElementById(
-                "clearMrnBtn"
-            )
-            ?.addEventListener(
-                "click",
-                clearMrn
-            );
-
-
-        document
-            .getElementById(
-                "newMrnBtn"
-            )
-            ?.addEventListener(
-                "click",
-                function () {
-
-                    initializeMrn();
-
-                    openModal("mrnFormModal");
-
-                }
-            );
-
-
-        document
-            .getElementById(
-                "cancelMrnFormBtn"
-            )
-            ?.addEventListener(
-                "click",
-                function () {
-
-                    clearMrn();
-
-                    closeModal("mrnFormModal");
-
-                }
-            );
-
-
-        document
-            .getElementById(
-                "closeMrnFormBtn"
-            )
-            ?.addEventListener(
-                "click",
-                function () {
-
-                    closeModal("mrnFormModal");
-
-                }
-            );
-
-
-        document
-            .getElementById(
-                "mrnHistorySearch"
-            )
-            ?.addEventListener(
-                "input",
-                renderMrnHistory
-            );
-
-
-        [
-            "mrnDiscountA",
-            "mrnDiscountB",
-            "mrnDiscountC",
-            "mrnCashDiscount",
-            "mrnHandlingCharge",
-            "mrnVorSurcharge",
-            "mrnServiceTax",
-            "mrnECess",
-            "mrnExcise",
-            "mrnTaxSurcharge"
-        ].forEach(function (id) {
-
-            document
-                .getElementById(id)
-                ?.addEventListener(
-                    "input",
-                    calculateMrn
-                );
-
-        });
-
-
-        document.addEventListener(
-            "click",
-            function (event) {
-
-                const button =
-                    event.target.closest(
-                        "[data-remove-mrn-line]"
-                    );
-
-
-                if (!button) {
-                    return;
-                }
-
-
-                mrnLines =
-                    mrnLines.filter(
-                        function (line) {
-
-                            return line.id !==
-                                button.dataset.removeMrnLine;
-
-                        }
-                    );
-
-
-                renderMrnLines();
-
-                calculateMrn();
-
-            }
-        );
-
-
-        document.addEventListener(
-            "click",
-            function (event) {
-
-                const button =
-                    event.target.closest(
-                        "[data-view-mrn]"
-                    );
-
-
-                if (!button) {
-                    return;
-                }
-
-
-                const receipt =
-                    state.materialReceipts.find(
-                        function (item) {
-
-                            return item.id ===
-                                button.dataset.viewMrn;
-
-                        }
-                    );
-
-
-                if (receipt) {
-
-                    showMrnModal(
-                        receipt
-                    );
-
-                }
-
-            }
-        );
-
-
-        /* -----------------------------------------------------
-           COUNTER
-        ----------------------------------------------------- */
-
-        document
-            .getElementById(
-                "counterSearch"
-            )
-            ?.addEventListener(
-                "input",
-                renderCounterSearch
-            );
-
-
-        document
-            .getElementById(
-                "counterDiscount"
-            )
-            ?.addEventListener(
-                "input",
-                renderCounterCart
-            );
-
-
-        [
-            "counterHandlingCharge",
-            "counterSurcharge",
-            "counterCashDiscount"
-        ].forEach(function (id) {
-
-            document
-                .getElementById(id)
-                ?.addEventListener(
-                    "input",
-                    renderCounterCart
-                );
-
-        });
-
-
-        document
-            .getElementById(
-                "counterSaleType"
-            )
-            ?.addEventListener(
-                "change",
-                function () {
-
-                    document.getElementById(
-                        "counterSaleNumber"
-                    ).textContent = "Counter Sale";
-
-                    renderCounterCart();
-
-                }
-            );
-
-
-        document
-            .getElementById(
-                "clearSaleBtn"
-            )
-            ?.addEventListener(
-                "click",
-                clearCounterSale
-            );
-
-
-        document
-            .getElementById(
-                "sendSaleToCashBtn"
-            )
-            ?.addEventListener(
-                "click",
-                sendSaleToCash
-            );
-
-
-        document.addEventListener(
-            "click",
-            function (event) {
-
-                const button =
-                    event.target.closest(
-                        "[data-add-counter]"
-                    );
-
-
-                if (!button) {
-                    return;
-                }
-
-
-                addToCounter(
-                    button.dataset.addCounter
-                );
-
-
-                renderCounterSearch();
-
-            }
-        );
-
-
-        document.addEventListener(
-            "click",
-            function (event) {
-
-                const button =
-                    event.target.closest(
-                        "[data-remove-counter]"
-                    );
-
-
-                if (!button) {
-                    return;
-                }
-
-
-                counterCart =
-                    counterCart.filter(
-                        function (item) {
-
-                            return item.productId !==
-                                button.dataset.removeCounter;
-
-                        }
-                    );
-
-
-                renderCounterCart();
-
-            }
-        );
-
-
-        document.addEventListener(
-            "change",
-            function (event) {
-
-                const input =
-                    event.target.closest(
-                        "[data-counter-qty]"
-                    );
-
-
-                if (!input) {
-                    return;
-                }
-
-
-                const item =
-                    counterCart.find(
-                        function (cartItem) {
-
-                            return cartItem.productId ===
-                                input.dataset.counterQty;
-
-                        }
-                    );
-
-
-                if (!item) {
-                    return;
-                }
-
-
-                const product =
-                    state.inventory.find(
-                        function (product) {
-
-                            return product.id ===
-                                item.productId;
-
-                        }
-                    );
-
-
-                let qty =
-                    Number(input.value) || 1;
-
-
-                qty =
-                    Math.max(
-                        1,
-                        Math.min(
-                            qty,
-                            Number(product.stock)
-                        )
-                    );
-
-
-                item.qty = qty;
-
-                input.value = qty;
-
-                renderCounterCart();
-
-            }
-        );
-
-
-        /* -----------------------------------------------------
-           CASH
-        ----------------------------------------------------- */
-
-        document.addEventListener(
-            "click",
-            function (event) {
-
-                const item =
-                    event.target.closest(
-                        "[data-select-sale]"
-                    );
-
-
-                if (!item) {
-                    return;
-                }
-
-
-                selectedCashSaleId =
-                    item.dataset.selectSale;
-
-
-                renderPendingSales();
-
-                renderPaymentPanel();
-
-            }
-        );
-
-
-        document.addEventListener(
-            "click",
-            function (event) {
-
-                const button =
-                    event.target.closest(
-                        "[data-payment-method]"
-                    );
-
-
-                if (!button) {
-                    return;
-                }
-
-
-                selectedPaymentMethod =
-                    button.dataset.paymentMethod;
-
-
-                renderPaymentPanel();
-
-            }
-        );
-
-
-        document.addEventListener(
-            "input",
-            function (event) {
-
-                if (
-                    event.target.id ===
-                    "cashAmountReceived"
-                ) {
-
-                    updateCashChange();
-
-                }
-
-                if (event.target.id === "paymentJournalNo") {
-
-                    paymentJournalNo = event.target.value;
-
-                }
-
-                if (event.target.id === "paymentRemarks") {
-
-                    paymentRemarks = event.target.value;
-
-                }
-
-                if (event.target.id === "paymentChequeNo") {
-
-                    paymentChequeNo = event.target.value;
-
-                }
-
-                if (event.target.id === "paymentChequeDate") {
-
-                    paymentChequeDate = event.target.value;
-
-                }
-
-                if (event.target.id === "paymentChequeRemarks") {
-
-                    paymentChequeRemarks = event.target.value;
-
-                }
-
-            }
-        );
-
-
-        document.addEventListener(
-            "change",
-            function (event) {
-
-                if (event.target.id === "paymentBankName") {
-
-                    paymentBankName = event.target.value;
-
-                }
-
-                if (event.target.id === "paymentChequeBank") {
-
-                    paymentChequeBank = event.target.value;
-
-                }
-
-                if (event.target.id === "paymentChequeDate") {
-
-                    paymentChequeDate = event.target.value;
-
-                }
-
-            }
-        );
-
-
-        document.addEventListener(
-            "click",
-            function (event) {
-
-                if (
-                    event.target.id ===
-                    "completePaymentBtn"
-                ) {
-
-                    completePayment();
-
-                }
-
-            }
-        );
-
-
-        /* -----------------------------------------------------
-           LOGOUT
-        ----------------------------------------------------- */
-
-        document
-            .getElementById(
-                "logoutBtn"
-            )
-            ?.addEventListener(
-                "click",
-                function () {
-
-                    if (
-                        !confirm(
-                            "Log out of Zimdra DMS?"
-                        )
-                    ) {
-
-                        return;
-
-                    }
-
-                    showToast(
-                        "Logged out."
-                    );
-
-                    setTimeout(function () {
-
-                        window.location.reload();
-
-                    }, 400);
-
-                }
-            );
-
-
-        /* -----------------------------------------------------
-           TRANSACTIONS
-        ----------------------------------------------------- */
-
-        document
-            .getElementById(
-                "transactionSearch"
-            )
-            ?.addEventListener(
-                "input",
-                renderTransactions
-            );
-
-
-        /* -----------------------------------------------------
-           MODALS
-        ----------------------------------------------------- */
-
-        document
-            .getElementById(
-                "closeAddProductBtn"
-            )
-            ?.addEventListener(
-                "click",
-                function () {
-
-                    closeModal(
-                        "addProductModal"
-                    );
-
-                }
-            );
-
-
-        document
-            .getElementById(
-                "cancelAddProductBtn"
-            )
-            ?.addEventListener(
-                "click",
-                function () {
-
-                    closeModal(
-                        "addProductModal"
-                    );
-
-                }
-            );
-
-
-        document
-            .getElementById(
-                "closeInventoryManagerBtn"
-            )
-            ?.addEventListener(
-                "click",
-                function () {
-
-                    closeModal(
-                        "inventoryManagerModal"
-                    );
-
-                }
-            );
-
-
-        document
-            .getElementById(
-                "closeInvoiceBtn"
-            )
-            ?.addEventListener(
-                "click",
-                function () {
-
-                    closeModal(
-                        "invoiceModal"
-                    );
-
-                }
-            );
-
-
-        document
-            .getElementById(
-                "closeInvoiceFooterBtn"
-            )
-            ?.addEventListener(
-                "click",
-                function () {
-
-                    closeModal(
-                        "invoiceModal"
-                    );
-
-                }
-            );
-
-
-        document
-            .getElementById(
-                "closeMrnBtn"
-            )
-            ?.addEventListener(
-                "click",
-                function () {
-
-                    closeModal(
-                        "mrnModal"
-                    );
-
-                }
-            );
-
-
-        document
-            .getElementById(
-                "closeMrnFooterBtn"
-            )
-            ?.addEventListener(
-                "click",
-                function () {
-
-                    closeModal(
-                        "mrnModal"
-                    );
-
-                }
-            );
-
-
-        document
-            .getElementById(
-                "printInvoiceBtn"
-            )
-            ?.addEventListener(
-                "click",
-                function () {
-
-                    window.print();
-
-                }
-            );
-
-
-        document
-            .getElementById(
-                "printMrnBtn"
-            )
-            ?.addEventListener(
-                "click",
-                function () {
-
-                    window.print();
-
-                }
-            );
-
-
-        document.addEventListener(
-            "click",
-            function (event) {
-
-                const backdrop =
-                    event.target.closest(
-                        "[data-close-modal]"
-                    );
-
-
-                if (!backdrop) {
-                    return;
-                }
-
-
-                closeModal(
-                    backdrop.dataset.closeModal
-                );
-
-            }
-        );
-
-
-        /* -----------------------------------------------------
-           MANAGER ADD CATEGORY
-        ----------------------------------------------------- */
-
-        document.addEventListener(
-            "click",
-            function (event) {
-
-                if (
-                    event.target.id !==
-                    "managerAddCategoryBtn"
-                ) {
-
-                    return;
-
-                }
-
-
-                const input =
-                    document.getElementById(
-                        "managerCategoryInput"
-                    );
-
-
-                const value =
-                    input.value.trim();
-
-
-                if (!value) {
-
-                    showToast(
-                        "Enter a category name.",
-                        "error"
-                    );
-
-                    return;
-
-                }
-
-
-                if (
-                    state.categories.includes(
-                        value
-                    )
-                ) {
-
-                    showToast(
-                        "Category already exists.",
-                        "error"
-                    );
-
-                    return;
-
-                }
-
-
-                state.categories.push(
-                    value
-                );
-
-
-                saveState();
-
-                populateProductDropdowns();
-
-                openInventoryManager(
-                    "manage-category"
-                );
-
-
-                showToast(
-                    "Category added."
-                );
-
-            }
-        );
-
-
-        /* -----------------------------------------------------
-           MANAGER ADD UNIT
-        ----------------------------------------------------- */
-
-        document.addEventListener(
-            "click",
-            function (event) {
-
-                if (
-                    event.target.id !==
-                    "managerAddUnitBtn"
-                ) {
-
-                    return;
-
-                }
-
-
-                const input =
-                    document.getElementById(
-                        "managerUnitInput"
-                    );
-
-
-                const value =
-                    input.value.trim();
-
-
-                if (!value) {
-
-                    showToast(
-                        "Enter a unit.",
-                        "error"
-                    );
-
-                    return;
-
-                }
-
-
-                if (
-                    state.units.includes(
-                        value
-                    )
-                ) {
-
-                    showToast(
-                        "Unit already exists.",
-                        "error"
-                    );
-
-                    return;
-
-                }
-
-
-                state.units.push(
-                    value
-                );
-
-
-                saveState();
-
-                populateProductDropdowns();
-
-                openInventoryManager(
-                    "units"
-                );
-
-
-                showToast(
-                    "Unit added."
-                );
-
-            }
-        );
-
-
-        /* -----------------------------------------------------
-           GROUP PRICING
-        ----------------------------------------------------- */
-
-        document.addEventListener(
-            "click",
-            function (event) {
-
-                if (
-                    event.target.id !==
-                    "addGroupPriceBtn"
-                ) {
-
-                    return;
-
-                }
-
-
-                const name =
-                    document.getElementById(
-                        "groupPriceName"
-                    ).value.trim();
-
-
-                const discount =
-                    Number(
-                        document.getElementById(
-                            "groupPriceDiscount"
-                        ).value
-                    ) || 0;
-
-
-                if (!name) {
-
-                    showToast(
-                        "Enter a group name.",
-                        "error"
-                    );
-
-                    return;
-
-                }
-
-
-                state.groupPrices.push({
-
-                    name,
-
-                    discount:
-                        Math.min(
-                            Math.max(
-                                discount,
-                                0
-                            ),
-                            100
-                        )
-
+        filterTabs.forEach(function (tab) {
+            tab.addEventListener("click", function () {
+                state.filter = tab.dataset.filter;
+
+                filterTabs.forEach(function (other) {
+                    other.classList.toggle("active", other === tab);
                 });
 
+                renderJobTable();
+            });
+        });
 
-                saveState();
+        jobSearch.addEventListener("input", function () {
+            state.search = jobSearch.value;
 
-                openInventoryManager(
-                    "group-pricing"
-                );
+            renderJobTable();
+        });
 
+        clearSearch.addEventListener("click", function () {
+            jobSearch.value = "";
 
-                showToast(
-                    "Group pricing rule added."
-                );
+            state.search = "";
 
+            renderJobTable();
+
+            jobSearch.focus();
+        });
+
+        document.addEventListener("click", function (event) {
+            const opener = event.target.closest("[data-open-job]");
+
+            if (opener) {
+                openAssignModal(opener.dataset.openJob);
             }
-        );
+        });
 
+        mechPicker.addEventListener("click", function (event) {
+            const option = event.target.closest(".picker-option");
+
+            if (option && !option.disabled) {
+                toggleMechanic(option.dataset.toggle);
+            }
+        });
+
+        crewListEl.addEventListener("click", function (event) {
+            const remove = event.target.closest("[data-remove]");
+
+            if (remove) {
+                removeMechanic(remove.dataset.remove);
+            }
+        });
+
+        crewListEl.addEventListener("change", function (event) {
+            if (event.target.name === "crewLead") {
+                setLead(event.target.value);
+            }
+        });
+
+        showAllTrades.addEventListener("change", renderPicker);
+
+        bay.addEventListener("change", function () {
+            state.bay = bay.value;
+
+            assignError.hidden = true;
+        });
+
+        saveAssign.addEventListener("click", handleSave);
+
+        recallBtn.addEventListener("click", handleRecall);
+
+        cancelAssign.addEventListener("click", closeAssignModal);
+
+        modalClose.addEventListener("click", closeAssignModal);
+
+        assignModal.addEventListener("click", function (event) {
+            if (event.target.hasAttribute("data-close-modal")) {
+                closeAssignModal();
+            }
+        });
+
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape" && assignModal.classList.contains("open")) {
+                closeAssignModal();
+            }
+        });
     }
 
-
-    /* =========================================================
-       INITIALIZE
-    ========================================================= */
+    /* =====================================================
+       22. INITIALIZE
+       ===================================================== */
 
     function init() {
+        const session = guardSession();
 
-        loadState();
+        if (!session) {
+            return;
+        }
 
-        populateProductDropdowns();
+        currentDate.textContent = new Date()
+            .toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+            })
+            .toUpperCase();
+
+        state.jobs = loadJobCards();
+
+        state.assignments = loadAssignments();
 
         bindEvents();
 
         renderDashboard();
 
-        renderInventory();
+        renderJobTable();
 
-        renderCounterSearch();
-
-        renderCounterCart();
-
-        renderPendingSales();
-
-        renderTransactions();
-
-        initializeMrn();
-
-        showTab(
-            "dashboard"
-        );
-
+        renderRoster();
     }
 
-
     init();
-
-
-})();
+})(typeof window !== "undefined" ? window : globalThis);
